@@ -5,8 +5,10 @@ target/
 !**/src/test/**/target/
 
 ### CUSTOM ###
-/node_modules/
-/dist/
+admin/node_modules/
+frontend/node_modules/
+backend/node_modules/
+dist/
 
 ### STS ###
 .apt_generated
