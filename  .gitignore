@@ -5,8 +5,8 @@ target/
 !**/src/test/**/target/
 
 ### CUSTOM ###
-node_modules/
-dist/
+/node_modules/
+/dist/
 
 ### STS ###
 .apt_generated
