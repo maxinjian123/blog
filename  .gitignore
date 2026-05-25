@@ -35,3 +35,5 @@ build/
 
 ### VS Code ###
 .vscode/
+/backend/chroma_data/chroma.sqlite3
+/backend/chroma.bat
