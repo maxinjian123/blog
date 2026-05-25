@@ -1,0 +1,230 @@
+[33mWARNING[0m:  [21-05-2026 11:13:23] chroma_server_nofile is not supported on Windows. chroma_server_nofile will not be set.
+[32mINFO[0m:     [21-05-2026 11:13:24] Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+[36mDEBUG[0m:    [21-05-2026 11:13:24] Starting component System
+[36mDEBUG[0m:    [21-05-2026 11:13:24] Starting component OpenTelemetryClient
+[36mDEBUG[0m:    [21-05-2026 11:13:24] Starting component SqliteDB
+[36mDEBUG[0m:    [21-05-2026 11:13:24] Starting component SimpleQuotaEnforcer
+[36mDEBUG[0m:    [21-05-2026 11:13:24] Starting component Posthog
+[36mDEBUG[0m:    [21-05-2026 11:13:24] Starting component SimpleRateLimitEnforcer
+[36mDEBUG[0m:    [21-05-2026 11:13:24] Starting component LocalSegmentManager
+[36mDEBUG[0m:    [21-05-2026 11:13:24] Starting component LocalExecutor
+[36mDEBUG[0m:    [21-05-2026 11:13:24] Starting component SegmentAPI
+[31mERROR[0m:    [21-05-2026 11:13:24] Failed to send telemetry event ServerStartEvent: capture() takes 1 positional argument but 3 were given
+[32mINFO[0m:     [21-05-2026 11:13:24] Started server process [[36m44316[0m]
+[32mINFO[0m:     [21-05-2026 11:13:24] Waiting for application startup.
+[32mINFO[0m:     [21-05-2026 11:13:24] Application startup complete.
+[32mINFO[0m:     [21-05-2026 11:13:24] Uvicorn running on [1mhttp://localhost:8000[0m (Press CTRL+C to quit)
+[32mINFO[0m:     [21-05-2026 11:14:16] ::1:52029 - "GET / HTTP/1.1" 404
+[32mINFO[0m:     [21-05-2026 11:14:16] ::1:52029 - "GET / HTTP/1.1" 404
+[32mINFO[0m:     [21-05-2026 11:14:16] ::1:52029 - "GET /favicon.ico HTTP/1.1" 404
+[32mINFO[0m:     [21-05-2026 11:14:16] ::1:52029 - "GET /favicon.ico HTTP/1.1" 404
+[32mINFO[0m:     [21-05-2026 11:17:15] ::1:64762 - "GET / HTTP/1.1" 404
+[32mINFO[0m:     [21-05-2026 11:17:24] ::1:64762 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 200
+[33mWARNING[0m:  [21-05-2026 11:19:35] chroma_server_nofile is not supported on Windows. chroma_server_nofile will not be set.
+[32mINFO[0m:     [21-05-2026 11:19:35] Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+[36mDEBUG[0m:    [21-05-2026 11:19:35] Starting component System
+[36mDEBUG[0m:    [21-05-2026 11:19:35] Starting component OpenTelemetryClient
+[36mDEBUG[0m:    [21-05-2026 11:19:35] Starting component SqliteDB
+[36mDEBUG[0m:    [21-05-2026 11:19:35] Starting component SimpleQuotaEnforcer
+[36mDEBUG[0m:    [21-05-2026 11:19:35] Starting component Posthog
+[36mDEBUG[0m:    [21-05-2026 11:19:35] Starting component SimpleRateLimitEnforcer
+[36mDEBUG[0m:    [21-05-2026 11:19:35] Starting component LocalSegmentManager
+[36mDEBUG[0m:    [21-05-2026 11:19:35] Starting component LocalExecutor
+[36mDEBUG[0m:    [21-05-2026 11:19:35] Starting component SegmentAPI
+[31mERROR[0m:    [21-05-2026 11:19:35] Failed to send telemetry event ServerStartEvent: capture() takes 1 positional argument but 3 were given
+[32mINFO[0m:     [21-05-2026 11:19:35] Started server process [[36m32748[0m]
+[32mINFO[0m:     [21-05-2026 11:19:35] Waiting for application startup.
+[32mINFO[0m:     [21-05-2026 11:19:35] Application startup complete.
+[32mINFO[0m:     [21-05-2026 11:19:35] Uvicorn running on [1mhttp://localhost:8000[0m (Press CTRL+C to quit)
+[32mINFO[0m:     [21-05-2026 11:20:46] ::1:51179 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 11:20:46] ::1:51179 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 200
+[31mERROR[0m:    [21-05-2026 11:21:59] Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+[32mINFO[0m:     [21-05-2026 11:21:59] ::1:62682 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 11:22:04] ::1:56511 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 11:22:19] ::1:50230 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 11:22:45] ::1:53528 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 11:22:50] ::1:56372 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 11:23:01] ::1:51531 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 11:23:30] ::1:64995 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 11:23:35] ::1:64996 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[33mWARNING[0m:  [21-05-2026 11:24:06] chroma_server_nofile is not supported on Windows. chroma_server_nofile will not be set.
+[32mINFO[0m:     [21-05-2026 11:24:06] Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+[36mDEBUG[0m:    [21-05-2026 11:24:06] Starting component System
+[36mDEBUG[0m:    [21-05-2026 11:24:06] Starting component OpenTelemetryClient
+[36mDEBUG[0m:    [21-05-2026 11:24:06] Starting component SqliteDB
+[36mDEBUG[0m:    [21-05-2026 11:24:06] Starting component SimpleQuotaEnforcer
+[36mDEBUG[0m:    [21-05-2026 11:24:06] Starting component Posthog
+[36mDEBUG[0m:    [21-05-2026 11:24:06] Starting component SimpleRateLimitEnforcer
+[36mDEBUG[0m:    [21-05-2026 11:24:06] Starting component LocalSegmentManager
+[36mDEBUG[0m:    [21-05-2026 11:24:06] Starting component LocalExecutor
+[36mDEBUG[0m:    [21-05-2026 11:24:06] Starting component SegmentAPI
+[31mERROR[0m:    [21-05-2026 11:24:06] Failed to send telemetry event ServerStartEvent: capture() takes 1 positional argument but 3 were given
+[32mINFO[0m:     [21-05-2026 11:24:06] Started server process [[36m4680[0m]
+[32mINFO[0m:     [21-05-2026 11:24:06] Waiting for application startup.
+[32mINFO[0m:     [21-05-2026 11:24:06] Application startup complete.
+[31mERROR[0m:    [21-05-2026 11:24:06] [Errno 10048] error while attempting to bind on address ('::1', 8000, 0, 0): Í¨³£Ã¿¸öÌ×½Ó×ÖµØÖ·(Ð­Òé/ÍøÂçµØÖ·/¶Ë¿Ú)Ö»ÔÊÐíÊ¹ÓÃÒ»´Î¡£
+[32mINFO[0m:     [21-05-2026 11:24:06] Waiting for application shutdown.
+[36mDEBUG[0m:    [21-05-2026 11:24:06] Stopping component System
+[36mDEBUG[0m:    [21-05-2026 11:24:06] Stopping component SegmentAPI
+[36mDEBUG[0m:    [21-05-2026 11:24:06] Stopping component LocalExecutor
+[36mDEBUG[0m:    [21-05-2026 11:24:06] Stopping component LocalSegmentManager
+[36mDEBUG[0m:    [21-05-2026 11:24:06] Stopping component SimpleRateLimitEnforcer
+[36mDEBUG[0m:    [21-05-2026 11:24:06] Stopping component Posthog
+[36mDEBUG[0m:    [21-05-2026 11:24:06] Stopping component SimpleQuotaEnforcer
+[36mDEBUG[0m:    [21-05-2026 11:24:06] Stopping component SqliteDB
+[36mDEBUG[0m:    [21-05-2026 11:24:06] Stopping component OpenTelemetryClient
+[32mINFO[0m:     [21-05-2026 11:24:06] Application shutdown complete.
+[32mINFO[0m:     [21-05-2026 11:24:12] Shutting down
+[32mINFO[0m:     [21-05-2026 11:24:12] Waiting for application shutdown.
+[36mDEBUG[0m:    [21-05-2026 11:24:12] Stopping component System
+[36mDEBUG[0m:    [21-05-2026 11:24:12] Stopping component SegmentAPI
+[36mDEBUG[0m:    [21-05-2026 11:24:12] Stopping component LocalExecutor
+[36mDEBUG[0m:    [21-05-2026 11:24:12] Stopping component LocalSegmentManager
+[36mDEBUG[0m:    [21-05-2026 11:24:12] Stopping component SimpleRateLimitEnforcer
+[36mDEBUG[0m:    [21-05-2026 11:24:12] Stopping component Posthog
+[36mDEBUG[0m:    [21-05-2026 11:24:12] Stopping component SimpleQuotaEnforcer
+[36mDEBUG[0m:    [21-05-2026 11:24:12] Stopping component SqliteDB
+[36mDEBUG[0m:    [21-05-2026 11:24:12] Stopping component OpenTelemetryClient
+[32mINFO[0m:     [21-05-2026 11:24:12] Application shutdown complete.
+[32mINFO[0m:     [21-05-2026 11:24:12] Finished server process [[36m32748[0m]
+[33mWARNING[0m:  [21-05-2026 11:24:20] chroma_server_nofile is not supported on Windows. chroma_server_nofile will not be set.
+[32mINFO[0m:     [21-05-2026 11:24:20] Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+[36mDEBUG[0m:    [21-05-2026 11:24:20] Starting component System
+[36mDEBUG[0m:    [21-05-2026 11:24:20] Starting component OpenTelemetryClient
+[36mDEBUG[0m:    [21-05-2026 11:24:20] Starting component SqliteDB
+[36mDEBUG[0m:    [21-05-2026 11:24:20] Starting component SimpleQuotaEnforcer
+[36mDEBUG[0m:    [21-05-2026 11:24:20] Starting component Posthog
+[36mDEBUG[0m:    [21-05-2026 11:24:20] Starting component SimpleRateLimitEnforcer
+[36mDEBUG[0m:    [21-05-2026 11:24:20] Starting component LocalSegmentManager
+[36mDEBUG[0m:    [21-05-2026 11:24:20] Starting component LocalExecutor
+[36mDEBUG[0m:    [21-05-2026 11:24:20] Starting component SegmentAPI
+[31mERROR[0m:    [21-05-2026 11:24:20] Failed to send telemetry event ServerStartEvent: capture() takes 1 positional argument but 3 were given
+[32mINFO[0m:     [21-05-2026 11:24:20] Started server process [[36m11608[0m]
+[32mINFO[0m:     [21-05-2026 11:24:20] Waiting for application startup.
+[32mINFO[0m:     [21-05-2026 11:24:20] Application startup complete.
+[32mINFO[0m:     [21-05-2026 11:24:20] Uvicorn running on [1mhttp://localhost:8000[0m (Press CTRL+C to quit)
+[32mINFO[0m:     [21-05-2026 11:24:24] Shutting down
+[32mINFO[0m:     [21-05-2026 11:24:25] Waiting for application shutdown.
+[36mDEBUG[0m:    [21-05-2026 11:24:25] Stopping component System
+[36mDEBUG[0m:    [21-05-2026 11:24:25] Stopping component SegmentAPI
+[36mDEBUG[0m:    [21-05-2026 11:24:25] Stopping component LocalExecutor
+[36mDEBUG[0m:    [21-05-2026 11:24:25] Stopping component LocalSegmentManager
+[36mDEBUG[0m:    [21-05-2026 11:24:25] Stopping component SimpleRateLimitEnforcer
+[36mDEBUG[0m:    [21-05-2026 11:24:25] Stopping component Posthog
+[36mDEBUG[0m:    [21-05-2026 11:24:25] Stopping component SimpleQuotaEnforcer
+[36mDEBUG[0m:    [21-05-2026 11:24:25] Stopping component SqliteDB
+[36mDEBUG[0m:    [21-05-2026 11:24:25] Stopping component OpenTelemetryClient
+[32mINFO[0m:     [21-05-2026 11:24:25] Application shutdown complete.
+[32mINFO[0m:     [21-05-2026 11:24:25] Finished server process [[36m11608[0m]
+[33mWARNING[0m:  [21-05-2026 11:24:28] chroma_server_nofile is not supported on Windows. chroma_server_nofile will not be set.
+[32mINFO[0m:     [21-05-2026 11:24:28] Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+[36mDEBUG[0m:    [21-05-2026 11:24:28] Starting component System
+[36mDEBUG[0m:    [21-05-2026 11:24:28] Starting component OpenTelemetryClient
+[36mDEBUG[0m:    [21-05-2026 11:24:28] Starting component SqliteDB
+[36mDEBUG[0m:    [21-05-2026 11:24:28] Starting component SimpleQuotaEnforcer
+[36mDEBUG[0m:    [21-05-2026 11:24:28] Starting component Posthog
+[36mDEBUG[0m:    [21-05-2026 11:24:28] Starting component SimpleRateLimitEnforcer
+[36mDEBUG[0m:    [21-05-2026 11:24:28] Starting component LocalSegmentManager
+[36mDEBUG[0m:    [21-05-2026 11:24:28] Starting component LocalExecutor
+[36mDEBUG[0m:    [21-05-2026 11:24:28] Starting component SegmentAPI
+[31mERROR[0m:    [21-05-2026 11:24:28] Failed to send telemetry event ServerStartEvent: capture() takes 1 positional argument but 3 were given
+[32mINFO[0m:     [21-05-2026 11:24:28] Started server process [[36m2764[0m]
+[32mINFO[0m:     [21-05-2026 11:24:28] Waiting for application startup.
+[32mINFO[0m:     [21-05-2026 11:24:28] Application startup complete.
+[32mINFO[0m:     [21-05-2026 11:24:28] Uvicorn running on [1mhttp://localhost:8000[0m (Press CTRL+C to quit)
+[32mINFO[0m:     [21-05-2026 11:24:46] ::1:62654 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 11:24:51] ::1:56362 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 11:25:16] ::1:63857 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 11:26:37] ::1:54559 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 11:30:07] ::1:61467 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 11:30:13] ::1:52616 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 11:43:25] ::1:50329 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 11:43:28] ::1:50329 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 11:43:38] ::1:49362 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 11:43:41] ::1:49362 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 11:44:12] ::1:55357 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 11:44:15] ::1:55357 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 11:44:25] ::1:52719 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 11:44:28] ::1:52719 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 11:45:18] ::1:54969 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 11:45:21] ::1:54969 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 11:45:31] ::1:63201 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 11:45:35] ::1:53159 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 11:45:43] ::1:55794 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 11:45:48] ::1:62582 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 11:45:55] ::1:50698 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 11:46:10] ::1:65352 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 11:46:13] ::1:65352 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 11:46:23] ::1:51652 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 11:46:26] ::1:51652 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 11:54:49] ::1:58524 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 11:54:52] ::1:58524 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 11:55:02] ::1:61601 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 11:55:05] ::1:61601 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 12:00:07] ::1:63992 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 12:00:10] ::1:63992 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 12:00:20] ::1:53954 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 12:00:22] ::1:53954 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 12:21:03] ::1:56167 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 12:21:06] ::1:56167 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 12:21:21] ::1:51745 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 12:21:24] ::1:51745 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 12:23:55] ::1:62101 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 12:23:55] ::1:62102 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 12:23:58] ::1:62101 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 12:23:58] ::1:62102 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 12:24:27] ::1:59645 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 12:24:27] ::1:59646 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 12:24:29] ::1:59645 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 12:24:29] ::1:59646 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 12:25:21] ::1:49352 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 12:25:24] ::1:49352 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 12:25:27] ::1:49352 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 12:25:35] ::1:55535 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 12:26:30] ::1:56551 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 12:26:32] ::1:56551 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 12:30:07] ::1:55765 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 12:30:10] ::1:55765 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 12:30:21] ::1:50266 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 12:30:24] ::1:50266 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 12:30:35] ::1:61253 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 12:30:38] ::1:61253 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 12:51:02] ::1:58715 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 12:51:04] ::1:58715 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 12:51:14] ::1:61355 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 12:51:17] ::1:61355 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 12:51:27] ::1:57905 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 12:51:30] ::1:57905 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 12:51:34] ::1:57905 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 12:51:42] ::1:55947 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 13:00:07] ::1:62648 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 13:00:13] ::1:52184 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 13:00:21] ::1:52697 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 13:00:26] ::1:52455 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 13:00:34] ::1:53255 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 13:00:39] ::1:57390 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 13:00:47] ::1:61734 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 13:02:33] ::1:65509 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 13:02:36] ::1:65509 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 13:02:46] ::1:65233 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 13:02:49] ::1:65233 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 13:03:00] ::1:50367 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 13:03:03] ::1:50367 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 13:08:17] ::1:57377 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 13:08:20] ::1:57377 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 13:08:30] ::1:57378 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 13:08:33] ::1:57378 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 13:08:44] ::1:57380 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 13:08:47] ::1:57380 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 15:55:53] ::1:65301 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 15:55:55] ::1:65301 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 15:56:05] ::1:57706 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 15:56:07] ::1:57706 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 15:56:12] ::1:60654 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 15:56:19] ::1:58486 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 16:00:07] ::1:55895 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 16:00:09] ::1:55895 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 16:00:14] ::1:55903 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 16:00:22] ::1:54056 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409
+[32mINFO[0m:     [21-05-2026 16:00:27] ::1:54057 - "GET /api/v2/tenants/default_tenant/databases/default_database/collections?name=blog_articles HTTP/1.1" 200
+[32mINFO[0m:     [21-05-2026 16:00:29] ::1:54057 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 409

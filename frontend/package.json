@@ -1,0 +1,39 @@
+{
+  "name": "3d-blog-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev-frontend": "vite",
+    "build": "vue-tsc -b && vite build",
+    "build:prod": "vue-tsc -b && vite build --mode production",
+    "build:analyze": "vue-tsc -b && vite build --mode analyze",
+    "preview": "vite preview",
+    "optimize": "vite optimize"
+  },
+  "dependencies": {
+    "@ant-design/icons-vue": "^7.0.1",
+    "@tailwindcss/vite": "^4.3.0",
+    "@vavt/v3-extension": "^4.0.0",
+    "axios": "^1.7.9",
+    "echarts": "^5.6.0",
+    "echarts-wordcloud": "^2.1.0",
+    "marked": "^18.0.4",
+    "md-editor-v3": "^6.5.0",
+    "pinia": "^2.3.0",
+    "tailwindcss": "^4.3.0",
+    "vue": "^3.5.13",
+    "vue-m-message": "^4.0.2",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "@unhead/vue": "^3.1.0",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "rollup-plugin-visualizer": "^7.0.1",
+    "terser": "^5.48.0",
+    "typescript": "~5.6.3",
+    "vite": "^6.0.5",
+    "vite-plugin-compression": "^0.5.1",
+    "vue-tsc": "^2.2.0"
+  }
+}

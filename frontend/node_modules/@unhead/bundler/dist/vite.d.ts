@@ -1,0 +1,14 @@
+import { Plugin } from 'vite';
+import { V as VitePluginOptions, I as InternalFrameworkContext } from './shared/bundler.LjD9SWtb.js';
+
+/**
+ * Vite plugin factory that composes the core Unhead build-time transforms
+ * (tree-shake, seo-meta, minify, SSR static replace, devtools).
+ *
+ * Framework packages (e.g. `@unhead/vue/vite`) should not call this directly;
+ * use the `createFrameworkVitePlugin` helper in `./framework` which threads
+ * `_framework` correctly without exposing it on public options.
+ */
+declare function Unhead(options?: VitePluginOptions, internal?: InternalFrameworkContext): Plugin[];
+
+export { Unhead, VitePluginOptions };
