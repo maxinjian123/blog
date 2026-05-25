@@ -1,5 +1,4 @@
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
-
 module.exports = {
   port: process.env.BACKEND_PORT || 3001,
   chroma:{

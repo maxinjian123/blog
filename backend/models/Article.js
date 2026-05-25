@@ -62,6 +62,10 @@ module.exports = (sequelize) => {
       type: DataTypes.ENUM('html', 'markdown'),
       defaultValue: 'html'
     },
+    catalog: {
+      type: DataTypes.JSON,
+      allowNull: true
+    },
     created_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW

@@ -196,7 +196,7 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
 
 router.post('/', auth, async (req, res, next) => {
   try {
-    const { title, slug, content, summary, cover, status, category_id, tags, content_type } = req.body
+    const { title, slug, content, summary, cover, status, category_id, tags, content_type, catalog } = req.body
     if (!title || !content) {
       return error(res, '标题和内容不能为空', 400)
     }
@@ -215,7 +215,8 @@ router.post('/', auth, async (req, res, next) => {
       author_id: req.user.id,
       published_at: status === 'published' ? new Date() : null,
       category_id,
-      content_type: ['html', 'markdown'].includes(content_type) ? content_type : 'html'
+      content_type: ['html', 'markdown'].includes(content_type) ? content_type : 'html',
+      catalog: catalog || null
     })
 
     if (tags && Array.isArray(tags)) {
@@ -260,7 +261,7 @@ router.put('/:id', auth, async (req, res, next) => {
       return error(res, '文章不存在', 404)
     }
 
-    const { title, slug, content, summary, cover, status, category_id, tags, content_type } = req.body
+    const { title, slug, content, summary, cover, status, category_id, tags, content_type, catalog } = req.body
 
     await article.update({
       title: title || article.title,
@@ -271,7 +272,8 @@ router.put('/:id', auth, async (req, res, next) => {
       status: status || article.status,
       published_at: status === 'published' ? new Date() : null,
       category_id: category_id !== undefined ? category_id : article.category_id,
-      content_type: content_type !== undefined ? (['html', 'markdown'].includes(content_type) ? content_type : article.content_type) : article.content_type
+      content_type: content_type !== undefined ? (['html', 'markdown'].includes(content_type) ? content_type : article.content_type) : article.content_type,
+      catalog: catalog !== undefined ? catalog : article.catalog
     })
 
     if (tags && Array.isArray(tags)) {

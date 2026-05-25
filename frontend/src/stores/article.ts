@@ -22,6 +22,7 @@ export interface Article {
     like_count: number
     comment_count: number
     similarity?: number
+    catalog: Array<{ text: string; level: number }>
 }
 
 export interface Tag {
@@ -92,7 +93,8 @@ export const useArticleStore = defineStore('article', () => {
                 view_count: a.view_count || a.viewCount || 0,
                 like_count: a.like_count || 0,
                 comment_count: a.comment_count || 0,
-                similarity: a.similarity
+                similarity: a.similarity,
+                catalog: a.catalog || []
             }))
             total.value = data.pagination?.total || data.total || 0
             page.value = data.page || 1
@@ -129,7 +131,8 @@ export const useArticleStore = defineStore('article', () => {
                 featured: a.featured || false,
                 view_count: a.view_count || 0,
                 like_count: a.like_count || 0,
-                comment_count: a.comment_count || 0
+                comment_count: a.comment_count || 0,
+                catalog: a.catalog || []
             }
             return currentArticle.value
         } catch (e: any) {
@@ -173,7 +176,8 @@ export const useArticleStore = defineStore('article', () => {
                 view_count: a.view_count || a.viewCount || 0,
                 like_count: a.like_count || 0,
                 comment_count: a.comment_count || 0,
-                similarity: a.similarity
+                similarity: a.similarity,
+                catalog: a.catalog || []
             }))
             total.value = data.pagination?.total || data.total || 0
             page.value = 1

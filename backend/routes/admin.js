@@ -144,7 +144,7 @@ router.put('/settings', auth, async (req, res, next) => {
     const { site_name, site_description } = req.body;
     const fs = require('fs');
     const path = require('path');
-    const envPath = path.join(__dirname, '..', '..', '.env');
+    const envPath = path.join(__dirname, '..', '..', '.env.development');
 
     let envContent = fs.readFileSync(envPath, 'utf-8');
 

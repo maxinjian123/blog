@@ -125,6 +125,7 @@ function goBack() {
             view_count: article.view_count || 0,
             like_count: (article as any).like_count || 0,
             comment_count: (article as any).comment_count || 0,
+            catalog: (article as any).catalog || [],
           }"
         />
       </router-link>

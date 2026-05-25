@@ -42,6 +42,7 @@ const status = ref<'draft' | 'published'>('draft')
 const summaryLoading = ref(false)
 const editorMode = ref<'html' | 'markdown'>('html')
 const content_type = ref<'html' | 'markdown'>('html')
+const catalog = ref<any[]>([])
 
 const categories = ref<Array<{ id: string; name: string }>>([])
 const tags = ref<Array<{ id: string; name: string }>>([])
@@ -147,6 +148,10 @@ async function handleMdUploadImg(
   callback(results.filter(r => r.url))
 }
 
+function onGetCatalog(list: any[]) {
+  catalog.value = list
+}
+
 onMounted(async () => {
   await loadCategories()
   await loadTags()
@@ -196,6 +201,7 @@ async function loadArticle() {
     const ct = (article as any).content_type || 'html'
     content_type.value = ct
     editorMode.value = ct
+    catalog.value = (article as any).catalog || []
     const content = article.content || ''
     await nextTick(() => {
       if (ct === 'markdown') {
@@ -260,7 +266,8 @@ async function handleSave(draft: boolean = true) {
         })
         .filter(Boolean),
     status: (draft ? 'draft' : 'published') as 'draft' | 'published',
-    content_type: content_type.value
+    content_type: content_type.value,
+    catalog: editorMode.value === 'markdown' ? catalog.value : null
   }
 
   try {
@@ -472,12 +479,12 @@ const currentEditorContent = computed(() => {
           <MdEditor
             v-model="valueMd"
             language="zh-CN"
-            :toolbars="mdToolbars"
             :preview="false"
             :show-code-row-number="true"
             placeholder="开始创作你的文章..."
             :footers="['markdownTotal']"
             :on-upload-img="handleMdUploadImg"
+            @onGetCatalog="onGetCatalog"
             style="height: 600px"
           >
             <template #defToolbars>
