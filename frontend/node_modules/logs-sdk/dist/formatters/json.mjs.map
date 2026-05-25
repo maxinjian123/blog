@@ -1,0 +1,1 @@
+{"version":3,"file":"json.mjs","names":[],"sources":["../../src/formatters/json.ts"],"sourcesContent":["import type { Formatter } from '../format'\n\nexport const jsonFormatter: Formatter = diagnostic => JSON.stringify(diagnostic)\n"],"mappings":";AAEA,MAAa,iBAA2B,eAAc,KAAK,UAAU,WAAW"}
