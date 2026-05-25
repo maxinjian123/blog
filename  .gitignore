@@ -8,7 +8,9 @@ target/
 admin/node_modules/
 frontend/node_modules/
 backend/node_modules/
-dist/
+admin/dist/
+frontend/dist/
+backend/dist/
 
 ### STS ###
 .apt_generated

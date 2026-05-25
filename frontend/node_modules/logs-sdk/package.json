@@ -1,0 +1,76 @@
+{
+  "name": "logs-sdk",
+  "type": "module",
+  "version": "0.0.6",
+  "description": "Structured diagnostic code library",
+  "author": "Anthony Fu <anthonyfu117@hotmail.com>",
+  "contributors": [
+    "Eduardo San Martin Morote <posva13@gmail.com>"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/vercel-labs/logs-sdk#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vercel-labs/logs-sdk.git"
+  },
+  "bugs": "https://github.com/vercel-labs/logs-sdk/issues",
+  "keywords": [],
+  "sideEffects": false,
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./formatters/ansi": "./dist/formatters/ansi.mjs",
+    "./formatters/json": "./dist/formatters/json.mjs",
+    "./reporters/dev": "./dist/reporters/dev.mjs",
+    "./reporters/node": "./dist/reporters/node.mjs",
+    "./unplugin": "./dist/unplugin.mjs",
+    "./package.json": "./package.json"
+  },
+  "types": "./dist/index.d.mts",
+  "files": [
+    "dist",
+    "skills"
+  ],
+  "dependencies": {
+    "magic-string": "^0.30.21",
+    "oxc-parser": "^0.126.0",
+    "unplugin": "^3.0.0"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^8.2.0",
+    "@antfu/ni": "^30.0.0",
+    "@antfu/utils": "^9.3.0",
+    "@posva/prompts": "^2.4.4",
+    "@types/node": "^25.6.0",
+    "@types/semver": "^7.7.1",
+    "bumpp": "^11.0.1",
+    "conventional-changelog": "^7.2.0",
+    "conventional-changelog-angular": "^8.3.1",
+    "esbuild": "^0.28.0",
+    "eslint": "^10.2.0",
+    "lint-staged": "^16.4.0",
+    "publint": "^0.3.18",
+    "semver": "^7.7.4",
+    "simple-git-hooks": "^2.13.1",
+    "tsdown": "^0.21.8",
+    "tsnapi": "^0.3.0",
+    "typescript": "^6.0.2",
+    "vite": "^8.0.8",
+    "vitest": "^4.1.4",
+    "logs-sdk": "0.0.6"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "pnpm i --frozen-lockfile --ignore-scripts --offline && npx lint-staged"
+  },
+  "lint-staged": {
+    "*": "eslint --fix"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "dev": "vitest",
+    "play": "pnpm -C playground run dev",
+    "lint": "eslint",
+    "release": "node scripts/release.ts",
+    "test": "pnpm run build && pnpm -r run build && tsc && eslint && vitest run",
+    "typecheck": "tsc"
+  }
+}
