@@ -710,9 +710,25 @@ chroma run --path ./chroma_data --port 8000
 
 # 数据库初始化 (首次启动自动同步模型)
 # 在 backend/app.js 中取消注释 syncDatabase() 即可
-```
 
+```
 ---
+### 10.3 docker 部署
+```bash
+# 后端
+# 构建镜像（backend/DockerFile）目录下
+docker build -t blog-app .
+
+# 启动容器
+docker run -d \
+--name blog-app \
+-p 3000:3000 \
+-e DB_HOST=数据库容器名 \
+-e REDIS_HOST=redis容器名 \
+-e OLLAMA_CHAT_ENABLED=是否使用本地模型 \
+-v 宿主机uploads路径:/blog-app/uploads \
+blog-app
+```
 
 ## 11. 项目版本信息
 
