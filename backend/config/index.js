@@ -1,10 +1,6 @@
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 module.exports = {
   port: process.env.BACKEND_PORT || 3001,
-  chroma:{
-    url: 'http://localhost',
-    port: 8000
-  },
   db: {
     host: process.env.DB_HOST || 'localhost',
     port: process.env.DB_PORT || 3306,
@@ -30,7 +26,6 @@ module.exports = {
   },
   ollama: {
     host: process.env.OLLAMA_HOST || 'http://localhost:11434',
-    embedModel: process.env.OLLAMA_EMBED_MODEL || 'nomic-embed-text',
     chatEnabled: process.env.OLLAMA_CHAT_ENABLED === 'true',
     chatModel: process.env.OLLAMA_CHAT_MODEL || 'gemma3:4b'
   },

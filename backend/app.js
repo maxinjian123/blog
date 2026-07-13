@@ -8,7 +8,6 @@ const config = require('./config');
 const { syncDatabase } = require('./models');
 const redis = require('./utils/redis');
 const errorHandler = require('./middleware/errorHandler');
-const { safeSchedule } = require('./utils/cron');
 
 const authRoutes = require('./routes/auth');
 const articleRoutes = require('./routes/articles');
@@ -22,7 +21,6 @@ const announcementRoutes = require('./routes/announcements');
 const siteRoutes = require('./routes/site');
 const captchaRoutes = require('./routes/captcha');
 const commentUploadRoutes = require('./routes/commentUpload');
-const chromaService = require('./services/ai/chromaService');
 
 const app = express();
 
@@ -78,16 +76,6 @@ const PORT = config.port;
 app.listen(PORT, () => {
   console.log(`[Server] Running on http://localhost:${PORT}`);
   console.log(`[Server] Environment: ${process.env.NODE_ENV || 'development'}`);
-});
-
-// 定时同步任务：每30分钟将 articles 表数据同步到 Chroma RAG 知识库
-safeSchedule('*/30 * * * *', async () => {
-  const result = await chromaService.syncAllArticles();
-  console.log(`[Chroma] 定时同步完成: ${result.articles} 篇文章, ${result.chunks} 个块`);
-}, {
-  name: 'ChromaArticleSync',
-  timezone: 'Asia/Shanghai',
-  runOnStart: true
 });
 
 module.exports = app;

@@ -148,44 +148,7 @@ export const useArticleStore = defineStore('article', () => {
     }
 
     async function searchArticles(query: string) {
-        loading.value = true
-        error.value = null
-        try {
-            const res = await api.get('/articles/search/vector', {
-                params: {q: query, limit: pageSize.value}
-            })
-            const payload = res.data
-            const data = payload.data || payload
-            const list = data.list || data.rows || []
-            articles.value = list.map((a: any) => ({
-                id: String(a.id),
-                title: a.title,
-                slug: a.slug,
-                excerpt: a.summary || '',
-                content: a.content || '',
-                content_type: a.content_type || 'html',
-                cover_image: a.cover || '',
-                category: a.category?.name || a.category || '',
-                category_slug: a.category?.slug || a.category_slug || '',
-                tags: (a.tags || []).map((t: any) => (typeof t === 'string' ? t : t.name)),
-                author: a.author?.username || a.author || '',
-                created_at: a.created_at || a.createdAt || '',
-                updated_at: a.updated_at || a.updatedAt || '',
-                published: a.status === 'published',
-                featured: a.featured || false,
-                view_count: a.view_count || a.viewCount || 0,
-                like_count: a.like_count || 0,
-                comment_count: a.comment_count || 0,
-                similarity: a.similarity,
-                catalog: a.catalog || []
-            }))
-            total.value = data.pagination?.total || data.total || 0
-            page.value = 1
-        } catch (e: any) {
-            error.value = e?.response?.data?.message || '搜索失败'
-        } finally {
-            loading.value = false
-        }
+        return fetchArticles({ keyword: query, page: 1, pageSize: pageSize.value })
     }
 
     return {

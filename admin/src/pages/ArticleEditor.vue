@@ -5,23 +5,21 @@ import {useArticleStore} from '@/stores/article'
 import api from '@/utils/api'
 import {
   ArrowLeftOutlined,
-  SnippetsOutlined,
-  EyeOutlined,
+  EditOutlined,
+  FileTextOutlined,
+  MenuOutlined,
   PictureOutlined,
+  RobotOutlined,
   SaveOutlined,
   SendOutlined,
   ThunderboltOutlined,
-  SwapOutlined
 } from '@ant-design/icons-vue'
-import type {IDomEditor, IEditorConfig, IToolbarConfig} from '@wangeditor/editor'
-import {Editor, Toolbar} from '@wangeditor/editor-for-vue'
-import '@wangeditor/editor/dist/css/style.css'
-import {MdEditor} from 'md-editor-v3'
 import {Emoji} from '@vavt/v3-extension'
 import '@vavt/v3-extension/lib/asset/Emoji.css'
+import {MdEditor} from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
 import {message} from 'ant-design-vue'
-import {computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch} from 'vue'
+import {computed, onMounted, ref} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 
 const router = useRouter()
@@ -29,76 +27,26 @@ const route = useRoute()
 const articleStore = useArticleStore()
 
 const isEdit = computed(() => !!route.params.id)
-const editorId = computed(() => (isEdit.value ? (route.params.id as string) : 'create'))
 
 const title = ref('')
-const valueHtml = ref('')
-const valueMd = ref('')
+const content = ref('')
 const summary = ref('')
 const categoryId = ref<string | null>(null)
 const tagIds = ref<string[]>([])
 const cover = ref('')
 const status = ref<'draft' | 'published'>('draft')
 const summaryLoading = ref(false)
-const editorMode = ref<'html' | 'markdown'>('html')
-const content_type = ref<'html' | 'markdown'>('html')
 const catalog = ref<any[]>([])
+const lastSavedAt = ref<string | null>(null)
+const saveLoading = ref(false)
+const aiResult = ref('')
+const showCoverModal = ref(false)
+const showMetaDrawer = ref(false)
+const showAiDrawer = ref(false)
 
 const categories = ref<Array<{ id: string; name: string }>>([])
 const tags = ref<Array<{ id: string; name: string }>>([])
 
-// HTML编辑器 (wangeditor)
-const editorRef = shallowRef<IDomEditor | null>(null)
-const showPreview = ref(false)
-const showCoverModal = ref(false)
-const coverPreviewVisible = ref(false)
-const saveLoading = ref(false)
-const aiResult = ref('')
-
-const editorConfig: Partial<IEditorConfig> = {
-  placeholder: '开始创作你的文章...',
-  autoFocus: false,
-  MENU_CONF: {
-    uploadImage: {
-      async customUpload(file: File, insertFn: (url: string) => void) {
-        const formData = new FormData()
-        formData.append('file', file)
-        try {
-          const res: any = await api.post('/upload', formData, {
-            headers: {'Content-Type': 'multipart/form-data'}
-          })
-          const url = res.data?.url || res.url
-          if (url) insertFn(url)
-        } catch {
-          message.error('图片上传失败')
-        }
-      }
-    },
-    uploadVideo: {
-      async customUpload(file: File, insertFn: (url: string) => void) {
-        const formData = new FormData()
-        formData.append('file', file)
-        try {
-          const res: any = await api.post('/upload', formData, {
-            headers: {'Content-Type': 'multipart/form-data'}
-          })
-          const url = res.data?.url || res.url
-          if (url) insertFn(url)
-        } catch {
-          message.error('视频上传失败')
-        }
-      }
-    }
-  }
-}
-
-const toolbarConfig: Partial<IToolbarConfig> = {
-  excludeKeys: ['fullScreen']
-}
-
-let mode: 'default' | 'simple' = 'default'
-
-// md-editor-v3 工具栏配置
 const mdToolbars: any[] = [
   'bold',
   'italic',
@@ -124,33 +72,17 @@ const mdToolbars: any[] = [
   'codeEditor'
 ]
 
-// md-editor-v3 图片上传
-async function handleMdUploadImg(
-  files: Array<File>,
-  callback: (urls: Array<{ url: string; alt: string; title: string }>) => void
-) {
-  const results = await Promise.all(
-    files.map(async (file) => {
-      const formData = new FormData()
-      formData.append('file', file)
-      try {
-        const res: any = await api.post('/upload', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        })
-        const url = res.data?.url || res.url
-        return { url: typeof url === 'string' ? url : '', alt: file.name, title: file.name }
-      } catch {
-        message.error('图片上传失败')
-        return { url: '', alt: file.name, title: `上传失败: ${file.name}` }
-      }
-    })
-  )
-  callback(results.filter(r => r.url))
-}
+const wordCount = computed(() => {
+  const text = content.value || ''
+  const cjk = (text.match(/[\u4e00-\u9fa5]/g) || []).length
+  const words = text.replace(/[\u4e00-\u9fa5]/g, '').split(/\s+/).filter(Boolean).length
+  return cjk + words
+})
 
-function onGetCatalog(list: any[]) {
-  catalog.value = list
-}
+const readingTime = computed(() => {
+  const minutes = Math.ceil(wordCount.value / 300)
+  return minutes < 1 ? '< 1' : String(minutes)
+})
 
 onMounted(async () => {
   await loadCategories()
@@ -160,14 +92,6 @@ onMounted(async () => {
     await loadArticle()
   }
 })
-
-onBeforeUnmount(() => {
-  editorRef.value?.destroy()
-})
-
-function handleCreated(editor: IDomEditor) {
-  editorRef.value = editor
-}
 
 async function loadCategories() {
   try {
@@ -198,64 +122,43 @@ async function loadArticle() {
     categoryId.value = article.category_id
     tagIds.value = (article.tags || []).map((t: any) => t.id)
     status.value = article.status
-    const ct = (article as any).content_type || 'html'
-    content_type.value = ct
-    editorMode.value = ct
     catalog.value = (article as any).catalog || []
-    const content = article.content || ''
-    await nextTick(() => {
-      if (ct === 'markdown') {
-        valueMd.value = content
-      } else {
-        if (editorRef.value) {
-          editorRef.value.setHtml(content)
-        }
-        valueHtml.value = content
-      }
-    })
+    content.value = article.content || ''
   }
 }
 
-function getEditorContent(): string {
-  if (editorMode.value === 'markdown') {
-    return valueMd.value
-  }
-  return editorRef.value?.getHtml() || ''
-}
-
-// 切换编辑器模式
-function handleToggleEditorMode() {
-  // 获取当前内容
-  const currentContent = getEditorContent()
-  if (editorMode.value === 'html') {
-    // 切换到 markdown
-    editorMode.value = 'markdown'
-    // 将当前HTML内容作为初始markdown内容
-    if (currentContent && !valueMd.value) {
-      valueMd.value = currentContent
-    }
-  } else {
-    // 切换到 HTML
-    editorMode.value = 'html'
-    // 将当前markdown内容作为初始HTML内容
-    if (currentContent && !valueHtml.value) {
-      valueHtml.value = currentContent
-      nextTick(() => {
-        if (editorRef.value) {
-          editorRef.value.setHtml(currentContent)
+async function handleMdUploadImg(
+    files: Array<File>,
+    callback: (urls: Array<{ url: string; alt: string; title: string }>) => void
+) {
+  const results = await Promise.all(
+      files.map(async (file) => {
+        const formData = new FormData()
+        formData.append('file', file)
+        try {
+          const res: any = await api.post('/upload', formData, {
+            headers: {'Content-Type': 'multipart/form-data'}
+          })
+          const url = res.data?.url || res.url
+          return {url: typeof url === 'string' ? url : '', alt: file.name, title: file.name}
+        } catch {
+          message.error('图片上传失败')
+          return {url: '', alt: file.name, title: `上传失败: ${file.name}`}
         }
       })
-    }
-  }
-  content_type.value = editorMode.value
+  )
+  callback(results.filter(r => r.url))
+}
+
+function onGetCatalog(list: any[]) {
+  catalog.value = list
 }
 
 async function handleSave(draft: boolean = true) {
   saveLoading.value = true
-  const content = getEditorContent()
   const payload: any = {
     title: title.value,
-    content,
+    content: content.value,
     summary: summary.value,
     cover: cover.value,
     category_id: categoryId.value,
@@ -266,8 +169,8 @@ async function handleSave(draft: boolean = true) {
         })
         .filter(Boolean),
     status: (draft ? 'draft' : 'published') as 'draft' | 'published',
-    content_type: content_type.value,
-    catalog: editorMode.value === 'markdown' ? catalog.value : null
+    content_type: 'markdown',
+    catalog: catalog.value
   }
 
   try {
@@ -281,11 +184,33 @@ async function handleSave(draft: boolean = true) {
         await router.replace(`/articles/${res.id}/edit`)
       }
     }
+    lastSavedAt.value = new Date().toLocaleTimeString('zh-CN', {hour: '2-digit', minute: '2-digit'})
   } catch {
     message.error('保存失败')
   } finally {
-    await loadArticle()
     saveLoading.value = false
+  }
+}
+
+async function handleGenerateSummary() {
+  if (!content.value.trim()) {
+    message.warning('请先在编辑器中输入内容')
+    return
+  }
+  summaryLoading.value = true
+  try {
+    const res: any = await api.post('/ai/summary', {content: content.value})
+    const data = res.data || res
+    summary.value = data.summary || data.content || ''
+    if (summary.value) {
+      message.success('摘要已生成')
+    } else {
+      message.error('摘要生成失败')
+    }
+  } catch (err: any) {
+    message.error(err?.response?.data?.message || '摘要生成失败')
+  } finally {
+    summaryLoading.value = false
   }
 }
 
@@ -305,14 +230,8 @@ function handleTagsGenerated(generatedTags: Array<{ id: string; name: string; sl
   })
 }
 
-function handleInsertAiContent(content: string) {
-  if (editorMode.value === 'markdown') {
-    valueMd.value = content
-  } else if (editorRef.value) {
-    editorRef.value.focus()
-    editorRef.value.setHtml(content)
-    valueHtml.value = content
-  }
+function handleInsertAiContent(inserted: string) {
+  content.value = inserted
   aiResult.value = ''
 }
 
@@ -321,206 +240,416 @@ function handleCoverSelected(url: string) {
   showCoverModal.value = false
 }
 
-function handleToggleMode() {
-  mode = mode === 'default' ? 'simple' : 'default'
-}
-
-async function handleGenerateSummary() {
-  const content = getEditorContent()
-  if (!content.trim()) {
-    message.warning('请先在编辑器中输入内容')
-    return
-  }
-  summaryLoading.value = true
-  try {
-    const res: any = await api.post('/ai/summary', {content})
-    const data = res.data || res
-    summary.value = data.summary || data.content || ''
-    if (summary.value) {
-      message.success('摘要已生成')
-    } else {
-      message.error('摘要生成失败')
-    }
-  } catch (err: any) {
-    message.error(err?.response?.data?.message || '摘要生成失败')
-  } finally {
-    summaryLoading.value = false
-  }
-}
-
 const filterOption = (input: string, option: { value: string, name: string, key: string }) => {
   return option.name.toLowerCase().indexOf(input.toLowerCase()) >= 0
 }
-
-// 监听编辑器内容变化（传递当前内容类型给AI助手）
-const currentEditorContent = computed(() => {
-  return editorMode.value === 'markdown' ? valueMd.value : valueHtml.value
-})
 </script>
 
 <template>
-  <div class="article-editor">
-    <div class="page-header">
-      <a-space>
-          <a-button @click="router.back()">
-            <template #icon>
-              <ArrowLeftOutlined/>
-            </template>
-          </a-button>
-          <h2 style="margin-top: 10px">{{ isEdit ? '文章编辑' : '发布文章' }}</h2>
-          <a-tag :color="editorMode === 'markdown' ? 'purple' : 'blue'">
-            {{ editorMode === 'markdown' ? 'Markdown' : 'HTML' }}
-          </a-tag>
-      </a-space>
-      <a-space>
-        <a-button @click="handleToggleEditorMode" v-if="!isEdit">
-          <template #icon>
-            <SwapOutlined />
-          </template>
-          切换到{{ editorMode === 'markdown' ? 'HTML' : 'Markdown' }}编辑器
+  <div class="editor-page">
+    <!-- 顶部工具栏 -->
+    <header class="editor-header">
+      <div class="header-left">
+        <a-button class="header-btn" @click="router.back()">
+          <ArrowLeftOutlined/>
         </a-button>
-        <a-button @click="showCoverModal = true">
-          <template #icon>
-            <PictureOutlined/>
-          </template>
-          {{ cover ? '更换封面' : '设置封面' }}
+        <div class="header-title">
+          <EditOutlined class="title-icon"/>
+          <span>{{ isEdit ? '编辑文章' : '撰写新文章' }}</span>
+        </div>
+        <a-tag color="purple" class="mode-tag">Markdown</a-tag>
+      </div>
+
+      <div class="header-center">
+        <FileTextOutlined class="stat-icon"/>
+        <span class="stat-value">{{ wordCount }}</span>
+        <span class="stat-label">字</span>
+        <span class="stat-divider">·</span>
+        <span class="stat-label">预计阅读 {{ readingTime }} 分钟</span>
+        <span v-if="lastSavedAt" class="stat-divider">·</span>
+        <span v-if="lastSavedAt" class="stat-label">已保存 {{ lastSavedAt }}</span>
+      </div>
+
+      <div class="header-right">
+        <a-button class="drawer-btn" @click="showMetaDrawer = true">
+          <MenuOutlined/>
+          信息
         </a-button>
-        <a-button @click="showPreview = !showPreview">
-          <template #icon>
-            <EyeOutlined/>
-          </template>
-          {{ showPreview ? '编辑' : '预览' }}
+        <a-button class="drawer-btn" @click="showAiDrawer = true">
+          <RobotOutlined/>
+          AI
         </a-button>
-        <a-button @click="handleSave(true)" :loading="saveLoading">
-          <template #icon>
-            <SaveOutlined/>
-          </template>
+        <a-button :loading="saveLoading" @click="handleSave(true)">
+          <SaveOutlined/>
           保存草稿
         </a-button>
-        <a-button type="primary"
-                  v-if="isEdit && status === 'published'"
-                  style="background: #E6A23C"
-                  @click="handleSave(false)" :loading="saveLoading">
-          <template #icon>
-            <SnippetsOutlined />
-          </template>
-          保存
+        <a-button
+            type="primary"
+            :loading="saveLoading"
+            class="publish-btn"
+            @click="handleSave(false)"
+        >
+          <SendOutlined/>
+          {{ isEdit && status === 'published' ? '更新' : '发布' }}
         </a-button>
-        <a-button type="primary"
-                  v-else
-                  @click="handleSave(false)" :loading="saveLoading">
-          <template #icon>
-            <SendOutlined/>
-          </template>
-          发布
-        </a-button>
-      </a-space>
-    </div>
+      </div>
+    </header>
 
+    <!-- 封面弹窗 -->
     <a-modal v-model:open="showCoverModal" title="设置封面图片" width="520px" :footer="null">
-      <CoverGenerator :current-cover="cover" @selected="handleCoverSelected" @cancel="showCoverModal = false"/>
+      <CoverGenerator
+          :current-cover="cover"
+          @selected="handleCoverSelected"
+          @cancel="showCoverModal = false"
+      />
     </a-modal>
 
-    <a-row :gutter="16">
-      <a-col :xs="24" :lg="17">
-        <div style="margin-bottom: 16px">
-          <a-input v-model:value="title" placeholder="输入文章标题..." size="large" :bordered="false"
-                   style="font-size: 24px; font-weight: 600; padding: 0"/>
-        </div>
+    <!-- 主体：全宽编辑器 + 可展开侧边抽屉（push 模式） -->
+    <div
+        class="editor-body"
+        :class="{
+        'is-pushed-right': showMetaDrawer,
+        'is-pushed-left': showAiDrawer
+      }"
+    >
+      <main class="editor-main">
+        <MdEditor
+            v-model="content"
+            language="zh-CN"
+            :preview="true"
+            :show-code-row-number="true"
+            placeholder="开始创作你的文章..."
+            :footers="['markdownTotal']"
+            :toolbars="mdToolbars"
+            :on-upload-img="handleMdUploadImg"
+            @onGetCatalog="onGetCatalog"
+            class="md-editor"
+        >
+          <template #defToolbars>
+            <Emoji title="表情"/>
+          </template>
+        </MdEditor>
+      </main>
+    </div>
 
-        <a-space style="margin-bottom: 16px" size="middle" wrap>
-          <a-select v-model:value="categoryId" placeholder="选择分类" style="width: 160px" allow-clear>
+    <!-- 文章信息抽屉 -->
+    <a-drawer
+        v-model:open="showMetaDrawer"
+        title="文章信息"
+        placement="left"
+        width="340"
+        :mask="false"
+        root-class-name="editor-side-drawer"
+    >
+      <div class="drawer-content">
+        <div class="panel-section">
+          <label class="field-label">文章标题</label>
+          <a-input v-model:value="title" placeholder="输入一个简洁有力的标题..." size="large"/>
+        </div>
+        <div class="panel-section">
+          <label class="field-label">分类</label>
+          <a-select v-model:value="categoryId" placeholder="选择分类" allow-clear class="field-select">
             <a-select-option v-for="cat in categories" :key="cat.id" :value="cat.id">
               {{ cat.name }}
             </a-select-option>
           </a-select>
-
-          <a-select v-model:value="tagIds" mode="multiple" placeholder="选择标签" style="min-width: 200px" allow-clear
-                    show-search
-                    :filter-option="filterOption">
+        </div>
+        <div class="panel-section">
+          <label class="field-label">标签</label>
+          <a-select
+              v-model:value="tagIds"
+              mode="multiple"
+              placeholder="选择标签"
+              allow-clear
+              show-search
+              :filter-option="filterOption"
+              class="field-select"
+          >
             <a-select-option v-for="tag in tags" :key="tag.id" :value="tag.id" :name="tag.name">
               {{ tag.name }}
             </a-select-option>
           </a-select>
-        </a-space>
-
-        <div style="margin-bottom: 16px; display: flex; gap: 8px">
-          <a-textarea v-model:value="summary" placeholder="文章摘要..." :rows="3" style="flex: 1"/>
-          <a-button type="dashed" :loading="summaryLoading" @click="handleGenerateSummary" style="flex-shrink: 0">
-            <template #icon>
+        </div>
+        <div class="panel-section">
+          <div class="label-row">
+            <label class="field-label">摘要</label>
+            <a-button type="dashed" size="small" :loading="summaryLoading" @click="handleGenerateSummary">
               <ThunderboltOutlined/>
-            </template>
-            生成摘要
+              生成
+            </a-button>
+          </div>
+          <a-textarea v-model:value="summary" placeholder="文章摘要会在列表和 SEO 中展示..." :rows="5"/>
+        </div>
+        <div class="panel-section">
+          <label class="field-label">封面</label>
+          <div v-if="cover" class="cover-preview">
+            <img :src="cover" alt="封面预览"/>
+            <div class="cover-overlay">
+              <a-button type="primary" size="small" @click="showCoverModal = true">更换</a-button>
+            </div>
+          </div>
+          <a-button v-else type="dashed" block @click="showCoverModal = true">
+            <PictureOutlined/>
+            设置封面
           </a-button>
         </div>
+      </div>
+    </a-drawer>
 
-        <div v-if="cover" style="margin-bottom: 16px">
-          <a-image :src="cover" alt="cover"
-               style="max-width: 100%; max-height: 200px; border-radius: 8px; object-fit: cover; cursor: pointer"/>
-        </div>
-
-        <div v-show="showPreview" class="editor-container" style="min-height: 500px">
-          <div v-if="editorMode === 'markdown'" class="markdown-preview" style="min-height: 500px; padding: 16px">
-            <!-- Markdown预览: 由 md-editor-v3 的 previewOnly 模式处理 -->
-          </div>
-          <div v-else class="html-preview" v-html="getEditorContent()" style="min-height: 500px"/>
-        </div>
-
-        <!-- HTML 编辑器 (wangeditor) -->
-        <div v-show="!showPreview && editorMode === 'html'" class="editor-container">
-          <Toolbar :editor="editorRef" :default-config="toolbarConfig" :mode="mode"
-                   style="border-bottom: 1px solid #d9d9d9"/>
-          <Editor :default-config="editorConfig" :mode="mode" style="height: 500px; overflow-y: hidden"
-                  @onCreated="handleCreated"/>
-        </div>
-
-        <!-- Markdown 编辑器 (md-editor-v3) -->
-        <div v-show="!showPreview && editorMode === 'markdown'" class="editor-container md-editor-wrapper">
-          <MdEditor
-            v-model="valueMd"
-            language="zh-CN"
-            :preview="false"
-            :show-code-row-number="true"
-            placeholder="开始创作你的文章..."
-            :footers="['markdownTotal']"
-            :on-upload-img="handleMdUploadImg"
-            @onGetCatalog="onGetCatalog"
-            style="height: 600px"
-          >
-            <template #defToolbars>
-              <Emoji title="表情" />
-            </template>
-          </MdEditor>
-        </div>
-      </a-col>
-
-      <a-col :xs="24" :lg="7">
+    <!-- AI 助手抽屉 -->
+    <a-drawer
+        v-model:open="showAiDrawer"
+        title="AI 助手"
+        placement="right"
+        width="360"
+        :mask="false"
+        root-class-name="editor-side-drawer"
+    >
+      <div class="drawer-content">
         <AiAssistant
-          :editor-content="currentEditorContent"
-          :content-type="content_type"
-          @result="handleAiResult"
-          @insert="handleInsertAiContent"
-          @tags-generated="handleTagsGenerated"
+            :editor-content="content"
+            content-type="markdown"
+            @result="handleAiResult"
+            @insert="handleInsertAiContent"
+            @tags-generated="handleTagsGenerated"
         />
-      </a-col>
-    </a-row>
+      </div>
+    </a-drawer>
   </div>
 </template>
 
 <style scoped>
-.article-editor {
+.editor-page {
+  --editor-bg: #F7F5F2;
+  --panel-bg: #FFFFFF;
+  --ink: #1F2937;
+  --muted: #6B7280;
+  --accent: #D97706;
+  --accent-hover: #B45309;
+  --border: #E5E7EB;
+  --radius: 12px;
+
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--editor-bg);
+  color: var(--ink);
+}
+
+/* 顶部工具栏 */
+.editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  padding: 0 24px;
+  background: var(--panel-bg);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  gap: 16px;
+}
+
+.header-left,
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.title-icon {
+  color: var(--accent);
+}
+
+.mode-tag {
+  font-size: 12px;
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+
+.header-center {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.stat-icon {
+  color: var(--accent);
+}
+
+.stat-value {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.stat-divider {
+  opacity: 0.5;
+}
+
+.publish-btn {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.publish-btn:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+:global(.editor-side-drawer .ant-drawer-body) {
+  padding: 0;
+}
+
+:global(.editor-side-drawer .ant-drawer-header) {
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.drawer-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 主体布局 */
+.editor-body {
+  flex: 1;
+  min-height: 0;
+  padding: 24px 32px 32px;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  transition: margin 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.editor-body.is-pushed-right {
+  margin-left: 340px;
+  width: calc(100% - 340px);
+}
+
+.editor-body.is-pushed-left {
+  margin-right: 360px;
+  width: calc(100% - 360px);
+}
+
+.editor-body.is-pushed-right.is-pushed-left {
+  margin-left: 340px;
+  margin-right: 360px;
+  width: calc(100% - 340px - 360px);
+}
+
+/* 编辑器主区域：像一张纸铺在桌面上 */
+.editor-main {
+  width: 100%;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.md-editor {
+  flex: 1;
+  height: 100% !important;
+}
+
+.md-editor :deep(.md-editor-container) {
+  border: none;
+}
+
+/* 抽屉内内容 */
+.drawer-content {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.panel-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.field-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.field-select {
+  width: 100%;
+}
+
+.cover-preview {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  background: var(--editor-bg);
+}
+
+.cover-preview img {
+  width: 100%;
   height: 100%;
+  object-fit: cover;
 }
 
-.md-editor-wrapper {
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
+.cover-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  transition: opacity 0.2s ease;
 }
 
-.markdown-preview {
-  padding: 16px;
-  background: var(--color-card, #fff);
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
+.cover-preview:hover .cover-overlay {
+  opacity: 1;
+}
+
+/* 响应式 */
+@media (max-width: 1200px) {
+  .editor-body {
+    padding: 20px 24px 28px;
+  }
+}
+
+@media (max-width: 768px) {
+  .editor-header {
+    padding: 0 12px;
+  }
+
+  .header-center {
+    display: none;
+  }
+
+  .editor-body {
+    padding: 12px;
+  }
+
+  .header-right .ant-btn > span:last-child {
+    display: none;
+  }
 }
 </style>

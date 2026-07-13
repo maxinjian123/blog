@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import AiChatWidget from '@/components/ai/AiChatWidget.vue'
 import Footer from '@/components/layout/Footer.vue'
 import NavBar from '@/components/layout/NavBar.vue'
 import Sidebar from '@/components/layout/Sidebar.vue'
@@ -62,7 +61,6 @@ onMounted(() => {
       </div>
     </div>
     <Footer />
-    <AiChatWidget />
   </div>
 </template>
 

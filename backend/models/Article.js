@@ -1,5 +1,4 @@
 const { DataTypes } = require('sequelize');
-const { v4: uuidv4 } = require('uuid');
 const {getPureUUID} = require("../utils");
 
 module.exports = (sequelize) => {

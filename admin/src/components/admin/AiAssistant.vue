@@ -9,8 +9,7 @@ import {
   ReloadOutlined,
   SendOutlined,
   TagsOutlined,
-  ThunderboltOutlined,
-  TranslationOutlined
+  ThunderboltOutlined
 } from '@ant-design/icons-vue'
 
 const content = ref('')
@@ -117,20 +116,8 @@ async function handleAutoTags() {
   }
   currentAction.value = '自动标签'
   await callAi('/ai/tags', {
-    content: content.value,
-    title: content.value.split('\n')[0]?.slice(0, 100) || ''
-  })
-}
-
-async function handleTranslate() {
-  if (!props.editorContent.trim()) {
-    message.warning('请先在编辑器中输入内容')
-    return
-  }
-  currentAction.value = '翻译英文'
-  await callAi('/ai/translate', {
     content: props.editorContent,
-    targetLang: 'en'
+    title: content.value.split('\n')[0]?.slice(0, 100) || ''
   })
 }
 
@@ -214,16 +201,6 @@ async function handleCopy() {
           <TagsOutlined/>
         </template>
         自动标签
-      </a-button>
-      <a-button
-          size="small"
-          :loading="loading && currentAction === '翻译英文'"
-          @click="handleTranslate"
-      >
-        <template #icon>
-          <TranslationOutlined/>
-        </template>
-        翻译英文
       </a-button>
     </div>
 

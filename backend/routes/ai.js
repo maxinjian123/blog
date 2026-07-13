@@ -2,7 +2,6 @@ const express = require('express');
 const {auth, optionalAuth} = require('../middleware/auth');
 const {success, error} = require('../utils/response');
 const ai = require('../services/ai');
-const chromaService = require('../services/ai/chromaService');
 const {loadPrompt, replacePlaceholders} = require("../utils");
 
 const router = express.Router();
@@ -141,12 +140,6 @@ router.post('/summary', async (req, res, next) => {
     try {
         const {content, maxLength} = req.body;
 
-        // 如果未提供内容，使用 RAG 知识库对全部文章进行总结
-        if (!content || (typeof content === 'string' && content.trim().length === 0)) {
-            const summary = await ai.summary.summarizeAllArticles({ maxLength: maxLength || 500 });
-            return success(res, { summary, method: 'rag' });
-        }
-
         const plainText = stripHtml(content);
         if (!plainText || plainText.length < 10) {
             return error(res, '文章内容过短，无法生成有效摘要', 400);
@@ -189,66 +182,6 @@ router.post('/tags', auth, async (req, res, next) => {
     }
 });
 
-router.post('/translate', optionalAuth, async (req, res, next) => {
-    try {
-        const {content, targetLang = 'en'} = req.body;
-        if (!content) {
-            return error(res, '翻译内容不能为空', 400);
-        }
-
-        const translated = await ai.translate.translateHtml(content, targetLang);
-
-        return success(res, {content: translated, targetLang});
-    } catch (err) {
-        next(err);
-    }
-});
-
-// QA 普通问答
-router.post('/qa', optionalAuth, async (req, res, next) => {
-    try {
-        const {question} = req.body;
-        if (!question) {
-            return error(res, '问题不能为空', 400);
-        }
-
-        const result = await ai.qa.ask(question);
-
-        return success(res, {answer: result.answer, sources: result.sources});
-    } catch (err) {
-        next(err);
-    }
-});
-
-// QA 流式问答（SSE）
-router.post('/qa/stream', optionalAuth, async (req, res, next) => {
-    try {
-        const {question} = req.body;
-        if (!question) {
-            return error(res, '问题不能为空', 400);
-        }
-
-        res.setHeader('Content-Type', 'text/event-stream');
-        res.setHeader('Cache-Control', 'no-cache');
-        res.setHeader('Connection', 'keep-alive');
-        res.setHeader('X-Accel-Buffering', 'no');
-
-        await ai.qa.askStream(question, (chunk, fullContent) => {
-            res.write(`data: ${JSON.stringify({chunk, fullContent})}\n\n`);
-        });
-
-        res.write('data: [DONE]\n\n');
-        res.end();
-    } catch (err) {
-        if (!res.headersSent) {
-            next(err);
-        } else {
-            res.write(`data: ${JSON.stringify({error: err.message})}\n\n`);
-            res.end();
-        }
-    }
-});
-
 router.post('/cover', auth, async (req, res, next) => {
     try {
         const {prompt, title, content, summary: articleSummary} = req.body;
@@ -275,30 +208,6 @@ router.post('/cover', auth, async (req, res, next) => {
     }
 });
 
-router.get('/recommend/:articleId', optionalAuth, async (req, res, next) => {
-    try {
-        const {Article} = require('../models');
-
-        const article = await Article.findByPk(req.params.articleId);
-        if (!article) {
-            return error(res, '文章不存在', 404);
-        }
-
-        const recommendations = await ai.embedding.searchSimilar(
-            `${article.title} ${article.summary || ''}`,
-            6
-        );
-
-        const filtered = recommendations
-            .filter((r) => String(r.articleId) !== req.params.articleId)
-            .slice(0, 5);
-
-        return success(res, {recommendations: filtered});
-    } catch (err) {
-        next(err);
-    }
-});
-
 router.post('/auto-reply', auth, async (req, res, next) => {
     try {
         const {commentContent, articleTitle} = req.body;
@@ -317,26 +226,6 @@ ${articleTitle ? `- 当前文章标题是：《${articleTitle}》` : ''}`;
         const reply = await ai.chat.chatSimple(commentContent, systemPrompt);
 
         return success(res, {reply});
-    } catch (err) {
-        next(err);
-    }
-});
-
-// Chroma 知识库管理：清空向量数据
-router.post('/chroma/clear', auth, async (req, res, next) => {
-    try {
-        await chromaService.clearAll();
-        return success(res, null, '向量知识库已清空');
-    } catch (err) {
-        next(err);
-    }
-});
-
-// Chroma 知识库管理：同步全部文章
-router.post('/chroma/sync', auth, async (req, res, next) => {
-    try {
-        const result = await chromaService.syncAllArticles();
-        return success(res, result, '知识库同步成功');
     } catch (err) {
         next(err);
     }

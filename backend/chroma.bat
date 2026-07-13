@@ -1,1 +1,0 @@
-chroma run --path ./chroma_data --port 8000

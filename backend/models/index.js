@@ -23,7 +23,6 @@ const Article = require('./Article')(sequelize);
 const Category = require('./Category')(sequelize);
 const Tag = require('./Tag')(sequelize);
 const Comment = require('./Comment')(sequelize);
-const ArticleVector = require('./ArticleVector')(sequelize);
 const VisitorLog = require('./VisitorLog')(sequelize);
 const ArticleTag = require('./ArticleTags')(sequelize);
 const Announcement = require('./Announcement')(sequelize);
@@ -63,9 +62,6 @@ Comment.belongsTo(User, {foreignKey: 'user_id', as: 'user'});
 Comment.hasMany(Comment, {foreignKey: 'parent_id', as: 'replies'});
 Comment.belongsTo(Comment, {foreignKey: 'parent_id', as: 'parent'});
 
-Article.hasMany(ArticleVector, {foreignKey: 'article_id', as: 'vectors'});
-ArticleVector.belongsTo(Article, {foreignKey: 'article_id', as: 'article'});
-
 Article.hasMany(VisitorLog, {foreignKey: 'article_id', as: 'visitorLogs'});
 VisitorLog.belongsTo(Article, {foreignKey: 'article_id', as: 'article'});
 
@@ -90,7 +86,6 @@ module.exports = {
     Category,
     Tag,
     Comment,
-    ArticleVector,
     VisitorLog,
     Announcement
 };

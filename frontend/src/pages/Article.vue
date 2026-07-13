@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import AiSummary from '@/components/article/AiSummary.vue'
-import AiTranslate from '@/components/article/AiTranslate.vue'
 import CommentSection from '@/components/article/CommentSection.vue'
 import { useArticleSeo } from '@/composables/useSeo'
 import { useArticleStore } from '@/stores/article'
@@ -233,8 +232,6 @@ function goBack() {
           </footer>
 
           <hr class="section-divider my-8" />
-
-          <AiTranslate :articleContent="currentArticle.content" />
 
           <CommentSection :articleId="articleId as string" />
         </div>
