@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import type { Article } from '@/stores/article'
 
-defineProps<{
+withDefaults(defineProps<{
   article: Article
-}>()
+  layout?: 'card' | 'list'
+}>(), {
+  layout: 'card'
+})
 
 function formatDate(dateStr: string) {
   if (!dateStr) return ''
@@ -18,10 +21,19 @@ function formatDate(dateStr: string) {
 <template>
 <!--  {{article}}-->
   <article
-    class="article-card group cursor-pointer rounded-sm overflow-hidden transition-all duration-300"
+    class="article-card group cursor-pointer overflow-hidden transition-all duration-300"
+    :class="[
+      layout === 'card'
+        ? 'rounded-sm flex flex-col'
+        : 'rounded-sm flex flex-col sm:flex-row items-stretch'
+    ]"
     style="background-color: var(--color-card); border: 1px solid var(--color-border); box-shadow: var(--shadow-sm)"
   >
-    <div class="aspect-video overflow-hidden relative w-full" style="background-color: var(--color-hover);height: 200px;">
+    <div
+      class="overflow-hidden relative shrink-0"
+      :class="layout === 'card' ? 'aspect-video w-full' : 'w-full sm:w-44 md:w-52 aspect-video sm:aspect-square'"
+      style="background-color: var(--color-hover)"
+    >
       <img
         v-if="article.cover_image"
         :src="article.cover_image"
@@ -41,8 +53,8 @@ function formatDate(dateStr: string) {
         :style="{ background: 'var(--gradient-card-hover)' }"
       />
     </div>
-    <div class="p-4 md:p-5">
-      <div class="flex items-center gap-2 mb-2.5">
+    <div class="flex flex-col" :class="layout === 'card' ? 'p-4 md:p-5 flex-1' : 'p-4 sm:px-5 sm:py-4 flex-1 justify-center'">
+      <div class="flex items-center gap-2 mb-2" :class="layout === 'list' ? 'sm:mb-1.5' : ''">
         <span
           v-if="article.category"
           class="text-xs px-2 py-0.5 rounded-md font-medium"
@@ -53,7 +65,8 @@ function formatDate(dateStr: string) {
         <span class="text-xs" style="color: var(--color-text-secondary)">{{ formatDate(article.created_at) }}</span>
       </div>
       <h3
-        class="text-base md:text-lg font-bold mb-2 line-clamp-2 leading-snug transition-colors duration-200 group-hover:text-primary"
+        class="font-bold line-clamp-2 leading-snug transition-colors duration-200 group-hover:text-primary"
+        :class="layout === 'card' ? 'text-base md:text-lg mb-2' : 'text-base sm:text-lg mb-1.5 sm:mb-2'"
         style="color: var(--color-text)"
       >
         {{ article.title }}
@@ -61,7 +74,7 @@ function formatDate(dateStr: string) {
       <p v-if="article.excerpt" class="text-sm line-clamp-2 leading-relaxed mb-0" style="color: var(--color-text-secondary)">
         {{ article.excerpt }}
       </p>
-      <div class="flex items-center gap-3 mt-3 text-xs" style="color: var(--color-text-secondary)">
+      <div class="flex items-center gap-3 mt-3 text-xs" style="color: var(--color-text-secondary)" :class="layout === 'list' ? 'sm:mt-2.5' : ''">
         <span class="flex items-center gap-1">
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
           {{ article.view_count || 0 }}

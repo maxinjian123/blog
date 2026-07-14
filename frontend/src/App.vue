@@ -49,15 +49,15 @@ onMounted(() => {
 
     <NavBar />
     <div class="flex-1 flex justify-center relative z-1">
-      <div class="w-full max-w-6xl flex gap-5 px-0 md:px-4 pt-14 md:pt-16">
-        <main class="flex-1 min-w-0 md:pl-6 md:pr-0 px-4 pb-8">
+      <div class="w-full flex gap-5 px-0 md:px-4 pt-14 md:pt-16" :class="route.name === 'Article' ? 'max-w-[1450px]' : 'max-w-6xl'">
+        <main class="flex-1 min-w-0 pb-8" :class="route.name === 'Article' ? 'min-w-0 px-0' : 'md:pl-6 md:pr-0 px-4'">
           <router-view v-slot="{ Component, route }">
             <transition name="page-fade" mode="out-in">
               <component :is="Component" :key="route.path" />
             </transition>
           </router-view>
         </main>
-        <Sidebar class="hidden md:block w-64 lg:w-72 shrink-0" />
+        <Sidebar v-if="route.name !== 'Article'" class="hidden md:block w-64 lg:w-72 shrink-0" />
       </div>
     </div>
     <Footer />

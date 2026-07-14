@@ -1,613 +1,672 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-theme="dark">
+<html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TechMind Blog - 项目架构文档 v3.0</title>
+<title>TechMind Blog 架构文档</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
   :root {
-    --bg-primary: #0a0a0f;
-    --bg-secondary: #12121a;
-    --bg-card: #1a1a28;
-    --border: #2a2a3e;
-    --text-primary: #e8e8f0;
-    --text-secondary: #9898b0;
-    --text-tertiary: #686880;
-    --accent: #7c5cfc;
-    --accent-glow: rgba(124,92,252,0.15);
-    --accent-secondary: #f472b6;
-    --accent-gradient: linear-gradient(135deg,#7c5cfc,#f472b6);
-    --green: #34d399;
-    --blue: #60a5fa;
-    --orange: #fb923c;
-    --radius: 12px;
-    --radius-sm: 8px;
+    --primary: #49B1F5;
+    --primary-dark: #3a8fc7;
+    --bg: #f8f9fa;
+    --card: #ffffff;
+    --text: #2c3e50;
+    --text-secondary: #6c757d;
+    --border: #e9ecef;
+    --accent: #10b981;
+    --code-bg: #f1f3f5;
+    --sidebar-width: 260px;
   }
-  *{margin:0;padding:0;box-sizing:border-box}
+  * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    font-family:'Noto Serif SC','Plus Jakarta Sans',-apple-system,sans-serif;
-    background:var(--bg-primary);
-    color:var(--text-primary);
-    line-height:1.8;
-    overflow-x:hidden
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    line-height: 1.8;
+    font-size: 15px;
   }
-  body::before {
-    content:'';
-    position:fixed;
-    top:0;left:0;right:0;bottom:0;
-    background-image:linear-gradient(rgba(124,92,252,0.03)1px,transparent 1px),linear-gradient(90deg,rgba(124,92,252,0.03)1px,transparent 1px);
-    background-size:60px 60px;
-    pointer-events:none;
-    z-index:0
+  .layout { display: flex; min-height: 100vh; }
+
+  /* Sidebar */
+  .sidebar {
+    width: var(--sidebar-width);
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    background: var(--card);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    z-index: 100;
+    padding: 24px 0;
   }
-  .container{max-width:960px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
-  .header{padding:80px 0 60px;text-align:center;position:relative}
-  .header::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:200px;height:1px;background:var(--accent-gradient);opacity:0.5}
-  .header-badge{display:inline-block;padding:6px 16px;border-radius:100px;background:var(--accent-glow);border:1px solid rgba(124,92,252,0.25);color:var(--accent);font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:24px}
-  .header h1{font-size:48px;font-weight:900;letter-spacing:-1.5px;background:var(--accent-gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;line-height:1.2}
-  .header .subtitle{font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;color:var(--text-secondary);font-weight:400}
-  .header .meta{margin-top:20px;display:flex;justify-content:center;gap:24px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;color:var(--text-tertiary);flex-wrap:wrap}
-  .header .meta span{display:flex;align-items:center;gap:6px}
-  .toc{margin:48px 0 64px;padding:32px 40px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);position:relative;overflow:hidden}
-  .toc::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--accent-gradient)}
-  .toc-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--accent);margin-bottom:16px}
-  .toc-list{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:4px 32px}
-  .toc-list li{padding:4px 0}
-  .toc-list a{color:var(--text-secondary);text-decoration:none;font-size:14px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:500;transition:color .2s;display:flex;align-items:center;gap:8px}
-  .toc-list a:hover{color:var(--accent)}
-  .toc-list .toc-num{color:var(--accent);font-weight:600;font-size:12px;min-width:20px;opacity:.6}
-  .section{margin-bottom:64px;animation:fadeInUp .6s ease-out both}
-  @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-  .section-header{display:flex;align-items:center;gap:16px;margin-bottom:32px;padding-bottom:16px;border-bottom:1px solid var(--border)}
-  .section-number{display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:10px;background:var(--accent-glow);border:1px solid rgba(124,92,252,0.25);color:var(--accent);font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:800;flex-shrink:0}
-  .section-header h2{font-size:24px;font-weight:700;letter-spacing:-.3px}
-  .section-header .section-sub{font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;color:var(--text-tertiary);font-weight:500;margin-top:2px}
-  h3{font-size:18px;font-weight:700;margin:28px 0 16px;color:var(--text-primary)}
-  h4{font-size:15px;font-weight:600;margin:20px 0 12px;color:var(--text-secondary)}
-  p{font-size:15px;color:var(--text-secondary);margin-bottom:16px;line-height:1.9}
-  .table-wrap{overflow-x:auto;margin:20px 0 28px;border-radius:var(--radius-sm);border:1px solid var(--border)}
-  table{width:100%;border-collapse:collapse;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif}
-  thead{background:var(--bg-card)}
-  th{padding:12px 16px;text-align:left;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-tertiary);border-bottom:1px solid var(--border);white-space:nowrap}
-  td{padding:10px 16px;border-bottom:1px solid rgba(42,42,62,0.5);color:var(--text-secondary);vertical-align:top}
-  tr:last-child td{border-bottom:none}
-  tr:hover td{background:rgba(124,92,252,0.03)}
-  pre{margin:20px 0 28px;padding:20px 24px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;color:var(--text-secondary)}
-  code{font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--bg-card);padding:2px 8px;border-radius:4px;color:var(--accent-secondary)}
-  pre code{background:none;padding:0;color:inherit}
-  .layout-diagram{margin:24px 0;padding:24px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.6;color:var(--text-secondary);white-space:pre;overflow-x:auto}
-  .accent-block{margin:24px 0;padding:20px 24px;border-radius:var(--radius-sm);border-left:3px solid;font-size:14px;line-height:1.8}
-  .accent-block.info{background:rgba(96,165,250,0.06);border-color:var(--blue)}
-  .accent-block.info code{background:rgba(96,165,250,0.1);color:var(--blue)}
-  .accent-block.warning{background:rgba(251,191,36,0.06);border-color:var(--orange)}
-  .accent-block.success{background:rgba(52,211,153,0.06);border-color:var(--green)}
-  ul,ol{margin:12px 0 20px;padding-left:24px;color:var(--text-secondary);font-size:14px;line-height:2}
-  li{margin-bottom:4px}
-  .tag{display:inline-block;padding:2px 10px;border-radius:4px;font-size:11px;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif}
-  .tag.purple{background:rgba(124,92,252,0.15);color:var(--accent)}
-  .tag.green{background:rgba(52,211,153,0.15);color:var(--green)}
-  .tag.blue{background:rgba(96,165,250,0.15);color:var(--blue)}
-  .tag.orange{background:rgba(251,146,60,0.15);color:var(--orange)}
-  .tag.pink{background:rgba(244,114,182,0.15);color:var(--accent-secondary)}
-  .footer{margin-top:80px;padding:40px 0;border-top:1px solid var(--border);text-align:center;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;color:var(--text-tertiary)}
-  .footer a{color:var(--accent);text-decoration:none}
-  @media(max-width:768px){
-    .header{padding:48px 0 40px}
-    .header h1{font-size:32px}
-    .header .meta{flex-direction:column;gap:8px;align-items:center}
-    .toc-list{grid-template-columns:1fr}
-    .toc{padding:24px}
-    .section-header h2{font-size:20px}
-    th,td{padding:8px 12px;font-size:12px}
-    .container{padding:0 16px}
-    .layout-diagram{font-size:11px;padding:16px}
-    pre{font-size:12px;padding:16px}
+  .sidebar-header {
+    padding: 0 20px 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
   }
-  @media(max-width:480px){
-    .header h1{font-size:26px}
-    .section-number{width:32px;height:32px;font-size:13px}
+  .sidebar-header h1 {
+    font-size: 16px;
+    color: var(--primary);
+    font-weight: 700;
   }
-  ::-webkit-scrollbar{width:8px;height:8px}
-  ::-webkit-scrollbar-track{background:var(--bg-primary)}
-  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
-  ::-webkit-scrollbar-thumb:hover{background:var(--text-tertiary)}
-  ::selection{background:rgba(124,92,252,0.3);color:var(--text-primary)}
+  .sidebar-header p {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+  }
+  .sidebar nav a {
+    display: block;
+    padding: 8px 20px;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 13px;
+    transition: all 0.2s;
+    border-left: 3px solid transparent;
+  }
+  .sidebar nav a:hover,
+  .sidebar nav a.active {
+    background: rgba(73, 177, 245, 0.08);
+    color: var(--primary);
+    border-left-color: var(--primary);
+  }
+  .sidebar nav .section-title {
+    padding: 12px 20px 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Main Content */
+  .main {
+    margin-left: var(--sidebar-width);
+    flex: 1;
+    max-width: 900px;
+    padding: 48px 56px;
+  }
+
+  /* Typography */
+  h1 { font-size: 28px; font-weight: 700; margin: 32px 0 16px; color: #1a1a2e; }
+  h2 { font-size: 22px; font-weight: 600; margin: 28px 0 12px; padding-bottom: 8px; border-bottom: 2px solid var(--primary); color: #1a1a2e; }
+  h3 { font-size: 17px; font-weight: 600; margin: 24px 0 10px; color: #2c3e50; }
+  h4 { font-size: 15px; font-weight: 600; margin: 16px 0 8px; }
+  p { margin: 8px 0 16px; }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  ul, ol { margin: 8px 0 16px; padding-left: 24px; }
+  li { margin: 4px 0; }
+
+  /* Code */
+  code {
+    background: var(--code-bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 13px;
+  }
+  pre {
+    background: #1e1e2e;
+    color: #cdd6f4;
+    padding: 16px 20px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 16px 0;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+    font-size: inherit;
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 14px;
+  }
+  th, td {
+    padding: 10px 14px;
+    text-align: left;
+    border: 1px solid var(--border);
+  }
+  th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: var(--text);
+  }
+  tr:nth-child(even) { background: #fafbfc; }
+
+  /* Cards */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin: 16px 0;
+  }
+  .card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Badges */
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    margin: 2px 4px;
+  }
+  .badge-blue { background: rgba(73, 177, 245, 0.12); color: var(--primary); }
+  .badge-green { background: rgba(16, 185, 129, 0.12); color: var(--accent); }
+  .badge-orange { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+  .badge-red { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
+  .badge-purple { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
+
+  /* Highlight Box */
+  .info-box {
+    background: rgba(73, 177, 245, 0.06);
+    border-left: 4px solid var(--primary);
+    padding: 12px 16px;
+    margin: 16px 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 14px;
+  }
+  .info-box strong { color: var(--primary); }
+
+  /* Architecture Diagram */
+  .arch-diagram {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin: 24px 0;
+    padding: 24px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+  .arch-node {
+    background: var(--primary);
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    min-width: 300px;
+  }
+  .arch-node.sub {
+    background: #e8f4fd;
+    color: var(--text);
+    border: 1px solid var(--border);
+    min-width: 200px;
+  }
+  .arch-arrow {
+    color: var(--text-secondary);
+    font-size: 20px;
+  }
+  .arch-row {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  /* ADR */
+  .adr {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 16px 0;
+  }
+  .adr h4 { margin-top: 0; color: var(--primary); }
+  .adr .meta { font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; }
+
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; padding: 24px 20px; }
+    table { font-size: 13px; }
+    th, td { padding: 6px 10px; }
+    pre { font-size: 12px; padding: 12px 16px; }
+  }
 </style>
 </head>
 <body>
-<div class="container">
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h1>TechMind Blog</h1>
+      <p>架构文档 v3.0</p>
+    </div>
+    <nav>
+      <div class="section-title">概览</div>
+      <a href="#overview">系统架构</a>
+      <a href="#adr">架构决策记录</a>
+      <div class="section-title">前端</div>
+      <a href="#frontend">前端模块 (frontend)</a>
+      <a href="#frontend-routes">路由设计</a>
+      <a href="#frontend-stores">状态管理</a>
+      <a href="#frontend-components">组件树</a>
+      <div class="section-title">管理面板</div>
+      <a href="#admin">管理面板 (admin)</a>
+      <div class="section-title">后端</div>
+      <a href="#backend">后端模块 (backend)</a>
+      <a href="#backend-routes">路由模块</a>
+      <a href="#backend-models">数据模型</a>
+      <a href="#backend-ai">AI 服务架构</a>
+      <a href="#backend-security">安全机制</a>
+      <div class="section-title">部署</div>
+      <a href="#deploy">部署架构</a>
+      <a href="#guide">开发指南</a>
+    </nav>
+  </aside>
 
-<header class="header">
-  <div class="header-badge">Architecture Document v3.0</div>
-  <h1>TechMind Blog</h1>
-  <p class="subtitle">项目架构文档 — 完整的技术规格与设计决策记录</p>
-  <div class="meta">
-    <span>2026-07-13</span>
-    <span>3 个子系统</span>
-    <span>12 个 API 模块</span>
-    <span>8 个数据模型</span>
-    <span>AI 双驱动</span>
-  </div>
-</header>
+  <main class="main">
+    <h1>TechMind Blog 架构文档</h1>
+    <p>本文档详细描述 TechMind Blog 系统的架构设计、模块划分、数据流和部署方案。</p>
 
-<nav class="toc">
-  <div class="toc-title">目录</div>
-  <ol class="toc-list">
-    <li><a href="#s1"><span class="toc-num">01</span> 项目概述</a></li>
-    <li><a href="#s2"><span class="toc-num">02</span> 目录结构</a></li>
-    <li><a href="#s3"><span class="toc-num">03</span> 技术栈详情</a></li>
-    <li><a href="#s4"><span class="toc-num">04</span> 路由体系</a></li>
-    <li><a href="#s5"><span class="toc-num">05</span> 数据库模型</a></li>
-    <li><a href="#s6"><span class="toc-num">06</span> API 接口文档</a></li>
-    <li><a href="#s7"><span class="toc-num">07</span> 前端架构</a></li>
-    <li><a href="#s8"><span class="toc-num">08</span> 后端架构</a></li>
-    <li><a href="#s9"><span class="toc-num">09</span> 访客日志</a></li>
-    <li><a href="#s10"><span class="toc-num">10</span> 环境依赖</a></li>
-    <li><a href="#s11"><span class="toc-num">11</span> 版本信息</a></li>
-    <li><a href="#s12"><span class="toc-num">12</span> 架构决策</a></li>
-  </ol>
-</nav>
+    <!-- ==================== 系统架构 ==================== -->
+    <h2 id="overview">一、系统架构概览</h2>
 
-<section class="section" id="s1">
-  <div class="section-header"><div class="section-number">1</div><div><h2>项目概述</h2><div class="section-sub">OVERVIEW</div></div></div>
-  <p>TechMind Blog 是一个全栈个人博客系统，采用前后端分离架构，覆盖读者浏览、内容管理与 API 服务的全链路需求。深度集成 AI 辅助写作能力，提供文章创作、润色、续写、摘要、标签、封面图生成和评论自动回复等智能功能。</p>
-  <div class="table-wrap">
+    <h3>1.1 整体架构</h3>
+    <p>TechMind Blog 采用经典的前后端分离架构，包含三个独立子系统：</p>
+
+    <div class="arch-diagram">
+      <div class="arch-node">前端 (frontend)<br><small>Vue 3 + Tailwind CSS v4 · 端口 5173</small></div>
+      <div class="arch-arrow">⬇ HTTP REST API</div>
+      <div class="arch-node">管理面板 (admin)<br><small>Vue 3 + Ant Design Vue 4 · 端口 5174</small></div>
+      <div class="arch-arrow">⬇ HTTP REST API</div>
+      <div class="arch-node">后端服务 (backend)<br><small>Express 4 + Sequelize + Redis · 端口 3000</small></div>
+      <div class="arch-row">
+        <div class="arch-node sub">MySQL 数据库<br><small>blog_3d</small></div>
+        <div class="arch-node sub">Redis 缓存<br><small>验证码 / 限流</small></div>
+        <div class="arch-node sub">AI 引擎 (双驱动)<br><small>豆包 API + Ollama 本地</small></div>
+      </div>
+    </div>
+
+    <h3>1.2 技术栈总览</h3>
     <table>
-      <thead><tr><th>子系统</th><th>技术栈</th><th>端口</th><th>定位</th></tr></thead>
-      <tbody>
-        <tr><td><span class="tag purple">frontend</span> 博客前端</td><td>Vue 3 + TypeScript + Vite + Tailwind CSS v4</td><td><code>5173</code></td><td>博客读者端，双栏响应式布局</td></tr>
-        <tr><td><span class="tag green">backend</span> 后端服务</td><td>Node.js + Express + Sequelize + MySQL + Redis</td><td><code>3000</code></td><td>RESTful API + AI 服务</td></tr>
-        <tr><td><span class="tag blue">admin</span> 管理面板</td><td>Vue 3 + Ant Design Vue 4 + Vite + md-editor-v3</td><td><code>5174</code></td><td>后台管理，Markdown 文章创作</td></tr>
-      </tbody>
+      <tr><th>子系统</th><th>技术</th><th>版本</th></tr>
+      <tr><td rowspan="7">前端 (frontend)</td><td>Vue</td><td>3.5</td></tr>
+      <tr><td>TypeScript</td><td>5.6</td></tr>
+      <tr><td>Tailwind CSS</td><td>4</td></tr>
+      <tr><td>Vite</td><td>6</td></tr>
+      <tr><td>Pinia</td><td>2</td></tr>
+      <tr><td>Vue Router</td><td>4</td></tr>
+      <tr><td>md-editor-v3</td><td>6</td></tr>
+      <tr><td rowspan="6">管理面板 (admin)</td><td>Vue</td><td>3.5</td></tr>
+      <tr><td>Ant Design Vue</td><td>4</td></tr>
+      <tr><td>TypeScript</td><td>5.6</td></tr>
+      <tr><td>Vite</td><td>6</td></tr>
+      <tr><td>Pinia</td><td>2</td></tr>
+      <tr><td>md-editor-v3</td><td>6</td></tr>
+      <tr><td rowspan="8">后端 (backend)</td><td>Node.js</td><td>≥ 16</td></tr>
+      <tr><td>Express</td><td>4</td></tr>
+      <tr><td>Sequelize ORM</td><td>—</td></tr>
+      <tr><td>MySQL</td><td>≥ 5.7</td></tr>
+      <tr><td>Redis (ioredis)</td><td>7</td></tr>
+      <tr><td>JWT (jsonwebtoken)</td><td>—</td></tr>
+      <tr><td>Multer</td><td>—</td></tr>
+      <tr><td>Nodemailer</td><td>—</td></tr>
     </table>
-  </div>
-</section>
 
-<section class="section" id="s2">
-  <div class="section-header"><div class="section-number">2</div><div><h2>项目目录结构</h2><div class="section-sub">PROJECT STRUCTURE</div></div></div>
-  <p>项目采用 monorepo 风格组织，三个子系统独立开发、独立构建，通过 API 和代理通信。</p>
-  <h3>前端 (frontend)</h3>
-  <div class="layout-diagram">frontend/
-├── index.html, vite.config.ts, package.json
-└── src/
-    ├── main.ts, App.vue (双栏布局 + SEO + 主题)
-    ├── router/index.ts     # 10 条路由
-    ├── stores/             # article, auth, theme
-    ├── utils/              # api.ts, message.ts
-    ├── composables/        # useSeo.ts
-    ├── styles/tailwind.css # Tailwind + 主题变量
-    ├── components/
-    │   ├── layout/         # NavBar, Sidebar, Footer
-    │   ├── article/        # ArticleCard, CommentSection, CommentNode, MdCommentEditor, AiSummary
-    │   └── common/         # Message, TagCloud (已注释)
-    └── pages/              # 10 个页面组件</div>
-  <h3>后端 (backend)</h3>
-  <div class="layout-diagram">backend/
-├── app.js, .env, package.json, Dockerfile, blog_3d.sql
-├── prompt/                # 7 个 AI 提示词模板
-├── uploads/               # 文件上传目录
-├── config/index.js        # 配置加载
-├── models/                # 8 个 Sequelize 模型
-├── routes/                # 12 个路由模块
-├── services/
-│   ├── ai/                # chat, ollamaChat, summary, tag, image
-│   ├── mail.js            # 邮件通知
-│   └── qq.js              # QQ 工具
-├── middleware/             # auth, upload, errorHandler
-└── utils/                 # redis, rateLimit, nsfw, response</div>
-  <h3>管理面板 (admin)</h3>
-  <div class="layout-diagram">admin/
-├── index.html, vite.config.ts, package.json
-└── src/
-    ├── main.ts, App.vue (Ant Design Vue 布局)
-    ├── router/index.ts     # 10 条管理路由
-    ├── stores/             # auth, article, dashboard
-    ├── pages/              # 9 个管理页面
-    │   └── ArticleEditor.vue # 文章编辑器 (md-editor-v3 + AI 抽屉 + 元信息抽屉)
-    └── components/admin/   # AiAssistant, CoverGenerator</div>
-</section>
+    <!-- ==================== ADR ==================== -->
+    <h2 id="adr">二、架构决策记录 (ADR)</h2>
 
-<section class="section" id="s3">
-  <div class="section-header"><div class="section-number">3</div><div><h2>技术栈详情</h2><div class="section-sub">TECH STACK</div></div></div>
+    <div class="adr">
+      <h4>ADR-001: 采用三子系统分离架构</h4>
+      <div class="meta">状态: <span class="badge badge-green">已采纳</span></div>
+      <p><strong>上下文：</strong>需要同时面向访客和管理员提供不同体验的界面，且前后端需要独立部署扩展。</p>
+      <p><strong>决策：</strong>将系统拆分为 frontend（博客前台）、admin（管理面板）、backend（后端 API）三个独立子系统。</p>
+      <p><strong>理由：</strong>前台和管理员界面风格差异大（Tailwind CSS vs Ant Design Vue），独立构建可优化各自部署；后端 API 统一复用。</p>
+      <p><strong>影响：</strong>需要维护三个 <code>package.json</code>，三个开发服务器，构建配置各自独立。</p>
+    </div>
 
-  <h3>3.1 前端技术栈 <span class="tag purple">frontend</span></h3>
-  <div class="table-wrap"><table><thead><tr><th>类别</th><th>技术</th><th>版本</th><th>说明</th></tr></thead>
-  <tbody>
-    <tr><td>框架</td><td>Vue 3</td><td>^3.5.13</td><td>Composition API + &lt;script setup&gt;</td></tr>
-    <tr><td>构建</td><td>Vite</td><td>^6.0.5</td><td>开发服务器 + HMR</td></tr>
-    <tr><td>路由</td><td>Vue Router 4</td><td>^4.5.0</td><td>createWebHistory, scrollBehavior</td></tr>
-    <tr><td>状态管理</td><td>Pinia</td><td>^2.3.0</td><td>setup 语法</td></tr>
-    <tr><td>样式</td><td>Tailwind CSS</td><td>^4.3.0</td><td>v4 + @tailwindcss/vite 插件</td></tr>
-    <tr><td>Markdown</td><td>md-editor-v3</td><td>^6.5.0</td><td>评论区 Markdown 编辑</td></tr>
-    <tr><td>Markdown 渲染</td><td>marked</td><td>^18.0.4</td><td>评论内容渲染</td></tr>
-    <tr><td>SEO</td><td>@unhead/vue</td><td>^3.1.0</td><td>useSeoMeta + useHead</td></tr>
-    <tr><td>图标</td><td>@ant-design/icons-vue</td><td>^7.0.1</td><td>SVG 图标组件</td></tr>
-    <tr><td>HTTP 客户端</td><td>Axios</td><td>^1.7.9</td><td>统一拦截器 + JWT 注入</td></tr>
-    <tr><td>消息提示</td><td>vue-m-message</td><td>^4.0.2</td><td>轻量提示</td></tr>
-    <tr><td>类型检查</td><td>TypeScript</td><td>~5.6.3</td><td>vue-tsc 构建时检查</td></tr>
-  </tbody></table></div>
+    <div class="adr">
+      <h4>ADR-002: 使用 MySQL + Sequelize ORM</h4>
+      <div class="meta">状态: <span class="badge badge-green">已采纳</span></div>
+      <p><strong>上下文：</strong>需要关系型数据库存储文章、分类、标签、评论等结构化数据，支持多对多关联和嵌套查询。</p>
+      <p><strong>决策：</strong>使用 MySQL 数据库 + Sequelize ORM。</p>
+      <p><strong>理由：</strong>数据关系明确（文章↔标签多对多，评论自关联嵌套），Sequelize 提供模型关联、迁移、验证等能力。</p>
+      <p><strong>影响：</strong>需要维护数据库迁移脚本，模型定义与数据库表结构同步。</p>
+    </div>
 
-  <h3>3.2 后端技术栈 <span class="tag green">backend</span></h3>
-  <div class="table-wrap"><table><thead><tr><th>类别</th><th>技术</th><th>版本</th><th>说明</th></tr></thead>
-  <tbody>
-    <tr><td>框架</td><td>Express</td><td>^4.21.0</td><td>Web 框架</td></tr>
-    <tr><td>ORM</td><td>Sequelize</td><td>^6.37.3</td><td>MySQL ORM + 模型同步</td></tr>
-    <tr><td>数据库驱动</td><td>mysql2</td><td>^3.11.0</td><td>关系型数据库</td></tr>
-    <tr><td>缓存</td><td>ioredis</td><td>^5.4.1</td><td>Redis 缓存 + 分布式限流</td></tr>
-    <tr><td>AI SDK</td><td>openai</td><td>^4.67.0</td><td>调用豆包 API (兼容 OpenAI)</td></tr>
-    <tr><td>认证</td><td>jsonwebtoken</td><td>^9.0.2</td><td>JWT Token 认证</td></tr>
-    <tr><td>密码</td><td>bcryptjs</td><td>^2.4.3</td><td>密码哈希</td></tr>
-    <tr><td>文件上传</td><td>multer</td><td>^1.4.5-lts.1</td><td>文件上传处理</td></tr>
-    <tr><td>邮件</td><td>nodemailer</td><td>^8.0.7</td><td>QQ 邮箱评论通知</td></tr>
-    <tr><td>图片处理</td><td>sharp</td><td>^0.34.5</td><td>NSFW 像素级肤色检测</td></tr>
-    <tr><td>验证码</td><td>svg-captcha</td><td>^1.4.0</td><td>SVG 数学验证码</td></tr>
-    <tr><td>限流</td><td>express-rate-limit</td><td>^8.5.2</td><td>全局 API 速率限制</td></tr>
-    <tr><td>安全</td><td>helmet</td><td>^7.1.0</td><td>HTTP 安全头</td></tr>
-    <tr><td>日志</td><td>morgan</td><td>^1.10.0</td><td>HTTP 请求日志</td></tr>
-  </tbody></table></div>
+    <div class="adr">
+      <h4>ADR-003: AI 双引擎驱动架构（豆包 + Ollama）</h4>
+      <div class="meta">状态: <span class="badge badge-green">已采纳</span></div>
+      <p><strong>上下文：</strong>需要 AI 辅助写作功能，但云端 API 可能因网络或配额不可用，需要本地备选方案。</p>
+      <p><strong>决策：</strong>采用豆包 Doubao API 作为主引擎，Ollama 本地模型作为备选，自动降级。</p>
+      <p><strong>理由：</strong>豆包提供高质量生成能力，Ollama 本地运行保证可用性，两者 API 兼容性好。</p>
+      <p><strong>影响：</strong>需要维护两套 AI 调用逻辑，但通过 <code>chat.js</code> 抽象层统一接口。</p>
+    </div>
 
-  <h3>3.3 管理面板技术栈 <span class="tag blue">admin</span></h3>
-  <div class="table-wrap"><table><thead><tr><th>类别</th><th>技术</th><th>版本</th></tr></thead>
-  <tbody>
-    <tr><td>框架</td><td>Vue 3</td><td>^3.5.13</td></tr>
-    <tr><td>UI 组件库</td><td>Ant Design Vue</td><td>^4.2.6</td></tr>
-    <tr><td>Markdown 编辑器</td><td>md-editor-v3</td><td>^6.5.0</td></tr>
-    <tr><td>Markdown 渲染</td><td>marked</td><td>^15.0.4</td></tr>
-    <tr><td>时间处理</td><td>dayjs</td><td>^1.11.13</td></tr>
-    <tr><td>工具函数</td><td>@vueuse/core</td><td>^12.0.0</td></tr>
-    <tr><td>状态管理</td><td>Pinia</td><td>^3.0.1</td></tr>
-    <tr><td>图标</td><td>@ant-design/icons-vue</td><td>^7.0.1</td></tr>
-  </tbody></table></div>
-</section>
+    <div class="adr">
+      <h4>ADR-004: JWT 无状态认证</h4>
+      <div class="meta">状态: <span class="badge badge-green">已采纳</span></div>
+      <p><strong>上下文：</strong>需要简单高效的 API 认证方案，无需服务端会话存储。</p>
+      <p><strong>决策：</strong>使用 JWT（jsonwebtoken）进行认证，7 天过期，支持 <code>auth</code> 强制认证和 <code>optionalAuth</code> 可选认证两种中间件。</p>
+      <p><strong>理由：</strong>无状态、跨域友好、适合前后端分离架构。</p>
+      <p><strong>影响：</strong>Token 无法主动撤销，需配合短过期时间使用。</p>
+    </div>
 
-<section class="section" id="s4">
-  <div class="section-header"><div class="section-number">4</div><div><h2>路由体系</h2><div class="section-sub">ROUTING</div></div></div>
+    <!-- ==================== 前端 ==================== -->
+    <h2 id="frontend">三、前端模块 (frontend)</h2>
 
-  <h3>4.1 博客前端路由</h3>
-  <div class="table-wrap"><table><thead><tr><th>路径</th><th>名称</th><th>页面</th><th>页面标题</th></tr></thead>
-  <tbody>
-    <tr><td><code>/</code></td><td>Home</td><td>Home.vue</td><td>LinzyBlog</td></tr>
-    <tr><td><code>/article/:id</code></td><td>Article</td><td>Article.vue</td><td>文章详情</td></tr>
-    <tr><td><code>/category/:id/:name</code></td><td>Category</td><td>Category.vue</td><td>分类</td></tr>
-    <tr><td><code>/categories</code></td><td>Categories</td><td>Categories.vue</td><td>全部分类</td></tr>
-    <tr><td><code>/tags</code></td><td>Tags</td><td>Tags.vue</td><td>全部标签</td></tr>
-    <tr><td><code>/tag/:id/:name</code></td><td>Tag</td><td>Tag.vue</td><td>标签</td></tr>
-    <tr><td><code>/archive</code></td><td>Archive</td><td>Archive.vue</td><td>归档</td></tr>
-    <tr><td><code>/search</code></td><td>Search</td><td>Search.vue</td><td>搜索</td></tr>
-    <tr><td><code>/about</code></td><td>About</td><td>About.vue</td><td>关于</td></tr>
-    <tr><td><code>/:pathMatch(.*)*</code></td><td>NotFound</td><td>NotFound.vue</td><td>404</td></tr>
-  </tbody></table></div>
-  <p>使用 <code>createWebHistory</code> 模式，通过 <code>@unhead/vue</code> 实现 SEO 元信息管理。</p>
+    <h3 id="frontend-routes">3.1 路由设计</h3>
+    <p>10 条懒加载路由，全部使用 <code>createWebHistory</code> 历史模式：</p>
+    <pre><code>const routes = [
+  { path: '/',                    component: Home.vue },
+  { path: '/article/:id',         component: Article.vue },
+  { path: '/category/:id/:name',  component: Category.vue },
+  { path: '/categories',          component: Categories.vue },
+  { path: '/tags',                component: Tags.vue },
+  { path: '/tag/:id/:name',       component: Tag.vue },
+  { path: '/archive',             component: Archive.vue },
+  { path: '/search',              component: Search.vue },
+  { path: '/about',               component: About.vue },
+  { path: '/:pathMatch(.*)*',     component: NotFound.vue },
+];</code></pre>
 
-  <h3>4.2 管理面板路由</h3>
-  <div class="table-wrap"><table><thead><tr><th>路径</th><th>名称</th><th>页面</th><th>说明</th></tr></thead>
-  <tbody>
-    <tr><td><code>/login</code></td><td>Login</td><td>Login.vue</td><td>登录页</td></tr>
-    <tr><td><code>/</code></td><td>Dashboard</td><td>Dashboard.vue</td><td>仪表盘</td></tr>
-    <tr><td><code>/articles</code></td><td>ArticleList</td><td>ArticleList.vue</td><td>文章管理</td></tr>
-    <tr><td><code>/articles/create</code></td><td>ArticleCreate</td><td>ArticleEditor.vue</td><td>创建文章</td></tr>
-    <tr><td><code>/articles/:id/edit</code></td><td>ArticleEdit</td><td>ArticleEditor.vue</td><td>编辑文章</td></tr>
-    <tr><td><code>/categories</code></td><td>CategoryManage</td><td>CategoryManage.vue</td><td>分类管理</td></tr>
-    <tr><td><code>/tags</code></td><td>TagManage</td><td>TagManage.vue</td><td>标签管理</td></tr>
-    <tr><td><code>/comments</code></td><td>CommentManage</td><td>CommentManage.vue</td><td>评论管理 (AI 回复)</td></tr>
-    <tr><td><code>/settings</code></td><td>Settings</td><td>Settings.vue</td><td>系统设置</td></tr>
-    <tr><td><code>/announcements</code></td><td>AnnouncementManage</td><td>AnnouncementManage.vue</td><td>公告管理</td></tr>
-  </tbody></table></div>
+    <h3 id="frontend-stores">3.2 状态管理 (Pinia Store)</h3>
 
-  <h3>4.3 后端 API 路由</h3>
-  <p>所有 API 前缀为 <code>/api/v1</code>，共 <strong>12 个路由模块</strong>：</p>
-  <div class="table-wrap"><table><thead><tr><th>路径</th><th>模块</th><th>说明</th></tr></thead>
-  <tbody>
-    <tr><td><code>/api/v1/auth</code></td><td>auth.js</td><td>用户认证 (含 SVG 验证码)</td></tr>
-    <tr><td><code>/api/v1/articles</code></td><td>articles.js</td><td>文章 CRUD + 搜索 + 归档 + 点赞 + 评论</td></tr>
-    <tr><td><code>/api/v1/comments</code></td><td>comments.js</td><td>评论管理 + AI 自动回复</td></tr>
-    <tr><td><code>/api/v1/categories</code></td><td>categories.js</td><td>分类 CRUD</td></tr>
-    <tr><td><code>/api/v1/tags</code></td><td>tags.js</td><td>标签 CRUD (含分页/搜索/排序)</td></tr>
-    <tr><td><code>/api/v1/upload</code></td><td>upload.js</td><td>文件上传 (单文件/批量)</td></tr>
-    <tr><td><code>/api/v1/comment-upload</code></td><td>commentUpload.js</td><td>评论图片上传 (Redis 限流 + NSFW)</td></tr>
-    <tr><td><code>/api/v1/captcha</code></td><td>captcha.js</td><td>SVG 数学验证码</td></tr>
-    <tr><td><code>/api/v1/ai</code></td><td>ai.js</td><td>AI 服务 (9 个端点)</td></tr>
-    <tr><td><code>/api/v1/admin</code></td><td>admin.js</td><td>统计/设置/缓存/导出</td></tr>
-    <tr><td><code>/api/v1/announcements</code></td><td>announcements.js</td><td>公告 CRUD</td></tr>
-    <tr><td><code>/api/v1/site</code></td><td>site.js</td><td>站点信息</td></tr>
-  </tbody></table></div>
-  <div class="accent-block info"><strong>全局配置：</strong>CORS 允许 <code>localhost:5173</code> 和 <code>localhost:5174</code> | 全局限流 15 分钟 300 次 | JSON 限制 10MB | <code>/uploads</code> 静态资源映射 | Helmet 安全头 | Morgan 请求日志</div>
-</section>
+    <div class="card">
+      <div class="card-title">article Store — 文章状态管理</div>
+      <ul>
+        <li><strong>状态：</strong><code>articles[]</code>, <code>currentArticle</code>, <code>loading</code>, <code>error</code>, <code>total</code>, <code>page</code>, <code>pageSize</code></li>
+        <li><strong>方法：</strong><code>fetchArticles(params)</code>, <code>fetchArticle(id)</code>, <code>fetchArticlesByCategory(slug)</code>, <code>searchArticles(query)</code></li>
+        <li><strong>数据映射：</strong>后端返回字段标准化（如 <code>category_name</code> → <code>category</code>）</li>
+      </ul>
+    </div>
 
-<section class="section" id="s5">
-  <div class="section-header"><div class="section-number">5</div><div><h2>数据库模型</h2><div class="section-sub">DATABASE</div></div></div>
-  <p>数据库名：<code>blog_3d</code>，使用 MySQL 关系型数据库，共 8 个数据模型。</p>
+    <div class="card">
+      <div class="card-title">auth Store — 认证状态管理</div>
+      <ul>
+        <li><strong>状态：</strong><code>user</code>, <code>token</code>（localStorage 持久化）, <code>loading</code>, <code>error</code></li>
+        <li><strong>方法：</strong><code>login(payload)</code>, <code>fetchProfile()</code>, <code>logout()</code></li>
+        <li><strong>计算属性：</strong><code>isLoggedIn</code>, <code>isAdmin</code></li>
+      </ul>
+    </div>
 
-  <h3>5.1 模型列表</h3>
-  <div class="table-wrap"><table><thead><tr><th>模型</th><th>表名</th><th>关键字段</th></tr></thead>
-  <tbody>
-    <tr><td>User</td><td>users</td><td>id(INTEGER AI PK), username(unique), email(unique), password, avatar, role(admin/author/user), created_at</td></tr>
-    <tr><td>Article</td><td>articles</td><td>id(UUID PK), title, slug(unique), content(TEXT long), summary, cover, status(draft/published/archived), author_id, category_id, view_count, like_count, is_ai_generated, published_at, content_type(html/markdown), catalog(JSON), timestamps</td></tr>
-    <tr><td>Category</td><td>categories</td><td>id(UUID PK), name, slug, description, timestamps</td></tr>
-    <tr><td>Tag</td><td>tags</td><td>id(UUID PK), name, slug, timestamps</td></tr>
-    <tr><td>ArticleTags</td><td>article_tags</td><td>article_id(FK), tag_id(FK) 联合主键</td></tr>
-    <tr><td>Comment</td><td>comments</td><td>id(STRING 36 UUID PK), article_id, user_id, parent_id, author_name, author_email, avatar, content, content_type(text/markdown), is_approved, is_ai_reply, like_count, created_at</td></tr>
-    <tr><td>VisitorLog</td><td>visitor_logs</td><td>id(INTEGER AI PK), article_id, ip, user_agent, action(view/like)</td></tr>
-    <tr><td>Announcement</td><td>announcements</td><td>id(INTEGER AI PK), content, is_active, sort_order, timestamps</td></tr>
-  </tbody></table></div>
+    <div class="card">
+      <div class="card-title">theme Store — 主题切换</div>
+      <ul>
+        <li><strong>状态：</strong><code>theme</code>（'dark' | 'light'）</li>
+        <li><strong>方法：</strong><code>toggleTheme()</code>, <code>setTheme(t)</code>, <code>initTheme()</code></li>
+        <li><strong>自动同步：</strong><code>watchEffect</code> 同步 <code>isDark</code>、localStorage 和 <code>data-theme</code> 属性</li>
+      </ul>
+    </div>
 
-  <h3>5.2 模型关联</h3>
-  <div class="layout-diagram">User (1) ──< (N) Article (author_id)
-Category (1) ──< (N) Article (category_id)
-Article (M) >──< (N) Tag (通过 article_tags)
-ArticleTags (N) ──> (1) Tag
-ArticleTags (N) ──> (1) Article
-Article (1) ──< (N) Comment (article_id)
-Comment (1) ──< (N) Comment (parent_id, 自关联回复)
-Article (1) ──< (N) VisitorLog (article_id)
-User (1) ──< (N) Comment (user_id)</div>
-</section>
+    <h3 id="frontend-components">3.3 组件树</h3>
+    <pre><code>App.vue
+├── NavBar.vue (导航栏 + 滚动进度条 + 移动端菜单)
+├── &lt;router-view&gt; (过渡动画)
+│   ├── Home.vue ── ArticleCard.vue
+│   ├── Article.vue
+│   │   ├── MdCatalog (文章目录)
+│   │   ├── AiSummary.vue (AI 摘要)
+│   │   ├── MdPreview (文章内容渲染)
+│   │   └── CommentSection.vue
+│   │       ├── MdCommentEditor.vue (Markdown 评论编辑器)
+│   │       └── CommentNode.vue (递归评论节点)
+│   ├── Categories.vue / Category.vue
+│   ├── Tags.vue ── TagCloud.vue (ECharts 词云)
+│   ├── Tag.vue
+│   ├── Archive.vue / Search.vue / About.vue / NotFound.vue
+├── Sidebar.vue (统计 + 公告 + 分类 + 标签 + 最新文章)
+└── Footer.vue (页脚)</code></pre>
 
-<section class="section" id="s6">
-  <div class="section-header"><div class="section-number">6</div><div><h2>API 接口文档</h2><div class="section-sub">API REFERENCE</div></div></div>
+    <h3>3.4 页面详细说明</h3>
+    <table>
+      <tr><th>页面</th><th>路由</th><th>功能</th></tr>
+      <tr><td>Home</td><td><code>/</code></td><td>文章列表 + 分页（10 篇/页），骨架屏加载，渐入动画</td></tr>
+      <tr><td>Article</td><td><code>/article/:id</code></td><td>文章详情，左侧目录 + 内容 + 右侧 AI 摘要 + 标签云，评论系统</td></tr>
+      <tr><td>Categories</td><td><code>/categories</code></td><td>全部分类网格展示，每项含图标 + 名称 + 文章数</td></tr>
+      <tr><td>Category</td><td><code>/category/:id/:name</code></td><td>分类下文章列表</td></tr>
+      <tr><td>Tags</td><td><code>/tags</code></td><td>标签网格 + ECharts 词云图</td></tr>
+      <tr><td>Tag</td><td><code>/tag/:id/:name</code></td><td>标签下文章列表</td></tr>
+      <tr><td>Archive</td><td><code>/archive</code></td><td>按年月归档，年份 → 月份 → 文章列表</td></tr>
+      <tr><td>Search</td><td><code>/search</code></td><td>关键词搜索，URL 参数初始化</td></tr>
+      <tr><td>About</td><td><code>/about</code></td><td>关于本站、技术栈、联系方式</td></tr>
+      <tr><td>NotFound</td><td><code>/:pathMatch(.*)*</code></td><td>404 页面</td></tr>
+    </table>
 
-  <h3>6.1 认证模块 <span class="tag purple">/api/v1/auth</span></h3>
-  <div class="table-wrap"><table><thead><tr><th>方法</th><th>路径</th><th>认证</th><th>说明</th><th>请求体</th></tr></thead>
-  <tbody>
-    <tr><td>POST</td><td><code>/login</code></td><td>❌</td><td>登录 (SVG 数学验证码)</td><td><code>{username, password, captchaKey, captchaCode}</code></td></tr>
-    <tr><td>POST</td><td><code>/register</code></td><td>❌</td><td>注册</td><td><code>{username, email, password}</code></td></tr>
-    <tr><td>GET</td><td><code>/me</code></td><td>✅ auth</td><td>获取当前用户</td><td>-</td></tr>
-    <tr><td>PUT</td><td><code>/password</code></td><td>✅ auth</td><td>修改密码</td><td><code>{old_password, new_password}</code></td></tr>
-  </tbody></table></div>
+    <!-- ==================== 管理面板 ==================== -->
+    <h2 id="admin">四、管理面板模块 (admin)</h2>
 
-  <h3>6.2 文章模块 <span class="tag purple">/api/v1/articles</span></h3>
-  <div class="table-wrap"><table><thead><tr><th>方法</th><th>路径</th><th>认证</th><th>说明</th></tr></thead>
-  <tbody>
-    <tr><td>GET</td><td><code>/</code></td><td>optionalAuth</td><td>文章列表 (分页/搜索/排序/分类/标签过滤)</td></tr>
-    <tr><td>GET</td><td><code>/:id</code></td><td>optionalAuth</td><td>文章详情 (Redis 限次 +1 阅读量)</td></tr>
-    <tr><td>POST</td><td><code>/</code></td><td>✅ auth</td><td>创建文章</td></tr>
-    <tr><td>PUT</td><td><code>/:id</code></td><td>✅ auth</td><td>更新文章</td></tr>
-    <tr><td>DELETE</td><td><code>/:id</code></td><td>✅ auth</td><td>删除文章</td></tr>
-    <tr><td>POST</td><td><code>/batch-delete</code></td><td>✅ auth</td><td>批量删除</td></tr>
-    <tr><td>POST</td><td><code>/:id/like</code></td><td>❌</td><td>文章点赞 (Redis 限流, 24h 1 次/IP)</td></tr>
-    <tr><td>POST</td><td><code>/:id/comments/:commentId/like</code></td><td>❌</td><td>评论点赞 (Redis 限流, 24h 1 次/IP)</td></tr>
-    <tr><td>GET</td><td><code>/archive</code></td><td>optionalAuth</td><td>文章归档 (按年月)</td></tr>
-    <tr><td>GET</td><td><code>/:id/comments</code></td><td>❌</td><td>评论列表 (游标分页, 无限嵌套)</td></tr>
-    <tr><td>POST</td><td><code>/:id/comments</code></td><td>❌</td><td>发表评论 (QQ 号绑定 + 验证码)</td></tr>
-  </tbody></table></div>
-  <div class="accent-block warning"><strong>限流机制：</strong>文章阅读量 — 手动 Redis 键检查，单 IP 24h 最多 3 次；文章点赞 — 单 IP 24h 最多 1 次；评论点赞 — 单 IP 24h 最多 1 次。</div>
+    <h3>4.1 路由设计</h3>
+    <pre><code>const routes = [
+  { path: '/login',               component: Login.vue },
+  { path: '/',                    component: Dashboard.vue },
+  { path: '/articles',            component: ArticleList.vue },
+  { path: '/articles/create',     component: ArticleEditor.vue },
+  { path: '/articles/edit/:id',   component: ArticleEditor.vue },
+  { path: '/categories',          component: CategoryManage.vue },
+  { path: '/tags',                component: TagManage.vue },
+  { path: '/comments',            component: CommentManage.vue },
+  { path: '/settings',            component: Settings.vue },
+  { path: '/announcements',       component: AnnouncementManage.vue },
+];</code></pre>
 
-  <h3>6.3 分类 / 标签 / 评论</h3>
-  <div class="table-wrap"><table><thead><tr><th>模块</th><th>方法</th><th>路径</th><th>认证</th><th>说明</th></tr></thead>
-  <tbody>
-    <tr><td rowspan="4">分类</td><td>GET</td><td><code>/categories</code></td><td>❌</td><td>分类列表 (含文章计数)</td></tr>
-    <tr><td>POST</td><td><code>/categories</code></td><td>✅ auth</td><td>创建分类</td></tr>
-    <tr><td>PUT</td><td><code>/categories/:id</code></td><td>✅ auth</td><td>更新分类</td></tr>
-    <tr><td>DELETE</td><td><code>/categories/:id</code></td><td>✅ auth</td><td>删除分类</td></tr>
-    <tr><td rowspan="3">标签</td><td>GET</td><td><code>/tags</code></td><td>❌</td><td>标签列表 (分页/搜索/排序)</td></tr>
-    <tr><td>POST</td><td><code>/tags</code></td><td>✅ auth</td><td>创建标签</td></tr>
-    <tr><td>PUT</td><td><code>/tags/:id</code></td><td>✅ auth</td><td>更新标签</td></tr>
-    <tr><td rowspan="4">评论</td><td>GET</td><td><code>/comments</code></td><td>✅ auth</td><td>评论列表 (管理用)</td></tr>
-    <tr><td>PUT</td><td><code>/comments/:id</code></td><td>✅ auth</td><td>审核评论</td></tr>
-    <tr><td>POST</td><td><code>/comments/:id/ai-reply</code></td><td>✅ auth</td><td>AI 自动回复评论</td></tr>
-    <tr><td>DELETE</td><td><code>/comments/:id</code></td><td>✅ auth</td><td>删除评论</td></tr>
-  </tbody></table></div>
+    <h3>4.2 页面说明</h3>
+    <table>
+      <tr><th>页面</th><th>功能</th></tr>
+      <tr><td>Login</td><td>管理员登录，表单验证，错误提示</td></tr>
+      <tr><td>Dashboard</td><td>统计卡片（文章/访问/评论/点赞数）、ECharts 柱状图（近 7 天访问趋势）、TOP5 文章</td></tr>
+      <tr><td>ArticleList</td><td>文章表格管理，支持搜索、状态筛选、批量删除、编辑/删除操作</td></tr>
+      <tr><td>ArticleEditor</td><td>文章编辑器，md-editor-v3 Markdown 编辑，AI 写作助手抽屉，元信息编辑</td></tr>
+      <tr><td>CategoryManage</td><td>分类表格，支持创建、编辑、删除、搜索</td></tr>
+      <tr><td>TagManage</td><td>标签表格，支持创建、编辑、删除、搜索、排序</td></tr>
+      <tr><td>CommentManage</td><td>评论表格，支持审核、AI 自动回复、手动回复、查看对话</td></tr>
+      <tr><td>Settings</td><td>站点信息编辑、密码修改、缓存清除、数据导出</td></tr>
+      <tr><td>AnnouncementManage</td><td>公告管理，支持创建、编辑、删除、启用/禁用、排序</td></tr>
+    </table>
 
-  <h3>6.4 AI 服务模块 <span class="tag pink">/api/v1/ai</span> (9 个端点)</h3>
-  <div class="table-wrap"><table><thead><tr><th>方法</th><th>路径</th><th>认证</th><th>说明</th></tr></thead>
-  <tbody>
-    <tr><td>POST</td><td><code>/chat</code></td><td>optionalAuth</td><td>AI 对话 (Ollama 优先，失败降级豆包)</td></tr>
-    <tr><td>POST</td><td><code>/chat/stream</code></td><td>optionalAuth</td><td>AI 流式对话 (SSE)</td></tr>
-    <tr><td>POST</td><td><code>/write</code></td><td>✅ auth</td><td>AI 创作文章 (HTML/Markdown, 自动摘要)</td></tr>
-    <tr><td>POST</td><td><code>/polish</code></td><td>✅ auth</td><td>文章润色</td></tr>
-    <tr><td>POST</td><td><code>/continue</code></td><td>✅ auth</td><td>文章续写</td></tr>
-    <tr><td>POST</td><td><code>/summary</code></td><td>❌</td><td>生成文章摘要</td></tr>
-    <tr><td>POST</td><td><code>/tags</code></td><td>✅ auth</td><td>AI 智能标签 (自动写入数据库)</td></tr>
-    <tr><td>POST</td><td><code>/cover</code></td><td>✅ auth</td><td>AI 封面图生成 (豆包)</td></tr>
-    <tr><td>POST</td><td><code>/auto-reply</code></td><td>✅ auth</td><td>AI 自动回复评论</td></tr>
-  </tbody></table></div>
+    <h3>4.3 组件说明</h3>
+    <table>
+      <tr><th>组件</th><th>功能</th></tr>
+      <tr><td>AiAssistant.vue</td><td>AI 写作助手（抽屉式），支持创作、润色、续写、标签推荐、封面生成，流式 SSE 输出</td></tr>
+      <tr><td>CoverGenerator.vue</td><td>AI 封面生成器，支持上传图片 + AI 生成（Chiikawa 风格）双模式</td></tr>
+    </table>
 
-  <h3>6.5 其他模块</h3>
-  <div class="table-wrap"><table><thead><tr><th>方法</th><th>路径</th><th>认证</th><th>说明</th></tr></thead>
-  <tbody>
-    <tr><td>GET</td><td><code>/admin/stats</code></td><td>optionalAuth</td><td>站点统计</td></tr>
-    <tr><td>PUT</td><td><code>/admin/settings</code></td><td>✅ auth</td><td>站点设置</td></tr>
-    <tr><td>POST</td><td><code>/admin/cache/clear</code></td><td>✅ auth</td><td>清除 Redis 缓存</td></tr>
-    <tr><td>GET</td><td><code>/admin/export</code></td><td>✅ auth</td><td>导出文章 JSON</td></tr>
-    <tr><td>GET</td><td><code>/captcha</code></td><td>❌</td><td>SVG 数学验证码</td></tr>
-    <tr><td>POST</td><td><code>/comment-upload</code></td><td>❌</td><td>评论图片上传 (NSFW 检测, 5MB)</td></tr>
-    <tr><td>GET</td><td><code>/announcements</code></td><td>optionalAuth</td><td>公告列表</td></tr>
-    <tr><td>GET</td><td><code>/site/info</code></td><td>optionalAuth</td><td>站点信息</td></tr>
-  </tbody></table></div>
-</section>
+    <!-- ==================== 后端 ==================== -->
+    <h2 id="backend">五、后端模块 (backend)</h2>
 
-<section class="section" id="s7">
-  <div class="section-header"><div class="section-number">7</div><div><h2>前端架构详情</h2><div class="section-sub">FRONTEND ARCHITECTURE</div></div></div>
+    <h3 id="backend-routes">5.1 路由模块详细说明</h3>
 
-  <h3>7.1 全局布局</h3>
-  <div class="layout-diagram">┌─────────────────────────────────────────────────────────────┐
-│  NavBar (固定顶部, z-50, 毛玻璃效果, 滚动激活)               │
-│  ├── Logo (TechMind Blog)                                   │
-│  ├── 导航链接 (首页/分类/标签/归档/搜索/关于)                 │
-│  ├── 深色/浅色模式切换按钮                                    │
-│  └── 移动端汉堡菜单 (全屏 fixed, z-index:60)                  │
-├──────────────────────────────┬──────────────────────────────┤
-│  Main Content                 │  Sidebar (桌面端)            │
-│  (flex-1)                    │  (hidden md:block w-64)      │
-│  &lt;router-view&gt;               │  ├── 头像 + 简介              │
-│  + 页面过渡动画 (page-fade)    │  ├── 统计 + GitHub 链接       │
-│                               │  ├── 公告 / 分类 / 标签       │
-│                               │  └── 最新文章                 │
-├──────────────────────────────┴──────────────────────────────┤
-│  Footer: &copy; TechMind Blog. Powered by Vue 3 + Tailwind   │
-└─────────────────────────────────────────────────────────────┘</div>
+    <h4>认证模块 (<code>/api/v1/auth</code>)</h4>
+    <table>
+      <tr><th>方法</th><th>路径</th><th>认证</th><th>说明</th></tr>
+      <tr><td>POST</td><td><code>/login</code></td><td><span class="badge badge-orange">否</span></td><td>用户名+密码登录，返回 JWT + 用户信息</td></tr>
+      <tr><td>POST</td><td><code>/register</code></td><td><span class="badge badge-orange">否</span></td><td>注册新用户，验证唯一性</td></tr>
+      <tr><td>GET</td><td><code>/me</code></td><td><span class="badge badge-blue">是</span></td><td>获取当前用户信息</td></tr>
+      <tr><td>PUT</td><td><code>/password</code></td><td><span class="badge badge-blue">是</span></td><td>修改密码，需验证旧密码</td></tr>
+    </table>
 
-  <h3>7.2 主题系统</h3>
-  <ul>
-    <li><strong>切换机制</strong>：<code>document.documentElement.setAttribute('data-theme', theme)</code></li>
-    <li><strong>深色模式变体</strong>：<code>@custom-variant dark</code></li>
-    <li><strong>持久化</strong>：<code>localStorage</code> 存储，初始化检测系统偏好</li>
-    <li><strong>自定义 CSS 变量</strong>：--color-bg, --color-card, --color-primary, --color-text, --color-border 等</li>
-  </ul>
+    <h4>文章模块 (<code>/api/v1/articles</code>)</h4>
+    <table>
+      <tr><th>方法</th><th>路径</th><th>认证</th><th>说明</th></tr>
+      <tr><td>GET</td><td><code>/</code></td><td><span class="badge badge-orange">否</span></td><td>分页查询，支持分类/标签/关键词筛选</td></tr>
+      <tr><td>GET</td><td><code>/archive</code></td><td><span class="badge badge-orange">否</span></td><td>按年月归档</td></tr>
+      <tr><td>GET</td><td><code>/:id</code></td><td><span class="badge badge-orange">否</span></td><td>文章详情，阅读量限流（单 IP 24h 最多 +3）</td></tr>
+      <tr><td>POST</td><td><code>/</code></td><td><span class="badge badge-blue">是</span></td><td>创建文章，自动处理标签</td></tr>
+      <tr><td>POST</td><td><code>/batch-delete</code></td><td><span class="badge badge-blue">是</span></td><td>批量删除</td></tr>
+      <tr><td>PUT</td><td><code>/:id</code></td><td><span class="badge badge-blue">是</span></td><td>更新文章</td></tr>
+      <tr><td>DELETE</td><td><code>/:id</code></td><td><span class="badge badge-blue">是</span></td><td>删除文章</td></tr>
+      <tr><td>GET</td><td><code>/:id/comments</code></td><td><span class="badge badge-orange">否</span></td><td>获取评论（游标分页，无限嵌套）</td></tr>
+      <tr><td>POST</td><td><code>/:id/comments</code></td><td><span class="badge badge-orange">否</span></td><td>发表评论（需 QQ + 验证码）</td></tr>
+      <tr><td>POST</td><td><code>/:id/like</code></td><td><span class="badge badge-orange">否</span></td><td>文章点赞（IP 限流 24h）</td></tr>
+      <tr><td>POST</td><td><code>/:id/comments/:commentId/like</code></td><td><span class="badge badge-orange">否</span></td><td>评论点赞（IP 限流 24h）</td></tr>
+    </table>
 
-  <h3>7.3 SEO 系统</h3>
-  <p>基于 <code>@unhead/vue</code> 实现完整的 SEO 元信息管理，支持 Open Graph、Twitter Card、canonical URL。</p>
+    <h4>AI 服务模块 (<code>/api/v1/ai</code>)</h4>
+    <table>
+      <tr><th>方法</th><th>路径</th><th>说明</th></tr>
+      <tr><td>POST</td><td><code>/chat</code></td><td>普通对话，支持自定义 systemPrompt</td></tr>
+      <tr><td>POST</td><td><code>/chat/stream</code></td><td>SSE 流式对话</td></tr>
+      <tr><td>POST</td><td><code>/write</code></td><td>AI 创作文章（HTML/Markdown 双格式）</td></tr>
+      <tr><td>POST</td><td><code>/polish</code></td><td>AI 润色文章</td></tr>
+      <tr><td>POST</td><td><code>/continue</code></td><td>AI 续写文章</td></tr>
+      <tr><td>POST</td><td><code>/summary</code></td><td>AI 生成摘要</td></tr>
+      <tr><td>POST</td><td><code>/tags</code></td><td>AI 标签推荐（自动创建到数据库）</td></tr>
+      <tr><td>POST</td><td><code>/cover</code></td><td>AI 封面图生成（Chiikawa 风格）</td></tr>
+      <tr><td>POST</td><td><code>/auto-reply</code></td><td>AI 自动回复评论</td></tr>
+    </table>
 
-  <h3>7.4 状态管理 (Pinia)</h3>
-  <div class="table-wrap"><table><thead><tr><th>Store</th><th>职责</th><th>关键方法</th></tr></thead>
-  <tbody>
-    <tr><td><code>article.ts</code></td><td>文章数据管理</td><td><code>fetchArticles()</code>, <code>fetchArticle(id)</code>, <code>searchArticles()</code><br><strong>字段映射：</strong>后端 <code>cover</code> → 前端 <code>cover_image</code>, <code>summary</code> → <code>excerpt</code></td></tr>
-    <tr><td><code>auth.ts</code></td><td>用户认证</td><td><code>login()</code>, <code>logout()</code>, <code>fetchProfile()</code></td></tr>
-    <tr><td><code>theme.ts</code></td><td>主题切换</td><td><code>toggleTheme()</code>, <code>initTheme()</code></td></tr>
-  </tbody></table></div>
+    <h3 id="backend-models">5.2 数据模型关联图</h3>
+    <pre><code>User ──1:N──> Article ──N:M──> Tag
+                    │            └── ArticleTags (中间表)
+                    │
+                    ├──1:N──> Comment ──self (parent_id 嵌套回复)
+                    │
+                    └──1:N──> VisitorLog
 
-  <h3>7.5 AI 与评论组件</h3>
-  <div class="table-wrap"><table><thead><tr><th>组件</th><th>功能</th><th>说明</th></tr></thead>
-  <tbody>
-    <tr><td>AiSummary.vue</td><td>AI 文章摘要</td><td>可折叠卡片展示，调用 /api/v1/ai/summary</td></tr>
-    <tr><td>CommentSection.vue</td><td>评论区容器</td><td>游标分页, 无限嵌套评论列表</td></tr>
-    <tr><td>CommentNode.vue</td><td>评论节点</td><td>"A 回复 B" 布局, AI 标识, 递归渲染, 高亮动画</td></tr>
-    <tr><td>MdCommentEditor.vue</td><td>Markdown 编辑器</td><td>md-editor-v3 二次封装, 图片上传, Emoji</td></tr>
-  </tbody></table></div>
-</section>
+Category ──1:N──> Article</code></pre>
 
-<section class="section" id="s8">
-  <div class="section-header"><div class="section-number">8</div><div><h2>后端架构详情</h2><div class="section-sub">BACKEND ARCHITECTURE</div></div></div>
+    <h3>5.3 数据模型详情</h3>
+    <table>
+      <tr><th>模型</th><th>表名</th><th>主键</th><th>关键字段</th></tr>
+      <tr><td>User</td><td>users</td><td>自增 ID</td><td>nickname, username, email, password, avatar, role (enum)</td></tr>
+      <tr><td>Article</td><td>articles</td><td>UUID</td><td>title, slug, content (TEXT long), summary, cover, status (enum), author_id, category_id, view_count, like_count, content_type, catalog (JSON)</td></tr>
+      <tr><td>Category</td><td>categories</td><td>UUID</td><td>name, slug, description</td></tr>
+      <tr><td>Tag</td><td>tags</td><td>UUID</td><td>name, slug</td></tr>
+      <tr><td>ArticleTags</td><td>article_tags</td><td>复合主键</td><td>article_id, tag_id</td></tr>
+      <tr><td>Comment</td><td>comments</td><td>UUID</td><td>article_id, user_id, parent_id (自关联), author_name, content, is_ai_reply, is_approved, like_count</td></tr>
+      <tr><td>VisitorLog</td><td>visitor_logs</td><td>自增 ID</td><td>article_id, ip, user_agent, action</td></tr>
+      <tr><td>Announcement</td><td>announcements</td><td>自增 ID</td><td>content, is_active, sort_order</td></tr>
+    </table>
 
-  <h3>8.1 配置管理</h3>
-  <div class="table-wrap"><table><thead><tr><th>配置项</th><th>环境变量</th><th>默认值</th></tr></thead>
-  <tbody>
-    <tr><td>端口</td><td>BACKEND_PORT</td><td>3000</td></tr>
-    <tr><td>数据库</td><td>DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD</td><td>localhost:3306/blog_3d</td></tr>
-    <tr><td>Redis</td><td>REDIS_HOST, REDIS_PORT, REDIS_PASSWORD</td><td>localhost:6379</td></tr>
-    <tr><td>JWT</td><td>JWT_SECRET, JWT_EXPIRES_IN</td><td>7d</td></tr>
-    <tr><td>豆包 AI</td><td>DOUBAO_API_KEY, DOUBAO_BASE_URL, DOUBAO_CHAT_MODEL, DOUBAO_IMAGE_MODEL</td><td>-</td></tr>
-    <tr><td>Ollama</td><td>OLLAMA_HOST, OLLAMA_CHAT_ENABLED, OLLAMA_CHAT_MODEL</td><td>localhost:11434, true, glm4:9b</td></tr>
-    <tr><td>上传</td><td>UPLOAD_DIR, MAX_FILE_SIZE</td><td>./uploads, 10mb</td></tr>
-    <tr><td>CORS</td><td>CORS_ORIGIN</td><td>localhost:5173,localhost:5174</td></tr>
-  </tbody></table></div>
+    <h3 id="backend-ai">5.4 AI 服务架构</h3>
+    <pre><code>AI 路由层 (routes/ai.js)
+  ├── AI 服务层 (services/ai/)
+  │   ├── chat.js ──────────→ 豆包 API (OpenAI SDK)
+  │   │                        └── 失败降级 → ollamaChat.js
+  │   ├── ollamaChat.js ────→ Ollama 本地 API (fetch)
+  │   ├── summary.js ───────→ 豆包 API
+  │   ├── tag.js ───────────→ 豆包 API
+  │   └── image.js ─────────→ 豆包文生图 API
+  │                            ├── extractCoverKeywords() → LLM 提取关键词
+  │                            └── buildChiikawaCoverPrompt() → 构建 prompt
+  └── 提示词模板 (prompt/)
+      ├── md-prompt.txt / html-prompt.txt (创作)
+      ├── md-polish-prompt.txt / html-polish-prompt.txt (润色)
+      ├── md-continue-prompt.txt / html-continue-prompt.txt (续写)
+      ├── cover-image-prompt.txt (封面图)
+      ├── cover-keywords-extract.txt (关键词提取)
+      └── comment-reply-prompt.txt (评论回复)</code></pre>
 
-  <h3>8.2 AI 双驱动架构</h3>
-  <div class="layout-diagram">客户端请求
-    │
-    ▼
-AI 服务层 (services/ai/index.js)
-    │
-    ├── chat.js          对话双驱动
-    │   ├── ollamaChat.js    (OLLAMA_CHAT_ENABLED=true 时优先)
-    │   └── openai SDK      (Ollama 失败或禁用时降级到豆包)
-    │
-    ├── summary.js       文章摘要生成 (单篇/批量)
-    ├── tag.js           标签生成 (自动写入数据库)
-    └── image.js         封面图生成 (豆包)</div>
+    <h3 id="backend-security">5.5 安全机制</h3>
+    <table>
+      <tr><th>安全层</th><th>实现方式</th><th>说明</th></tr>
+      <tr><td>HTTP 安全头</td><td>Helmet</td><td>设置 CSP、X-Frame-Options 等</td></tr>
+      <tr><td>跨域控制</td><td>CORS</td><td>限制允许的源</td></tr>
+      <tr><td>全局限流</td><td>express-rate-limit</td><td>15 分钟 300 次</td></tr>
+      <tr><td>局部限流</td><td>Redis rate-limit</td><td>图片上传每分钟 3 次/IP</td></tr>
+      <tr><td>自定义限流</td><td>rateLimit.js 工厂</td><td>点赞 24h 限流</td></tr>
+      <tr><td>JWT 验证</td><td>jsonwebtoken</td><td>7 天过期</td></tr>
+      <tr><td>图片安全</td><td>sharp NSFW 检测</td><td>肤色像素 > 70% 拦截</td></tr>
+    </table>
 
-  <h3>8.3 限流系统</h3>
-  <div class="table-wrap"><table><thead><tr><th>限流点</th><th>实现方式</th><th>窗口</th><th>上限</th></tr></thead>
-  <tbody>
-    <tr><td>全局 API</td><td>express-rate-limit 中间件</td><td>15 分钟</td><td>300 次</td></tr>
-    <tr><td>文章阅读量</td><td>手动 Redis 键检查</td><td>24 小时</td><td>3 次/IP</td></tr>
-    <tr><td>文章点赞</td><td>手动 Redis 键检查</td><td>24 小时</td><td>1 次/IP</td></tr>
-    <tr><td>评论点赞</td><td>手动 Redis 键检查</td><td>24 小时</td><td>1 次/IP</td></tr>
-    <tr><td>评论图片上传</td><td>自定义 createRateLimit</td><td>1 分钟</td><td>3 次/IP</td></tr>
-  </tbody></table></div>
+    <h3>5.6 中间件执行链</h3>
+    <pre><code>请求 → helmet → cors → morgan → express-rate-limit
+  → 路由匹配 → [auth/optionalAuth] → [自定义限流] → 控制器
+  → 响应 → errorHandler (错误时)</code></pre>
 
-  <h3>8.4 邮件通知</h3>
-  <ul>
-    <li>发送方：QQ 邮箱 SMTP (smtp.qq.com:465)</li>
-    <li>用途：评论回复邮件通知 (Nodemailer)</li>
-    <li>触发条件：发表评论时如有 parent_id, 自动发送通知给被回复者</li>
-  </ul>
+    <!-- ==================== 部署 ==================== -->
+    <h2 id="deploy">六、部署架构</h2>
 
-  <h3>8.5 中间件体系</h3>
-  <div class="table-wrap"><table><thead><tr><th>中间件</th><th>文件</th><th>功能</th></tr></thead>
-  <tbody>
-    <tr><td>JWT 认证</td><td>middleware/auth.js</td><td><code>auth</code> (必须登录) / <code>optionalAuth</code> (可选登录)</td></tr>
-    <tr><td>文件上传</td><td>middleware/upload.js</td><td>Multer diskStorage, 10MB, UUID 重命名</td></tr>
-    <tr><td>错误处理</td><td>middleware/errorHandler.js</td><td>全局错误捕获, 统一 JSON 响应格式</td></tr>
-  </tbody></table></div>
-</section>
+    <h3>6.1 开发环境</h3>
+    <div class="arch-diagram">
+      <div class="arch-node" style="min-width: 400px;">开发机器</div>
+      <div class="arch-row">
+        <div class="arch-node sub">frontend:5173<br><small>Vite 开发服务器</small></div>
+        <div class="arch-node sub">admin:5174<br><small>Vite 开发服务器</small></div>
+        <div class="arch-node sub">backend:3000<br><small>Express 服务</small></div>
+      </div>
+      <div class="arch-arrow">⬇ Vite 代理 /api → :3000</div>
+      <div class="arch-row">
+        <div class="arch-node sub">MySQL:3306</div>
+        <div class="arch-node sub">Redis:6379</div>
+        <div class="arch-node sub">Ollama:11434</div>
+      </div>
+    </div>
 
-<section class="section" id="s9">
-  <div class="section-header"><div class="section-number">9</div><div><h2>访客日志</h2><div class="section-sub">VISITOR LOGS</div></div></div>
-  <p>通过 <code>VisitorLog</code> 模型定义访客日志结构，但<strong>未主动写入</strong>日志记录 — 阅读量和点赞计数直接操作 Redis 键值，不创建 VisitorLog 行。模型保留以供后续扩展。</p>
-  <div class="table-wrap"><table><thead><tr><th>动作</th><th>Redis 键格式</th><th>TTL</th><th>上限</th></tr></thead>
-  <tbody>
-    <tr><td><span class="tag blue">view</span></td><td><code>article_view:{articleId}:{ip}</code></td><td>86400s</td><td>3 次/IP/天</td></tr>
-    <tr><td><span class="tag orange">like</span></td><td><code>article_like:{articleId}:{ip}</code></td><td>86400s</td><td>1 次/IP/天</td></tr>
-  </tbody></table></div>
-</section>
+    <h3>6.2 生产环境</h3>
+    <div class="arch-diagram">
+      <div class="arch-row">
+        <div class="arch-node sub">Nginx 反向代理<br><small>frontend:80 (静态文件)</small></div>
+        <div class="arch-node sub">Nginx 反向代理<br><small>admin:80 (静态文件)</small></div>
+        <div class="arch-node sub">Nginx 反向代理<br><small>backend:80 (API 代理)</small></div>
+      </div>
+      <div class="arch-arrow">⬇</div>
+      <div class="arch-node sub">Docker 容器<br><small>backend:3000</small></div>
+      <div class="arch-arrow">⬇</div>
+      <div class="arch-row">
+        <div class="arch-node sub">MySQL:3306</div>
+        <div class="arch-node sub">Redis:6379</div>
+      </div>
+    </div>
 
-<section class="section" id="s10">
-  <div class="section-header"><div class="section-number">10</div><div><h2>环境依赖</h2><div class="section-sub">ENVIRONMENT</div></div></div>
+    <h3>6.3 Docker 部署</h3>
+    <pre><code>cd backend
+docker build -t blog-backend .
+docker run -d -p 3000:3000 \
+  -e DB_HOST=your-db-host \
+  -e REDIS_HOST=your-redis-host \
+  -v /path/to/uploads:/blog-app/uploads \
+  blog-backend</code></pre>
 
-  <h3>10.1 外部服务</h3>
-  <div class="table-wrap"><table><thead><tr><th>服务</th><th>用途</th><th>默认地址</th></tr></thead>
-  <tbody>
-    <tr><td>MySQL</td><td>关系型数据库</td><td>localhost:3306</td></tr>
-    <tr><td>Redis</td><td>缓存 + 限流 + 验证码存储</td><td>localhost:6379</td></tr>
-    <tr><td>Ollama (可选)</td><td>本地大模型 (对话)</td><td>localhost:11434</td></tr>
-    <tr><td>豆包 API</td><td>云端 AI 服务</td><td>火山引擎</td></tr>
-    <tr><td>QQ 邮箱 SMTP</td><td>评论通知邮件</td><td>smtp.qq.com:465</td></tr>
-  </tbody></table></div>
+    <!-- ==================== 开发指南 ==================== -->
+    <h2 id="guide">七、开发指南</h2>
 
-  <h3>10.2 启动命令</h3>
-  <div class="layout-diagram"># 后端
-cd backend && npm install
-npm run dev-backend     # 开发模式 (nodemon)
-npm run start-backend   # 生产模式
+    <h3>7.1 代码规范</h3>
+    <ul>
+      <li>后端使用 CommonJS 模块（<code>require</code> / <code>module.exports</code>）</li>
+      <li>前端使用 ESM 模块（<code>import</code> / <code>export</code>）</li>
+      <li>Vue 组件使用 <code>&lt;script setup lang="ts"&gt;</code> 组合式 API</li>
+      <li>后端路由统一返回格式：<code>success(res, data)</code>, <code>error(res, msg)</code>, <code>paginated(res, {list, total, page, pageSize})</code></li>
+      <li>错误处理由 <code>errorHandler.js</code> 中间件统一捕获</li>
+    </ul>
 
-# 前端
-cd frontend && npm install
-npm run dev-frontend    # 开发模式 (vite)
-npm run build           # 构建
+    <h3>7.2 新增页面流程</h3>
+    <ol>
+      <li>在 <code>pages/</code> 目录下创建 Vue 组件</li>
+      <li>在 <code>router/index.ts</code> 中添加路由配置（懒加载）</li>
+      <li>如需状态管理，更新对应 Pinia Store</li>
+      <li>对接后端 API（Axios 实例已预配置）</li>
+      <li>设置 SEO（<code>usePageSeo</code> 或 <code>useArticleSeo</code>）</li>
+    </ol>
 
-# 管理面板
-cd admin && npm install
-npm run dev-admin       # 开发模式 (vite)
-npm run build           # 构建</div>
+    <h3>7.3 新增 API 端点流程</h3>
+    <ol>
+      <li>在 <code>routes/</code> 目录下创建或修改路由文件</li>
+      <li>在 <code>app.js</code> 中注册路由</li>
+      <li>如需数据库操作，在 <code>models/</code> 中定义或修改模型</li>
+      <li>使用 <code>response.js</code> 的 <code>success/error/paginated</code> 统一返回</li>
+      <li>根据需要添加认证中间件（<code>auth</code> / <code>optionalAuth</code>）</li>
+    </ol>
 
-  <h3>10.3 访问地址</h3>
-  <div class="table-wrap"><table><thead><tr><th>服务</th><th>地址</th><th>说明</th></tr></thead>
-  <tbody>
-    <tr><td>博客前端</td><td>http://localhost:5173</td><td>博客前台</td></tr>
-    <tr><td>管理后台</td><td>http://localhost:5174</td><td>默认账号: admin / admin123</td></tr>
-    <tr><td>后端 API</td><td>http://localhost:3000</td><td>RESTful API</td></tr>
-  </tbody></table></div>
-</section>
+    <div class="info-box">
+      <strong>提示：</strong>更多技术细节请参考各子系统的源代码和 README.md 文件。
+    </div>
 
-<section class="section" id="s11">
-  <div class="section-header"><div class="section-number">11</div><div><h2>版本信息</h2><div class="section-sub">VERSION HISTORY</div></div></div>
-  <div class="table-wrap"><table><thead><tr><th>版本</th><th>日期</th><th>变更内容</th></tr></thead>
-  <tbody>
-    <tr><td><strong>v3.0</strong></td><td><strong>2026-07-13</strong></td><td><strong>移除 Chroma RAG 知识库模块；移除翻译功能；移除前端 AiChatWidget 悬浮聊天组件；管理面板文章编辑器改为 Markdown 独占（移除 wangEditor 富文本编辑器）；优化编辑器布局（全宽编辑区 + 抽屉式元信息/AI 面板）；全面重构技术文档</strong></td></tr>
-    <tr><td>v2.2</td><td>2026-05-20</td><td>代码审查校准：修正模型字段描述、SEO 实现方式、限流机制说明</td></tr>
-    <tr><td>v2.1</td><td>2026-05-20</td><td>文档重构：补充 Comment 缺失字段、明确 AI 双驱动架构</td></tr>
-    <tr><td>v2.0</td><td>2026-05-20</td><td>集成 Chroma RAG 知识库、AI 流式对话、Redis 限流、Markdown 评论编辑器</td></tr>
-    <tr><td>v1.0</td><td>2026-01-15</td><td>初始版本：三子系统架构、基础 CRUD、AI 写作、JWT 认证</td></tr>
-  </tbody></table></div>
-</section>
-
-<section class="section" id="s12">
-  <div class="section-header"><div class="section-number">12</div><div><h2>架构决策记录</h2><div class="section-sub">ARCHITECTURE DECISIONS</div></div></div>
-
-  <div class="table-wrap"><table><thead><tr><th>决策</th><th>说明</th></tr></thead>
-  <tbody>
-    <tr><td>Ollama + 豆包双驱动</td><td>Ollama 提供本地推理，无网络依赖；豆包 API 提供云端大模型能力。Ollama 不可用时自动降级到豆包</td></tr>
-    <tr><td>三种限流方式并存</td><td>全局 API 用 express-rate-limit；资源级限流用手动 Redis 键检查；自定义场景用 createRateLimit 工具函数</td></tr>
-    <tr><td>@unhead/vue SEO</td><td>替代 vite-plugin-prerender (ESM 不兼容)，运行时动态设置 OG/Twitter/canonical</td></tr>
-    <tr><td>评论 NSFW 检测</td><td>评论图片上传自动检测 NSFW 内容 (像素级肤色分析)，保障内容安全</td></tr>
-    <tr><td>SVG 验证码</td><td>登录使用数学验证码 + Redis 一次性校验，防止暴力破解</td></tr>
-    <tr><td>评论 QQ 号绑定</td><td>发表评论使用 QQ 号自动获取昵称和头像，降低垃圾评论风险</td></tr>
-    <tr><td>游标分页</td><td>评论列表使用游标分页 (cursor-based)，避免深度分页性能问题</td></tr>
-    <tr><td>管理面板 Markdown 独占</td><td>编辑器从双模式简化为纯 Markdown，降低维护成本，统一创作体验</td></tr>
-    <tr><td>抽屉式编辑器布局</td><td>元信息面板和 AI 助手改为可展开抽屉，默认隐藏，解决页面拥挤和编辑区遮挡问题</td></tr>
-    <tr><td>移除 RAG 知识库</td><td>移除 Chroma 向量数据库依赖，简化系统架构，减少外部服务依赖</td></tr>
-  </tbody></table></div>
-  <div class="accent-block success"><strong>文档版本：</strong>v3.0 | 最后更新：2026-07-13</div>
-</section>
-
-<footer class="footer">
-  <p>TechMind Blog &mdash; 项目架构文档</p>
-  <p style="margin-top:4px;">Technologies: Vue 3 · Express · Sequelize · MySQL · Redis · Ollama · Tailwind CSS · Ant Design Vue</p>
-  <p style="margin-top:12px;"><a href="#">返回顶部</a></p>
-</footer>
-
+    <hr style="margin: 48px 0; border: none; border-top: 1px solid var(--border);">
+    <p style="text-align: center; color: var(--text-secondary); font-size: 13px;">
+      TechMind Blog · 架构文档 v3.0 · 基于 MIT 许可证开源
+    </p>
+  </main>
 </div>
 </body>
 </html>

@@ -186,21 +186,18 @@ router.post('/cover', auth, async (req, res, next) => {
     try {
         const {prompt, title, content, summary: articleSummary} = req.body;
 
-        let imagePrompt = prompt;
-        if (!imagePrompt) {
-            const plainContent = stripHtml(content) || '';
-            const contextText = [title, articleSummary, plainContent.substring(0, 500)].filter(Boolean).join('. ');
-
-            if (contextText) {
-                const aiSummary = await ai.summary.summarize(contextText, {maxLength: 100});
-                imagePrompt = aiSummary;
-            }
-        }
-        if (!imagePrompt) {
-            return error(res, '提示词或文章内容不能为空', 400);
+        // 如果用户提供了自定义提示词，直接用于文生图
+        if (prompt && prompt.trim()) {
+            const result = await ai.image.generateImage(prompt.trim(), {n: 1, size: '1920x1920'});
+            return success(res, result.images[0]);
         }
 
-        const result = await ai.image.generateArticleCover(imagePrompt);
+        if (!title && !content && !articleSummary) {
+            return error(res, '提示词、标题、内容或摘要至少提供一项', 400);
+        }
+
+        // 使用 Chiikawa 风格模板：先提取关键词，再填充提示词模板生成封面
+        const result = await ai.image.generateArticleCover(title, articleSummary, content);
 
         return success(res, result);
     } catch (err) {

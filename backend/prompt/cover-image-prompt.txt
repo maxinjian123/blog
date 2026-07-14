@@ -1,0 +1,26 @@
+Chiikawa (ちいかわ) official manga style educational illustration, {{aspectRatio}}, explaining {{topic}}.
+
+=== TITLE ===
+"{{mainTitle}}" in soft pink (#FFB7C5) rounded font
+{{subTitle}}
+
+=== SCENE & LAYOUT ===
+Layout: {{layoutType}} (based on the logic of the MAIN CONTENT below)
+
+Background: Soft gradient cream (#FFF8E7) to {{themeColor}}, minimal {{decorativeElements}}
+
+=== MAIN CONTENT ===
+Use different official Chiikawa Characters such as Chiikawa / Hachiware / Usagi
+{{contentSections}}
+
+=== KEY CONCEPTS ===
+{{keyConceptsCount}} floating info boxes with cute borders:
+{{keyConcepts}}
+
+=== CHIIKAWA STYLE ===
+Official Chiikawa aesthetic: round bodies, large sparkly eyes, pink blush (三), tiny limbs, super deformed proportions, gentle line art
+
+=== MOOD ===
+{{emotionalTone}}, {{educationalGoal}}, cute but informative
+
+Quality: High-quality Chiikawa illustration, clear visual hierarchy, {{purpose}}

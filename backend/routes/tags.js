@@ -1,6 +1,6 @@
 const express = require('express')
 const {auth} = require('../middleware/auth')
-const {success, error} = require('../utils/response')
+const {success, error, paginated} = require('../utils/response')
 const {Tag, Article, User} = require('../models')
 const {Sequelize, Op, literal} = require('sequelize')
 const {sequelize} = require('../models')
@@ -22,13 +22,6 @@ router.get('/', async (req, res, next) => {
         }
         const offset = (page - 1) * pageSize
 
-        if (All && All !== 'true') {
-            //拼接分页
-            where.limit = pageSize
-            where.offset = offset
-        }
-
-
         const articleCountLiteral = literal(`(
       SELECT COUNT(*)
       FROM article_tags
@@ -37,21 +30,22 @@ router.get('/', async (req, res, next) => {
 
         const sortOrder = [[sort === 'articleCount' ? literal('articleCount') : sort, order]]
 
-        const {count, rows} = await Tag.findAndCountAll({
+        const queryOptions = {
             attributes: {
                 include: [[articleCountLiteral, 'articleCount']]
             },
             where,
             order: sortOrder
-        })
+        }
 
-        return success(res, {
-            list: rows,
-            total: count,
-            page: page,
-            pageSize: pageSize,
-            totalPages: Math.ceil(count / pageSize)
-        })
+        if (All !== 'true') {
+            queryOptions.limit = pageSize
+            queryOptions.offset = offset
+        }
+
+        const {count, rows} = await Tag.findAndCountAll(queryOptions)
+
+        return paginated(res, {list: rows, total: count, page, pageSize})
     } catch (err) {
         next(err)
     }
@@ -96,13 +90,7 @@ router.get('/:id/articles', async (req, res, next) => {
             offset: (page - 1) * pageSize
         })
 
-        return success(res, {
-            list: rows,
-            total: count,
-            page,
-            pageSize,
-            totalPages: Math.ceil(count / pageSize)
-        })
+        return paginated(res, {list: rows, total: count, page, pageSize})
     } catch (err) {
         next(err)
     }

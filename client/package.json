@@ -1,0 +1,30 @@
+{
+  "name": "3d-blog-client",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev-client": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@layui/layui-vue": "^2.19.11",
+    "@vavt/v3-extension": "^5.0.0",
+    "axios": "^1.7.9",
+    "marked": "^18.0.4",
+    "md-editor-v3": "^6.5.3",
+    "pinia": "^2.3.0",
+    "vue": "^3.5.39",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "@types/marked": "^6.0.0",
+    "@types/node": "^24.13.2",
+    "@vitejs/plugin-vue": "^6.0.7",
+    "@vue/tsconfig": "^0.9.1",
+    "typescript": "~5.6.3",
+    "vite": "^8.1.1",
+    "vue-tsc": "^2.2.0"
+  }
+}

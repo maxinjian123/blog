@@ -1,5 +1,7 @@
 const OpenAI = require('openai');
 const config = require('../../config');
+const chat = require('./chat');
+const {loadPrompt, replacePlaceholders} = require('../../utils');
 
 const client = new OpenAI({
   baseURL: config.doubao.baseURL,
@@ -34,18 +36,113 @@ async function generateImage(prompt, options = {}) {
   };
 }
 
-async function generateArticleCover(articleTitle, articleSummary = '') {
-  const prompt = articleSummary
-    ? `Create a visually appealing article cover image for a blog post titled "${articleTitle}". 
-The article is about: ${articleSummary}.
-Style: Modern, clean, professional blog cover with abstract 3D elements. 
-Use a sophisticated color palette. No text in the image.`
-    : `Create a visually appealing article cover image for a blog post titled "${articleTitle}".
-Style: Modern, clean, professional blog cover with abstract 3D elements.
-Use a sophisticated color palette. No text in the image.`;
-
-  const result = await generateImage(prompt, { n: 1, size: '1920x1920' });
-  return result.images[0];
+function stripHtml(html) {
+  if (!html) return '';
+  return html
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
-module.exports = { generateImage, generateArticleCover };
+function truncateText(text, maxLength = 2000) {
+  if (!text || text.length <= maxLength) return text || '';
+  return text.substring(0, maxLength).trim() + '...';
+}
+
+function parseJsonResponse(content) {
+  if (!content) throw new Error('AI 返回为空');
+  const cleaned = content
+    .replace(/^```json\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
+  return JSON.parse(cleaned);
+}
+
+function formatContentSections(sections) {
+  if (!Array.isArray(sections) || sections.length === 0) return '';
+  return sections
+    .map((section, index) => {
+      const lines = [
+        `[CONTENT_SECTION_${index + 1}]`,
+        `Character: ${section.character || 'Chiikawa'}`,
+        `- ${section.actionAndExpression || 'standing happily'}`,
+        `- ${section.propsOrItems || 'a small notebook'}`,
+        `Visual: ${section.keyVisualElement || 'a cute educational scene'}`,
+        `Label: "${section.labelText || 'Step ' + (index + 1)}"`,
+        `${section.dialogueOrAnnotation || ''}`,
+      ];
+      return lines.join('\n');
+    })
+    .join('\n\n');
+}
+
+function formatKeyConcepts(concepts) {
+  if (!Array.isArray(concepts) || concepts.length === 0) return '';
+  return concepts
+    .map((concept, index) => `Box ${index + 1}: "${concept}"`)
+    .join('\n');
+}
+
+async function extractCoverKeywords(articleTitle, articleSummary = '', articleContent = '') {
+  const systemPrompt = await loadPrompt('cover-keywords-extract.txt');
+  const plainContent = stripHtml(articleContent);
+  const context = truncateText(
+    [
+      `Title: ${articleTitle || ''}`,
+      `Summary: ${articleSummary || ''}`,
+      `Content: ${plainContent || ''}`,
+    ]
+      .filter(Boolean)
+      .join('\n\n'),
+    3000
+  );
+
+  const reply = await chat.chatSimple(context, systemPrompt);
+  return parseJsonResponse(reply);
+}
+
+async function buildChiikawaCoverPrompt(keywords) {
+  const template = await loadPrompt('cover-image-prompt.txt');
+
+  const placeholders = {
+    aspectRatio: '1:1 square',
+    topic: keywords.topic || 'a friendly educational topic',
+    mainTitle: keywords.mainTitle || 'Learn with Chiikawa',
+    subTitle: keywords.subTitle ? `"${keywords.subTitle}"` : '""',
+    layoutType: keywords.layoutType || 'vertical feature list',
+    themeColor: keywords.themeColor || 'soft lavender',
+    decorativeElements: keywords.decorativeElements || 'tiny stars and clouds',
+    contentSections: formatContentSections(keywords.contentSections),
+    keyConceptsCount: Array.isArray(keywords.keyConcepts) ? keywords.keyConcepts.length : 3,
+    keyConcepts: formatKeyConcepts(keywords.keyConcepts),
+    emotionalTone: keywords.emotionalTone || 'encouraging',
+    educationalGoal: keywords.educationalGoal || 'help readers understand the topic',
+    purpose: keywords.purpose || 'for an educational blog cover',
+  };
+
+  return replacePlaceholders(template, placeholders).replace(/\n{3,}/g, '\n\n');
+}
+
+async function generateArticleCover(articleTitle, articleSummary = '', articleContent = '') {
+  const keywords = await extractCoverKeywords(articleTitle, articleSummary, articleContent);
+  const prompt = await buildChiikawaCoverPrompt(keywords);
+
+  const result = await generateImage(prompt, {n: 1, size: '1920x1920'});
+  return {
+    ...result.images[0],
+    prompt,
+    keywords,
+  };
+}
+
+module.exports = {
+  generateImage,
+  generateArticleCover,
+  extractCoverKeywords,
+  buildChiikawaCoverPrompt,
+};

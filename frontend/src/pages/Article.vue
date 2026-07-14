@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import AiSummary from '@/components/article/AiSummary.vue'
 import CommentSection from '@/components/article/CommentSection.vue'
+import Sidebar from '@/components/layout/Sidebar.vue'
 import { useArticleSeo } from '@/composables/useSeo'
 import { useArticleStore } from '@/stores/article'
 import { useThemeStore } from '@/stores/theme.ts'
@@ -150,11 +151,11 @@ function goBack() {
       <button class="px-6 py-2.5 rounded-xl text-sm font-medium text-white border-0 cursor-pointer transition-all duration-200 hover:shadow-md" style="background: var(--gradient-primary)" @click="goBack">返回首页</button>
     </div>
 
-      <!-- 文章内容：flex 布局，目录在左，内容在右 -->
-      <div v-if="currentArticle" class="flex gap-8">
+      <!-- 文章内容：三栏布局，目录 | 内容 | 站点信息 -->
+      <div v-if="currentArticle" class="flex gap-6 xl:gap-8">
         <!-- 左侧目录：sticky 吸顶，只在大屏显示 -->
-        <aside v-if="showToc" class="hidden lg:block shrink-0 relative!">
-          <div class="fixed top-30 left-45 w-50">
+        <aside v-if="showToc" class="hidden lg:block w-44 xl:w-52 shrink-0">
+          <div class="sticky top-28">
             <h4 class="text-sm font-semibold mb-3 pb-2 border-b flex items-center gap-1" style="color: var(--color-text); border-color: var(--color-border)">
               <MenuOutlined style="color: #49b1f5" />
               文章目录
@@ -162,7 +163,7 @@ function goBack() {
             <MdCatalog :offset-top="100" :scroll-element="scrollElement" :theme="theme" editor-id="preview-only" />
           </div>
         </aside>
-        <!-- 右侧内容 -->
+        <!-- 中间内容 -->
         <div class="flex-1 min-w-0">
           <button class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-sm rounded-lg transition-all duration-200 mb-6 border bg-transparent cursor-pointer hover:-translate-x-1" style="color: var(--color-text-secondary); border-color: var(--color-border)" @click="goBack">
             <LeftOutlined />
@@ -235,6 +236,8 @@ function goBack() {
 
           <CommentSection :articleId="articleId as string" />
         </div>
+        <!-- 右侧站点信息：文章页内嵌 Sidebar -->
+        <Sidebar class="hidden md:block w-60 lg:w-64 shrink-0" />
       </div>
   </div>
 </template>
