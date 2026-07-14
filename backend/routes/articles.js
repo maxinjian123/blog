@@ -8,6 +8,7 @@ const {sendReplyNotification} = require('../services/mail')
 const captchaRouter = require('./captcha')
 const verifyCaptcha = captchaRouter.verifyCaptcha
 const redis = require('../utils/redis')
+const {recordVisitStats} = require('../utils/visitStats')
 
 const router = express.Router()
 
@@ -134,6 +135,11 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
                 const ttl = await redis.ttl(viewKey)
                 await redis.set(viewKey, String(parseInt(viewCount) + 1), 'EX', ttl > 0 ? ttl : 86400)
             }
+            
+            // 记录访客统计信息（来源、设备、小时分布）
+            const referer = req.headers['referer'] || req.headers['referrer'] || ''
+            const userAgent = req.headers['user-agent'] || ''
+            await recordVisitStats({ referer, userAgent, redis })
         }
 
         // 获取评论数

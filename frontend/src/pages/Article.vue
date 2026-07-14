@@ -20,6 +20,9 @@ const themeStore = useThemeStore()
 
 const articleId = computed(() => route.params.id!)
 const likeLoading = ref(false)
+const showShareModal = ref(false)
+const shareCount = ref(0)
+const currentUrl = ref('')
 
 const currentArticle = computed(() => articleStore.currentArticle)
 const theme = computed(() => themeStore.theme)
@@ -48,6 +51,58 @@ function scrollToComments() {
   el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
+async function fetchShareCount() {
+  try {
+    const res = await api.get(`/articles/${articleId.value}/share-count`)
+    const data = res.data.data || res.data
+    shareCount.value = data.share_count || 0
+  } catch (e) {
+    console.error('获取分享次数失败', e)
+  }
+}
+
+async function onArticleShare() {
+  try {
+    await api.post(`/articles/${articleId.value}/share`)
+    shareCount.value++
+    Message.success('分享记录成功')
+  } catch (e: any) {
+    Message.error(e?.response?.data?.message || '分享失败')
+  }
+}
+
+function copyToClipboard(text: string) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text)
+    Message.success('链接已复制')
+  } else {
+    const textarea = document.createElement('textarea')
+    textarea.value = text
+    document.body.appendChild(textarea)
+    textarea.select()
+    document.execCommand('copy')
+    document.body.removeChild(textarea)
+    Message.success('链接已复制')
+  }
+}
+
+function shareToWeibo() {
+  const url = encodeURIComponent(window.location.href)
+  const title = encodeURIComponent(currentArticle.value?.title || '')
+  window.open(`https://service.weibo.com/share/share.php?url=${url}&title=${title}`)
+}
+
+function shareToQQ() {
+  const url = encodeURIComponent(window.location.href)
+  const title = encodeURIComponent(currentArticle.value?.title || '')
+  window.open(`https://connect.qq.com/widget/shareqq/index.html?url=${url}&title=${title}`)
+}
+
+function shareToWechat() {
+  Message.info('请复制链接后分享到微信')
+  copyToClipboard(window.location.href)
+}
+
 async function onArticleLike() {
   if (likeLoading.value) return
   likeLoading.value = true
@@ -67,6 +122,8 @@ async function onArticleLike() {
 
 onMounted(() => {
   articleStore.fetchArticle(articleId.value as string)
+  fetchShareCount()
+  currentUrl.value = window.location.href
   window.addEventListener('scroll', handleScroll)
 })
 
@@ -116,6 +173,20 @@ function goBack() {
           <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
         </svg>
         <span v-if="articleStore.currentArticle?.like_count" class="absolute -top-1 -right-1 min-w-4.5 h-4.5 flex items-center justify-center text-[10px] font-bold text-white rounded-full px-1" style="background: var(--gradient-primary)">{{ articleStore.currentArticle.like_count }}</span>
+      </button>
+      <button
+        class="w-11 h-11 rounded-full flex items-center justify-center cursor-pointer border-0 transition-all duration-300 hover:scale-110 shadow-md relative"
+        style="background: var(--color-card); color: var(--color-primary); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08)"
+        title="分享文章"
+        @click="showShareModal = true; onArticleShare()">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="18" cy="5" r="3" />
+          <circle cx="6" cy="12" r="3" />
+          <circle cx="18" cy="19" r="3" />
+          <line x1="8.59" x2="15.42" y1="13.51" y2="17.49" />
+          <line x1="15.41" x2="8.59" y1="6.51" y2="10.49" />
+        </svg>
+        <span v-if="shareCount" class="absolute -top-1 -right-1 min-w-4.5 h-4.5 flex items-center justify-center text-[10px] font-bold text-white rounded-full px-1" style="background: var(--gradient-primary)">{{ shareCount }}</span>
       </button>
     </div>
 
@@ -239,6 +310,53 @@ function goBack() {
         <!-- 右侧站点信息：文章页内嵌 Sidebar -->
         <Sidebar class="hidden md:block w-60 lg:w-64 shrink-0" />
       </div>
+
+    <!-- 分享弹窗 -->
+    <Transition name="fade">
+      <div v-if="showShareModal" class="fixed inset-0 z-50 flex items-center justify-center" @click.self="showShareModal = false">
+        <div class="absolute inset-0 bg-black/40" @click="showShareModal = false" />
+        <div class="relative w-80 rounded-2xl p-6 shadow-2xl" style="background: var(--color-card);">
+          <button class="absolute top-3 right-3 w-7 h-7 flex items-center justify-center rounded-full cursor-pointer border-0 transition-colors" style="color: var(--color-text-secondary); background: transparent;" @click="showShareModal = false">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+          <h3 class="text-lg font-bold mb-4" style="color: var(--color-text)">分享文章</h3>
+          <div class="grid grid-cols-4 gap-3 mb-4">
+            <button class="flex flex-col items-center gap-1.5 p-3 rounded-xl cursor-pointer border-0 transition-all hover:scale-105" style="background: var(--color-hover);" @click="copyToClipboard(currentUrl); showShareModal = false">
+              <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background: #49b1f5;">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+              </div>
+              <span class="text-xs" style="color: var(--color-text)">复制链接</span>
+            </button>
+            <button class="flex flex-col items-center gap-1.5 p-3 rounded-xl cursor-pointer border-0 transition-all hover:scale-105" style="background: var(--color-hover);" @click="shareToWeibo()">
+              <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background: #e6162d;">
+                <span class="text-white font-bold text-sm">微</span>
+              </div>
+              <span class="text-xs" style="color: var(--color-text)">微博</span>
+            </button>
+            <button class="flex flex-col items-center gap-1.5 p-3 rounded-xl cursor-pointer border-0 transition-all hover:scale-105" style="background: var(--color-hover);" @click="shareToQQ()">
+              <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background: #12b7f5;">
+                <span class="text-white font-bold text-sm">Q</span>
+              </div>
+              <span class="text-xs" style="color: var(--color-text)">QQ</span>
+            </button>
+            <button class="flex flex-col items-center gap-1.5 p-3 rounded-xl cursor-pointer border-0 transition-all hover:scale-105" style="background: var(--color-hover);" @click="shareToWechat()">
+              <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background: #07c160;">
+                <span class="text-white font-bold text-sm">微</span>
+              </div>
+              <span class="text-xs" style="color: var(--color-text)">微信</span>
+            </button>
+          </div>
+          <div class="flex items-center gap-2 px-3 py-2 rounded-lg" style="background: var(--color-hover);">
+            <span class="text-xs truncate flex-1" style="color: var(--color-text-secondary)">{{ currentUrl }}</span>
+            <button class="text-xs px-2 py-1 rounded cursor-pointer border-0 shrink-0" style="background: var(--color-primary); color: white;" @click="copyToClipboard(currentUrl)">复制</button>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 

@@ -35,5 +35,8 @@ module.exports = {
   },
   cors: {
     origin: process.env.CORS_ORIGIN || ''
+  },
+  site: {
+    url: process.env.SITE_URL || ''
   }
 };

@@ -4,6 +4,7 @@ const { success, error } = require('../utils/response');
 const { Article, Category, Tag, Comment, VisitorLog } = require('../models');
 const { Op, fn, col, literal } = require('sequelize');
 const sequelize = require('../models').sequelize;
+const redis = require('../utils/redis');
 
 const router = express.Router();
 
@@ -134,6 +135,74 @@ router.get('/stats', optionalAuth, async (req, res, next) => {
         created_at: c.created_at
       }))
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 获取访客来源统计（最近7天）
+router.get('/stats/source', auth, async (req, res, next) => {
+  try {
+    const sourceStats = { search: 0, social: 0, direct: 0, other: 0 };
+    
+    for (let i = 0; i < 7; i++) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      
+      for (const source of ['search', 'social', 'direct', 'other']) {
+        const key = `visit_source:${dateStr}:${source}`;
+        const count = await redis.get(key);
+        if (count) {
+          sourceStats[source] += parseInt(count);
+        }
+      }
+    }
+    
+    return success(res, sourceStats);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 获取设备分布统计（最近7天）
+router.get('/stats/device', auth, async (req, res, next) => {
+  try {
+    const deviceStats = { mobile: 0, tablet: 0, pc: 0 };
+    
+    for (let i = 0; i < 7; i++) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      
+      for (const device of ['mobile', 'tablet', 'pc']) {
+        const key = `visit_device:${dateStr}:${device}`;
+        const count = await redis.get(key);
+        if (count) {
+          deviceStats[device] += parseInt(count);
+        }
+      }
+    }
+    
+    return success(res, deviceStats);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 获取24小时活跃时段分布（今天）
+router.get('/stats/hourly', auth, async (req, res, next) => {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const hourlyStats = [];
+    
+    for (let hour = 0; hour < 24; hour++) {
+      const key = `visit_hour:${today}:${hour}`;
+      const count = await redis.get(key);
+      hourlyStats.push(count ? parseInt(count) : 0);
+    }
+    
+    return success(res, hourlyStats);
   } catch (err) {
     next(err);
   }
