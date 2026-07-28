@@ -97,7 +97,7 @@ for await (const idea of curiosity) {
               class="relative rounded-lg overflow-hidden transition-all duration-300 hover:-translate-y-1"
               style="border: 1px solid var(--color-border); box-shadow: var(--shadow-sm)"
             >
-              <div class="aspect-[16/9] md:aspect-[21/9] overflow-hidden relative" style="background-color: var(--color-hover)">
+              <div class="aspect-video md:aspect-21/9 overflow-hidden relative" style="background-color: var(--color-hover)">
                 <img
                   v-if="featuredArticle.cover_image"
                   :src="featuredArticle.cover_image"

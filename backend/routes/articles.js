@@ -12,6 +12,25 @@ const {recordVisitStats} = require('../utils/visitStats')
 
 const router = express.Router()
 
+// 从 markdown 内容提取目录（h1-h6），跳过代码块内的 #
+function extractCatalog(md) {
+    if (!md || typeof md !== 'string') return []
+    const catalog = []
+    const lines = md.split('\n')
+    let inCodeBlock = false
+    for (const line of lines) {
+        if (/^```/.test(line.trim())) { inCodeBlock = !inCodeBlock; continue }
+        if (inCodeBlock) continue
+        const m = line.match(/^(#{1,6})\s+(.+?)\s*#*\s*$/)
+        if (m) {
+            const level = m[1].length
+            const text = m[2].replace(/[`*_~]/g, '').trim()
+            if (text) catalog.push({ text, level })
+        }
+    }
+    return catalog
+}
+
 router.get('/archive', optionalAuth, async (req, res, next) => {
     try {
         const articles = await Article.findAll({
@@ -82,7 +101,7 @@ router.get('/', optionalAuth, async (req, res, next) => {
         }
 
         const include = [
-            {model: User, as: 'author', attributes: ['id', 'username', 'avatar']},
+            {model: User, as: 'author', attributes: ['id', 'username', 'avatar','nickname']},
             {model: Category, as: 'category', attributes: ['id', 'name', 'slug']},
             {model: Tag, as: 'tags', attributes: ['id', 'name', 'slug'], through: {attributes: []}}
         ]
@@ -156,6 +175,152 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
     }
 })
 
+// F1: 相关文章推荐（同标签优先，同分类兜底，排除当前文章，返回3篇）
+router.get('/:id/related', async (req, res, next) => {
+    try {
+        const current = await Article.findByPk(req.params.id, {
+            include: [{model: Tag, as: 'tags', attributes: ['id'], through: {attributes: []}}]
+        })
+        if (!current) return error(res, '文章不存在', 404)
+
+        const tagIds = current.tags?.map(t => t.id) || []
+        const limit = Number(req.query.limit) || 3
+        const excludeId = req.params.id
+
+        let related = []
+        // 优先：共享至少1个标签的文章，按共享标签数降序
+        if (tagIds.length) {
+            related = await Article.findAll({
+                where: {
+                    id: {[Op.ne]: excludeId},
+                    status: 'published'
+                },
+                include: [
+                    {model: User, as: 'author', attributes: ['id', 'username', 'avatar']},
+                    {model: Category, as: 'category', attributes: ['id', 'name', 'slug']},
+                    {model: Tag, as: 'tags', attributes: ['id', 'name', 'slug'], through: {attributes: []}}
+                ],
+                order: [['published_at', 'DESC']],
+                limit: 20
+            })
+            // 计算共享标签数，按共享数降序，取前 limit
+            related = related
+                .map(a => {
+                    const shared = (a.tags || []).filter(t => tagIds.includes(t.id)).length
+                    return {article: a, shared}
+                })
+                .filter(x => x.shared > 0)
+                .sort((a, b) => b.shared - a.shared || new Date(b.article.published_at) - new Date(a.article.published_at))
+                .slice(0, limit)
+                .map(x => x.article)
+        }
+
+        // 兜底：同分类文章
+        if (related.length < limit) {
+            const existingIds = new Set([excludeId, ...related.map(a => a.id)])
+            const fill = await Article.findAll({
+                where: {
+                    id: {[Op.notIn]: [...existingIds]},
+                    status: 'published',
+                    category_id: current.category_id
+                },
+                include: [
+                    {model: User, as: 'author', attributes: ['id', 'username', 'avatar']},
+                    {model: Category, as: 'category', attributes: ['id', 'name', 'slug']},
+                    {model: Tag, as: 'tags', attributes: ['id', 'name', 'slug'], through: {attributes: []}}
+                ],
+                order: [['published_at', 'DESC']],
+                limit: limit - related.length
+            })
+            related = related.concat(fill)
+        }
+
+        // 最后兜底：最新文章
+        if (related.length < limit) {
+            const existingIds = new Set([excludeId, ...related.map(a => a.id)])
+            const fill = await Article.findAll({
+                where: {
+                    id: {[Op.notIn]: [...existingIds]},
+                    status: 'published'
+                },
+                include: [
+                    {model: User, as: 'author', attributes: ['id', 'username', 'avatar']},
+                    {model: Category, as: 'category', attributes: ['id', 'name', 'slug']},
+                    {model: Tag, as: 'tags', attributes: ['id', 'name', 'slug'], through: {attributes: []}}
+                ],
+                order: [['published_at', 'DESC']],
+                limit: limit - related.length
+            })
+            related = related.concat(fill)
+        }
+
+        // 精简字段
+        const data = related.map(a => ({
+            id: a.id,
+            title: a.title,
+            slug: a.slug,
+            summary: a.summary,
+            cover: a.cover,
+            published_at: a.published_at,
+            view_count: a.view_count,
+            category: a.category,
+            tags: a.tags
+        }))
+
+        return success(res, data)
+    } catch (err) {
+        next(err)
+    }
+})
+
+// F3: 上下篇导航（按 published_at 排序）
+router.get('/:id/neighbors', async (req, res, next) => {
+    try {
+        const current = await Article.findByPk(req.params.id, {attributes: ['id', 'published_at']})
+        if (!current) return error(res, '文章不存在', 404)
+
+        const baseInclude = [
+            {model: User, as: 'author', attributes: ['id', 'username', 'avatar']},
+            {model: Category, as: 'category', attributes: ['id', 'name', 'slug']}
+        ]
+
+        // prev: published_at < current，取最近一篇
+        const prev = await Article.findOne({
+            where: {
+                id: {[Op.ne]: req.params.id},
+                status: 'published',
+                published_at: {[Op.lt]: current.published_at}
+            },
+            include: baseInclude,
+            order: [['published_at', 'DESC']]
+        })
+
+        // next: published_at > current，取最早一篇
+        const next = await Article.findOne({
+            where: {
+                id: {[Op.ne]: req.params.id},
+                status: 'published',
+                published_at: {[Op.gt]: current.published_at}
+            },
+            include: baseInclude,
+            order: [['published_at', 'ASC']]
+        })
+
+        const pick = a => a ? {
+            id: a.id,
+            title: a.title,
+            slug: a.slug,
+            cover: a.cover,
+            published_at: a.published_at,
+            category: a.category
+        } : null
+
+        return success(res, {prev: pick(prev), next: pick(next)})
+    } catch (err) {
+        next(err)
+    }
+})
+
 router.post('/', auth, async (req, res, next) => {
     try {
         const {title, slug, content, summary, cover, status, category_id, tags, content_type, catalog} = req.body
@@ -178,7 +343,7 @@ router.post('/', auth, async (req, res, next) => {
             published_at: status === 'published' ? new Date() : null,
             category_id,
             content_type: ['html', 'markdown'].includes(content_type) ? content_type : 'html',
-            catalog: catalog || null
+            catalog: catalog || (content_type === 'markdown' ? extractCatalog(content) : null)
         })
 
         if (tags && Array.isArray(tags)) {
@@ -227,7 +392,7 @@ router.put('/:id', auth, async (req, res, next) => {
             published_at: status === 'published' ? new Date() : null,
             category_id: category_id !== undefined ? category_id : article.category_id,
             content_type: content_type !== undefined ? (['html', 'markdown'].includes(content_type) ? content_type : article.content_type) : article.content_type,
-            catalog: catalog !== undefined ? catalog : article.catalog
+            catalog: catalog !== undefined ? catalog : (content && (content_type === 'markdown' || (content_type === undefined && article.content_type === 'markdown')) ? extractCatalog(content) : article.catalog)
         })
 
         if (tags && Array.isArray(tags)) {

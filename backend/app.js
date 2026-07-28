@@ -23,6 +23,7 @@ const captchaRoutes = require('./routes/captcha');
 const commentUploadRoutes = require('./routes/commentUpload');
 const shareRoutes = require('./routes/share');
 const sitemapRoutes = require('./routes/sitemap');
+const linkRoutes = require('./routes/links');
 
 const app = express();
 
@@ -66,6 +67,7 @@ app.use('/api/v1/announcements', announcementRoutes);
 app.use('/api/v1/site', siteRoutes);
 app.use('/api/v1/captcha', captchaRoutes);
 app.use('/api/v1/articles', shareRoutes);
+app.use('/api/v1/links', linkRoutes);
 app.use('/', sitemapRoutes);
 
 app.use((req, res) => {

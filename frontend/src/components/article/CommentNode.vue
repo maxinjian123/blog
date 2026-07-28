@@ -30,6 +30,7 @@ const props = defineProps<{
   getInitial: (item: CommentItem) => string
   onLike: (id: string) => void
   articleId: string
+  likedIds?: Set<string>
 }>()
 
 const emit = defineEmits<{
@@ -142,14 +143,14 @@ export default {
           <button
               @click="onLikeClick"
               class="ml-3 mt-1.5 text-xs cursor-pointer border-0 bg-transparent transition-all duration-200 hover:scale-110 inline-flex items-center gap-0.5"
-              style="color: var(--color-text-secondary)"
+              :style="likedIds?.has(comment.id) ? 'color: #ef4444' : 'color: var(--color-text-secondary)'"
           >
-            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" :fill="likedIds?.has(comment.id) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2">
               <path
                   d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
             </svg>
             <span v-if="comment.like_count > 0" class="font-medium"
-                  style="color: var(--color-primary)">{{ comment.like_count }}</span>
+                  :style="likedIds?.has(comment.id) ? 'color: #ef4444' : 'color: var(--color-primary)'">{{ comment.like_count }}</span>
           </button>
         </div>
       </div>

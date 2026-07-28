@@ -61,6 +61,12 @@ const routes: RouteRecordRaw[] = [
     name: 'AnnouncementManage',
     component: () => import('@/pages/AnnouncementManage.vue'),
     meta: { title: '公告管理', requiresAuth: true }
+  },
+  {
+    path: '/links',
+    name: 'LinkManage',
+    component: () => import('@/pages/LinkManage.vue'),
+    meta: { title: '友链管理', requiresAuth: true }
   }
 ]
 

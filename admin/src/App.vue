@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useAuthStore } from '@/stores/auth'
-import { AppstoreOutlined, CommentOutlined, DashboardOutlined, FileTextOutlined, LogoutOutlined, MenuFoldOutlined, MenuUnfoldOutlined, NotificationOutlined, SettingOutlined, TagsOutlined, UserOutlined } from '@ant-design/icons-vue'
+import { AppstoreOutlined, CommentOutlined, DashboardOutlined, FileTextOutlined, LinkOutlined, LogoutOutlined, MenuFoldOutlined, MenuUnfoldOutlined, NotificationOutlined, SettingOutlined, TagsOutlined, UserOutlined } from '@ant-design/icons-vue'
 import zhCN from 'ant-design-vue/es/locale/zh_CN'
 import dayjs from 'dayjs'
 import 'dayjs/locale/zh-cn'
@@ -32,6 +32,7 @@ const menuItems = [
   },
   { key: '/comments', icon: h(CommentOutlined), label: '评论管理' },
   { key: '/announcements', icon: h(NotificationOutlined), label: '公告管理' },
+  { key: '/links', icon: h(LinkOutlined), label: '友链管理' },
   { key: '/settings', icon: h(SettingOutlined), label: '系统设置' }
 ]
 
@@ -49,6 +50,8 @@ function updateSelectedKeys() {
     selectedKeys.value = ['/comments']
   } else if (path.startsWith('/announcements')) {
     selectedKeys.value = ['/announcements']
+  } else if (path.startsWith('/links')) {
+    selectedKeys.value = ['/links']
   } else if (path.startsWith('/settings')) {
     selectedKeys.value = ['/settings']
   }

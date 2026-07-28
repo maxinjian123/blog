@@ -85,7 +85,7 @@ export const useArticleStore = defineStore('article', () => {
                 category: a.category?.name || a.category || '',
                 category_slug: a.category?.slug || a.category_slug || '',
                 tags: (a.tags || []).map((t: any) => (typeof t === 'string' ? t : t.name)),
-                author: a.author?.username || a.author || '',
+                author: a.author?.nickname || a.author || '',
                 created_at: a.created_at || a.createdAt || '',
                 updated_at: a.updated_at || a.updatedAt || '',
                 published: a.status === 'published',
@@ -151,6 +151,48 @@ export const useArticleStore = defineStore('article', () => {
         return fetchArticles({ keyword: query, page: 1, pageSize: pageSize.value })
     }
 
+    // F1: 相关文章推荐
+    async function fetchRelated(id: string, limit = 3) {
+        try {
+            const res = await api.get(`/articles/${id}/related`, { params: { limit } })
+            const list = res.data?.data || []
+            return list.map((a: any) => ({
+                id: String(a.id),
+                title: a.title,
+                slug: a.slug,
+                excerpt: a.summary || '',
+                cover_image: a.cover || '',
+                published_at: a.published_at || '',
+                view_count: a.view_count || 0,
+                category: a.category?.name || '',
+                category_slug: a.category?.slug || '',
+                tags: (a.tags || []).map((t: any) => t.name)
+            }))
+        } catch {
+            return []
+        }
+    }
+
+    // F3: 上下篇导航
+    async function fetchNeighbors(id: string) {
+        try {
+            const res = await api.get(`/articles/${id}/neighbors`)
+            const d = res.data?.data || {}
+            const pick = (a: any) => a ? {
+                id: String(a.id),
+                title: a.title,
+                slug: a.slug,
+                cover_image: a.cover || '',
+                published_at: a.published_at || '',
+                category: a.category?.name || '',
+                category_slug: a.category?.slug || ''
+            } : null
+            return { prev: pick(d.prev), next: pick(d.next) }
+        } catch {
+            return { prev: null, next: null }
+        }
+    }
+
     return {
         articles,
         currentArticle,
@@ -165,5 +207,7 @@ export const useArticleStore = defineStore('article', () => {
         fetchArticle,
         fetchArticlesByCategory,
         searchArticles,
+        fetchRelated,
+        fetchNeighbors,
     }
 })

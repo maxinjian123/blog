@@ -99,7 +99,7 @@
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 html {
-  scroll-padding-top: 100px;
+  scroll-padding-top: 120px;
 }
 
 body {
@@ -110,26 +110,41 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-.article-content h1 {
+.article-content h1,
+.article-content-markdown h1 {
   font-size: 1.75rem;
   font-weight: 700;
   margin: 1.5em 0 0.5em;
   color: var(--color-text);
 }
 
-.article-content h2 {
+.article-content h2,
+.article-content-markdown h2 {
   font-size: 1.4rem;
   font-weight: 600;
-  margin: 1.5em 0 0.5em;
+  margin: 0.2em 0 0.5em;
   padding-left: 0.75rem;
   border-left: 3px solid var(--color-primary);
   color: var(--color-text);
 }
 
-.article-content h3 {
+.article-content h3,
+.article-content-markdown h3 {
   font-size: 1.2rem;
   font-weight: 600;
-  margin: 1.2em 0 0.4em;
+  margin: 0.2em 0 0.4em;
+  padding-top: 4em;
+  color: var(--color-text);
+}
+
+.article-content h4,
+.article-content h5,
+.article-content h6,
+.article-content-markdown h4,
+.article-content-markdown h5,
+.article-content-markdown h6 {
+  margin: 0.2em 0 0.4em;
+  padding-top: 1.2em;
   color: var(--color-text);
 }
 

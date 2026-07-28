@@ -28,6 +28,10 @@ const submitting = ref(false)
 const cursor = ref<string | null>(null)
 const hasMore = ref(false)
 const error = ref<string | null>(null)
+// F5: 评论排序（latest 最新 / hot 最热按赞数）
+const sortBy = ref<'latest' | 'hot'>('latest')
+// F5: 已点赞的评论 id 集合（本地防抖，避免重复点击）
+const likedIds = ref<Set<string>>(new Set())
 
 const qqNumber = ref('')
 const content = ref('')
@@ -182,12 +186,34 @@ async function refreshCaptcha() {
   }
 }
 
+// F5: 评论总赞数（含回复，用于排序）
+function commentTotalLikes(c: CommentItem): number {
+  let total = c.like_count || 0
+  if (c.replies?.length) {
+    total += c.replies.reduce((s, r) => s + commentTotalLikes(r), 0)
+  }
+  return total
+}
+
+// F5: 排序后的评论（latest 按 created_at DESC，hot 按总赞数 DESC）
+const sortedComments = computed<CommentItem[]>(() => {
+  if (sortBy.value === 'hot') {
+    return [...comments.value].sort((a, b) => commentTotalLikes(b) - commentTotalLikes(a))
+  }
+  return comments.value
+})
+
 async function onLike(commentId: string) {
+  if (likedIds.value.has(commentId)) {
+    Message.info('你已经点过赞啦')
+    return
+  }
   try {
     const res = await api.post(`/articles/${props.articleId}/comments/${commentId}/like`)
     const data = res.data.data || res.data
     // 更新本地 like_count
     updateCommentLike(comments.value, commentId, data.like_count)
+    likedIds.value.add(commentId)
     Message.success('点赞成功')
   } catch (e: any) {
     const errMsg = e?.response?.data?.message || '点赞失败'
@@ -231,13 +257,27 @@ watch(() => props.articleId, () => {
 
 <template>
   <div class="comment-section mt-8">
-    <h3 class="text-lg font-bold mb-6 flex items-center gap-2" style="color: var(--color-text)">
-      <svg class="w-5 h-5" style="color: var(--color-primary)" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-           stroke-width="2">
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-      </svg>
-      评论
-    </h3>
+    <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+      <h3 class="text-lg font-bold flex items-center gap-2" style="color: var(--color-text)">
+        <svg class="w-5 h-5" style="color: var(--color-primary)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        评论
+      </h3>
+      <!-- F5: 排序切换 -->
+      <div v-if="comments.length > 0" class="flex items-center gap-1 text-xs p-1 rounded-lg" style="background: var(--color-hover)">
+        <button
+          @click="sortBy = 'latest'"
+          class="px-3 py-1 rounded-md cursor-pointer border-0 transition-all"
+          :style="sortBy === 'latest' ? 'background: var(--color-card); color: var(--color-primary); font-weight: 600; box-shadow: var(--shadow-sm)' : 'background: transparent; color: var(--color-text-secondary)'"
+        >最新</button>
+        <button
+          @click="sortBy = 'hot'"
+          class="px-3 py-1 rounded-md cursor-pointer border-0 transition-all"
+          :style="sortBy === 'hot' ? 'background: var(--color-card); color: var(--color-primary); font-weight: 600; box-shadow: var(--shadow-sm)' : 'background: transparent; color: var(--color-text-secondary)'"
+        >最热</button>
+      </div>
+    </div>
 
     <!-- 评论表单 -->
     <div class="comment-form p-5 rounded-xl mb-6"
@@ -320,10 +360,11 @@ watch(() => props.articleId, () => {
 
     <!-- 评论列表 (递归渲染) -->
     <div v-else class="comments-list space-y-4">
-      <template v-for="comment in comments" :key="comment.id">
+      <template v-for="comment in sortedComments" :key="comment.id">
         <CommentNode
             :comment="comment"
             :depth="0"
+            :likedIds="likedIds"
             @reply="startReply"
             :renderContent="renderContent"
             :formatTime="formatTime"

@@ -6,10 +6,10 @@ import { useArticleSeo } from '@/composables/useSeo'
 import { useArticleStore } from '@/stores/article'
 import { useThemeStore } from '@/stores/theme.ts'
 import api from '@/utils/api'
-import { LeftOutlined, MenuOutlined } from '@ant-design/icons-vue'
+import { LeftOutlined, MenuOutlined, UnorderedListOutlined } from '@ant-design/icons-vue'
 import { MdCatalog, MdPreview } from 'md-editor-v3'
 import 'md-editor-v3/lib/preview.css'
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import Message from 'vue-m-message'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -29,6 +29,69 @@ const theme = computed(() => themeStore.theme)
 
 const scrollElement = document.documentElement
 
+// F2: 阅读进度条 + 阅读时间估算 + 阅读位置记忆
+const readingProgress = ref(0)
+const READ_POS_PREFIX = 'article-read-pos:'
+let savePosTimer: number | undefined
+
+const readingStats = computed(() => {
+  const content = currentArticle.value?.content || ''
+  if (!content) return { words: 0, minutes: 0 }
+  // 代码块行数（代码阅读更慢，单独按 15 行/分计入）
+  const codeBlocks = content.match(/```[\s\S]*?```/g) || []
+  const codeLines = codeBlocks.reduce((sum, b) => {
+    const lines = b.split('\n').length - 2
+    return sum + (lines > 0 ? lines : 0)
+  }, 0)
+  // 正文：剥离代码块/图片/链接语法后，统计所有非空白字符（含标点、数字，更贴近实际字数）
+  const plain = content
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/`[^`]*`/g, '')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/[#>*_~\-]/g, '')
+  const prose = plain.replace(/\s/g, '').length
+  // 技术文正文约 250 字/分，代码约 15 行/分
+  const minutes = prose + codeLines > 0 ? Math.max(1, Math.ceil(prose / 250 + codeLines / 15)) : 0
+  return { words: prose, minutes }
+})
+
+function updateReadingProgress() {
+  const scrollTop = window.scrollY
+  const docHeight = document.documentElement.scrollHeight - window.innerHeight
+  readingProgress.value = docHeight > 0 ? Math.min(100, (scrollTop / docHeight) * 100) : 0
+}
+
+function saveReadPosition() {
+  if (savePosTimer) window.clearTimeout(savePosTimer)
+  savePosTimer = window.setTimeout(() => {
+    const id = articleId.value as string
+    if (id && window.scrollY > 200) {
+      localStorage.setItem(READ_POS_PREFIX + id, String(window.scrollY))
+    }
+  }, 400)
+}
+
+function restoreReadPosition() {
+  const id = articleId.value as string
+  if (!id) return
+  const saved = localStorage.getItem(READ_POS_PREFIX + id)
+  if (!saved) return
+  const y = Number(saved)
+  // 阈值提高到 600，避免短文也触发；静默恢复（无 Toast）
+  if (!Number.isNaN(y) && y > 600) {
+    setTimeout(() => {
+      window.scrollTo({ top: y, behavior: 'auto' })
+      // 图片加载可能改变文档高度，二次校准
+      setTimeout(() => {
+        if (Math.abs(window.scrollY - y) > 50) {
+          window.scrollTo({ top: y, behavior: 'auto' })
+        }
+      }, 600)
+    }, 500)
+  }
+}
+
 const showToc = computed(() => {
   const article = articleStore.currentArticle
   return article && article.content_type === 'markdown' && article.catalog && article.catalog.length > 0
@@ -37,9 +100,28 @@ const showToc = computed(() => {
 useArticleSeo(currentArticle)
 
 const showBackTop = ref(false)
+const showTocDrawer = ref(false)
+
+// F1 相关文章 / F3 上下篇
+const relatedArticles = ref<Array<{
+  id: string; title: string; excerpt: string; cover_image: string;
+  category: string; tags: string[]; published_at: string; view_count: number
+}>>([])
+const neighbors = ref<{ prev: any | null; next: any | null }>({ prev: null, next: null })
+
+async function loadRelatedAndNeighbors(id: string) {
+  const [related, neigh] = await Promise.all([
+    articleStore.fetchRelated(id),
+    articleStore.fetchNeighbors(id)
+  ])
+  relatedArticles.value = related as any
+  neighbors.value = neigh as any
+}
 
 function handleScroll() {
   showBackTop.value = window.scrollY > 300
+  updateReadingProgress()
+  saveReadPosition()
 }
 
 function scrollToTop() {
@@ -103,6 +185,12 @@ function shareToWechat() {
   copyToClipboard(window.location.href)
 }
 
+function shareToX() {
+  const url = encodeURIComponent(window.location.href)
+  const title = encodeURIComponent(currentArticle.value?.title || '')
+  window.open(`https://twitter.com/intent/tweet?url=${url}&text=${title}`)
+}
+
 async function onArticleLike() {
   if (likeLoading.value) return
   likeLoading.value = true
@@ -132,7 +220,22 @@ onUnmounted(() => {
 })
 
 watch(articleId, id => {
+  // F1/F3: 切换文章时清空旧数据，避免闪烁
+  relatedArticles.value = []
+  neighbors.value = { prev: null, next: null }
+  window.scrollTo({ top: 0, behavior: 'auto' })
   articleStore.fetchArticle(id as string)
+})
+
+// F2: 文章加载完成后计算进度并恢复阅读位置；F1/F3 加载相关文章与上下篇
+watch(currentArticle, article => {
+  if (article) {
+    nextTick(() => {
+      updateReadingProgress()
+      restoreReadPosition()
+    })
+    loadRelatedAndNeighbors(article.id)
+  }
 })
 
 function formatDate(dateStr: string) {
@@ -151,6 +254,10 @@ function goBack() {
 
 <template>
   <div class="article-page mt-5">
+    <!-- F2: 阅读进度条 -->
+    <div class="fixed top-0 left-0 right-0 z-[60] h-[3px] pointer-events-none" aria-hidden="true">
+      <div class="h-full transition-[width] duration-150 ease-out" :style="{ width: readingProgress + '%', background: 'var(--gradient-primary)' }"></div>
+    </div>
     <!-- 左侧固定操作栏 -->
     <div class="fixed left-8 bottom-1/2 translate-y-1/2 z-40 hidden xl:flex flex-col items-center gap-3">
       <button
@@ -202,6 +309,37 @@ function goBack() {
           <polyline points="18 15 12 9 6 15" />
         </svg>
       </button>
+    </Transition>
+
+    <!-- F7: 移动端 TOC 浮动按钮（仅 < lg 显示） -->
+    <button
+      v-if="showToc"
+      class="fixed left-5 bottom-24 w-12 h-12 rounded-full flex items-center justify-center cursor-pointer border-0 transition-all duration-300 hover:scale-110 shadow-lg z-50 lg:hidden"
+      style="background: var(--gradient-primary); color: white; box-shadow: 0 4px 16px rgba(73, 177, 245, 0.4)"
+      title="文章目录"
+      @click="showTocDrawer = true">
+      <UnorderedListOutlined style="font-size: 20px" />
+    </button>
+
+    <!-- F7: 移动端 TOC 抽屉 -->
+    <Transition name="toc-slide">
+      <div v-if="showTocDrawer" class="fixed inset-0 z-[70] lg:hidden" @click.self="showTocDrawer = false">
+        <div class="absolute inset-0 bg-black/40" @click="showTocDrawer = false" />
+        <div class="absolute left-0 top-0 bottom-0 w-72 overflow-y-auto p-5 shadow-2xl" style="background: var(--color-card)">
+          <div class="flex items-center justify-between mb-4 pb-2 border-b" style="border-color: var(--color-border)">
+            <h4 class="text-sm font-semibold flex items-center gap-1.5" style="color: var(--color-text)">
+              <MenuOutlined style="color: #49b1f5" />
+              文章目录
+            </h4>
+            <button class="w-7 h-7 flex items-center justify-center rounded-full cursor-pointer border-0" style="color: var(--color-text-secondary); background: transparent" @click="showTocDrawer = false">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+          <MdCatalog :offset-top="80" :scroll-element="scrollElement" :theme="theme" editor-id="preview-only" class="toc-scroll" @click="showTocDrawer = false" />
+        </div>
+      </div>
     </Transition>
 
     <!-- 加载中 -->
@@ -275,6 +413,17 @@ function goBack() {
               </svg>
               <span class="font-medium">{{ currentArticle.view_count || 0 }}</span> 阅读
             </span>
+              <span class="opacity-30 select-none">|</span>
+              <span class="flex items-center gap-1" style="color: var(--color-text-secondary)">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+                <span v-if="readingStats.minutes" class="font-medium">{{ readingStats.minutes }}</span> 分钟阅读
+              </span>
+              <span class="hidden md:flex items-center gap-1 text-xs" style="color: var(--color-text-secondary)">
+                约 {{ readingStats.words }} 字
+              </span>
             </div>
           </header>
 
@@ -305,6 +454,65 @@ function goBack() {
 
           <hr class="section-divider my-8" />
 
+          <!-- F3: 上下篇导航 -->
+          <nav v-if="neighbors.prev || neighbors.next" class="grid gap-4 mb-8" :class="neighbors.prev && neighbors.next ? 'md:grid-cols-2' : 'grid-cols-1'">
+            <router-link
+              v-if="neighbors.prev"
+              :to="`/article/${neighbors.prev.id}`"
+              class="group flex items-center gap-3 p-4 rounded-xl transition-all duration-300 hover:-translate-y-0.5"
+              style="background: var(--color-card); border: 1px solid var(--color-border); box-shadow: var(--shadow-sm)">
+              <div class="shrink-0 w-10 h-10 rounded-full flex items-center justify-center" style="background: var(--color-hover)">
+                <LeftOutlined style="color: var(--color-primary)" />
+              </div>
+              <div class="min-w-0 flex-1">
+                <div class="text-xs mb-0.5" style="color: var(--color-text-secondary)">上一篇</div>
+                <div class="font-medium truncate transition-colors group-hover:text-[var(--color-primary)]" style="color: var(--color-text)">{{ neighbors.prev.title }}</div>
+              </div>
+            </router-link>
+            <router-link
+              v-if="neighbors.next"
+              :to="`/article/${neighbors.next.id}`"
+              class="group flex items-center gap-3 p-4 rounded-xl transition-all duration-300 hover:-translate-y-0.5 text-right"
+              style="background: var(--color-card); border: 1px solid var(--color-border); box-shadow: var(--shadow-sm)">
+              <div class="min-w-0 flex-1">
+                <div class="text-xs mb-0.5" style="color: var(--color-text-secondary)">下一篇</div>
+                <div class="font-medium truncate transition-colors group-hover:text-[var(--color-primary)]" style="color: var(--color-text)">{{ neighbors.next.title }}</div>
+              </div>
+              <div class="shrink-0 w-10 h-10 rounded-full flex items-center justify-center" style="background: var(--color-hover)">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--color-primary)">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </div>
+            </router-link>
+          </nav>
+
+          <!-- F1: 相关文章推荐 -->
+          <section v-if="relatedArticles.length" class="mb-8">
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2" style="color: var(--color-text)">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--color-primary)">
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+              </svg>
+              相关推荐
+            </h3>
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <router-link
+                v-for="rel in relatedArticles"
+                :key="rel.id"
+                :to="`/article/${rel.id}`"
+                class="group flex flex-col p-4 rounded-xl transition-all duration-300 hover:-translate-y-1"
+                style="background: var(--color-card); border: 1px solid var(--color-border); box-shadow: var(--shadow-sm)">
+                <div class="font-medium mb-2 line-clamp-2 transition-colors group-hover:text-[var(--color-primary)]" style="color: var(--color-text); min-height: 2.8em">{{ rel.title }}</div>
+                <p v-if="rel.excerpt" class="text-xs mb-3 line-clamp-2" style="color: var(--color-text-secondary)">{{ rel.excerpt }}</p>
+                <div class="mt-auto flex items-center gap-2 text-xs" style="color: var(--color-text-secondary)">
+                  <span v-if="rel.category" class="px-2 py-0.5 rounded" style="background: var(--color-hover); color: var(--color-primary)">{{ rel.category }}</span>
+                  <span>{{ formatDate(rel.published_at) }}</span>
+                  <span class="opacity-30">·</span>
+                  <span>{{ rel.view_count }} 阅读</span>
+                </div>
+              </router-link>
+            </div>
+          </section>
+
           <CommentSection :articleId="articleId as string" />
         </div>
         <!-- 右侧站点信息：文章页内嵌 Sidebar -->
@@ -322,7 +530,7 @@ function goBack() {
             </svg>
           </button>
           <h3 class="text-lg font-bold mb-4" style="color: var(--color-text)">分享文章</h3>
-          <div class="grid grid-cols-4 gap-3 mb-4">
+          <div class="grid grid-cols-5 gap-2 mb-4">
             <button class="flex flex-col items-center gap-1.5 p-3 rounded-xl cursor-pointer border-0 transition-all hover:scale-105" style="background: var(--color-hover);" @click="copyToClipboard(currentUrl); showShareModal = false">
               <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background: #49b1f5;">
                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -336,6 +544,14 @@ function goBack() {
                 <span class="text-white font-bold text-sm">微</span>
               </div>
               <span class="text-xs" style="color: var(--color-text)">微博</span>
+            </button>
+            <button class="flex flex-col items-center gap-1.5 p-3 rounded-xl cursor-pointer border-0 transition-all hover:scale-105" style="background: var(--color-hover);" @click="shareToX()">
+              <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background: #000;">
+                <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                </svg>
+              </div>
+              <span class="text-xs" style="color: var(--color-text)">X</span>
             </button>
             <button class="flex flex-col items-center gap-1.5 p-3 rounded-xl cursor-pointer border-0 transition-all hover:scale-105" style="background: var(--color-hover);" @click="shareToQQ()">
               <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background: #12b7f5;">
@@ -371,10 +587,38 @@ function goBack() {
   opacity: 0;
 }
 
+/* F7: 移动端 TOC 抽屉动画 */
+.toc-slide-enter-active,
+.toc-slide-leave-active {
+  transition: opacity 0.25s ease;
+}
+.toc-slide-enter-active > div:last-child,
+.toc-slide-leave-active > div:last-child {
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.toc-slide-enter-from,
+.toc-slide-leave-to {
+  opacity: 0;
+}
+.toc-slide-enter-from > div:last-child,
+.toc-slide-leave-to > div:last-child {
+  transform: translateX(-100%);
+}
+
 .toc-scroll {
   max-height: calc(100vh - 120px);
   overflow-y: auto;
   scrollbar-width: thin;
+}
+
+/* F7: 点击目录跳转后，标题不被固定导航栏遮挡 */
+.article-content-markdown :deep(h1),
+.article-content-markdown :deep(h2),
+.article-content-markdown :deep(h3),
+.article-content-markdown :deep(h4),
+.article-content-markdown :deep(h5),
+.article-content-markdown :deep(h6) {
+  scroll-margin-top: 80px;
 }
 
 .toc-scroll :deep(.md-editor-catalog-item) {

@@ -56,6 +56,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '关于' },
   },
   {
+    path: '/links',
+    name: 'Links',
+    component: () => import('@/pages/Links.vue'),
+    meta: { title: '友情链接' },
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('@/pages/NotFound.vue'),

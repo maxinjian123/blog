@@ -26,6 +26,7 @@ const Comment = require('./Comment')(sequelize);
 const VisitorLog = require('./VisitorLog')(sequelize);
 const ArticleTag = require('./ArticleTags')(sequelize);
 const Announcement = require('./Announcement')(sequelize);
+const Link = require('./Link')(sequelize);
 
 User.hasMany(Article, {foreignKey: 'author_id', as: 'articles'});
 Article.belongsTo(User, {foreignKey: 'author_id', as: 'author'});
@@ -87,5 +88,6 @@ module.exports = {
     Tag,
     Comment,
     VisitorLog,
-    Announcement
+    Announcement,
+    Link
 };
