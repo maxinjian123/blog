@@ -19,7 +19,7 @@ function error(res, message = 'Internal Server Error', statusCode = 500, errors 
   return res.status(statusCode).json(response);
 }
 
-function paginated(res, { list, total, page = 1, pageSize = 10 }, message = 'success') {
+function paginated(res, { list, total, page = 1, pageSize = 10, ...rest }, message = 'success') {
   const response = {
     code: 200,
     message,
@@ -30,7 +30,8 @@ function paginated(res, { list, total, page = 1, pageSize = 10 }, message = 'suc
         pageSize: Number(pageSize),
         total,
         totalPages: Math.ceil(total / pageSize)
-      }
+      },
+      ...rest
     }
   };
   return res.status(200).json(response);

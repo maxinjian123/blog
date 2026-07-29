@@ -1,22 +1,27 @@
 <script setup lang="ts">
-import {onMounted, ref} from 'vue'
+import {onMounted, ref, computed} from 'vue'
 import {useRouter} from 'vue-router'
 import api from '@/utils/api'
 import {GithubOutlined,FileTextOutlined} from '@ant-design/icons-vue'
 import TagCloud from "@/components/common/TagCloud.vue";
+import {useSiteStore} from '@/stores/site'
 
 const router = useRouter()
+const siteStore = useSiteStore()
+const siteInfo = computed(() => siteStore.info)
 
 interface Category {
   id: number
   name: string
   slug: string
+  article_count?: number
 }
 
 interface Tag {
   id: number
   name: string
   slug: string
+  article_count?: number
 }
 
 interface Article {
@@ -31,30 +36,24 @@ interface Announcement {
   content: string
 }
 
-interface SiteInfo {
-  site_name: string
-  site_description: string
-  author_name: string
-  author_bio: string
-  author_avatar: string | null
-}
-
 const stats = ref({articles: 0, tags: 0, categories: 0})
 const categories = ref<Category[]>([])
 const tags = ref<Tag[]>([])
 const recentPosts = ref<Article[]>([])
 const announcement = ref<Announcement | null>(null)
-const siteInfo = ref<SiteInfo | null>(null)
 
 onMounted(async () => {
+  // 确保站点信息已加载（logo、名称、作者等）
+  siteStore.ensureLoaded()
+
   try {
-    const [statsRes, catRes, tagRes, postsRes, announceRes, siteRes] = await Promise.all([
+    const [statsRes, hotCatRes, hotTagRes, postsRes, announceRes] = await Promise.all([
       api.get('/admin/stats').catch(() => null),
-      api.get('/categories').catch(() => null),
-      api.get('/tags').catch(() => null),
+      // 热门分类/标签：结合 Redis 动态计算（按已发布文章数降序）
+      api.get('/categories/hot', {params: {limit: 10}}).catch(() => null),
+      api.get('/tags/hot', {params: {limit: 20}}).catch(() => null),
       api.get('/articles', {params: {pageSize: 5}}).catch(() => null),
       api.get('/announcements/latest').catch(() => null),
-      api.get('/site/info').catch(() => null),
     ])
 
     if (statsRes) {
@@ -65,13 +64,13 @@ onMounted(async () => {
         categories: d.totalCategories || d.categoryCount || 0,
       }
     }
-    if (catRes) {
-      const d = catRes.data.data || catRes.data
-      categories.value = (d.list || d || []).slice(0, 10)
+    if (hotCatRes) {
+      const d = hotCatRes.data.data || hotCatRes.data
+      categories.value = (Array.isArray(d) ? d : (d.list || [])).slice(0, 10)
     }
-    if (tagRes) {
-      const d = tagRes.data.data || tagRes.data
-      tags.value = (d.list || d || []).slice(0, 20)
+    if (hotTagRes) {
+      const d = hotTagRes.data.data || hotTagRes.data
+      tags.value = (Array.isArray(d) ? d : (d.list || [])).slice(0, 20)
     }
     if (postsRes) {
       const d = postsRes.data.data || postsRes.data
@@ -80,10 +79,6 @@ onMounted(async () => {
     if (announceRes) {
       const d = announceRes.data.data || announceRes.data
       announcement.value = d
-    }
-    if (siteRes) {
-      const d = siteRes.data.data || siteRes.data
-      siteInfo.value = d
     }
   } catch {
     // silent

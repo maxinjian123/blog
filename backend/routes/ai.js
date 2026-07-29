@@ -1,5 +1,5 @@
 const express = require('express');
-const {auth, optionalAuth} = require('../middleware/auth');
+const {auth, optionalAuth, adminOnly} = require('../middleware/auth');
 const {success, error} = require('../utils/response');
 const ai = require('../services/ai');
 const {loadPrompt, replacePlaceholders} = require("../utils");
@@ -75,7 +75,7 @@ router.post('/chat/stream', optionalAuth, async (req, res, next) => {
     }
 });
 // AI创作文章
-router.post('/write', auth, async (req, res, next) => {
+router.post('/write', auth, adminOnly, async (req, res, next) => {
     try {
         const {prompt, style = '专业博客文章', length = '中等', content_type = 'html'} = req.body;
         if (!prompt) {
@@ -96,7 +96,7 @@ router.post('/write', auth, async (req, res, next) => {
     }
 });
 
-router.post('/polish', auth, async (req, res, next) => {
+router.post('/polish', auth, adminOnly, async (req, res, next) => {
     try {
         const {content, style = '更流畅专业', content_type = 'html'} = req.body;
         if (!content) {
@@ -117,7 +117,7 @@ router.post('/polish', auth, async (req, res, next) => {
 });
 
 // 续写内容
-router.post('/continue', auth, async (req, res, next) => {
+router.post('/continue', auth, adminOnly, async (req, res, next) => {
     try {
         const {content, direction, content_type = 'html'} = req.body;
         if (!content) {
@@ -153,7 +153,7 @@ router.post('/summary', async (req, res, next) => {
     }
 });
 
-router.post('/tags', auth, async (req, res, next) => {
+router.post('/tags', auth, adminOnly, async (req, res, next) => {
     try {
         const {content, title, count = 5} = req.body;
         const plainText = stripHtml(content);
@@ -182,7 +182,7 @@ router.post('/tags', auth, async (req, res, next) => {
     }
 });
 
-router.post('/cover', auth, async (req, res, next) => {
+router.post('/cover', auth, adminOnly, async (req, res, next) => {
     try {
         const {prompt, title, content, summary: articleSummary} = req.body;
 
@@ -205,7 +205,7 @@ router.post('/cover', auth, async (req, res, next) => {
     }
 });
 
-router.post('/auto-reply', auth, async (req, res, next) => {
+router.post('/auto-reply', auth, adminOnly, async (req, res, next) => {
     try {
         const {commentContent, articleTitle} = req.body;
         if (!commentContent) {

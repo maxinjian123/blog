@@ -7,7 +7,8 @@
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
     'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
-  background: #f5f5f5;
+  background: #f0f2f5;
+  color: rgba(0, 0, 0, 0.88);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -16,7 +17,9 @@ body {
 }
 
 .page-header {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -25,9 +28,22 @@ body {
 }
 
 .page-header h2 {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 600;
-  color: rgba(0, 0, 0, 0.85);
+  color: rgba(0, 0, 0, 0.88);
+  position: relative;
+  padding-left: 12px;
+}
+
+.page-header h2::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 18px;
+  background: #1677ff;
 }
 
 .search-bar {
@@ -38,12 +54,13 @@ body {
 }
 
 .stat-card {
-  border-radius: 8px;
-  transition: box-shadow 0.3s;
+  border-radius: 4px;
+  transition: box-shadow 0.3s, border-color 0.3s;
 }
 
 .stat-card:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  border-color: #1677ff;
 }
 
 .ai-sidebar {
@@ -148,8 +165,8 @@ body {
 .cover-upload {
   width: 240px;
   height: 160px;
-  border: 2px dashed #d9d9d9;
-  border-radius: 8px;
+  border: 1px dashed #d9d9d9;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -179,7 +196,8 @@ body {
 
 .chart-container {
   background: #fff;
-  border-radius: 8px;
+  border: 1px solid #f0f0f0;
+  border-radius: 4px;
   padding: 20px;
   margin-bottom: 16px;
 }

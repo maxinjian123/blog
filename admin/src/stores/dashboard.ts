@@ -8,6 +8,7 @@ export interface DashboardStats {
   draft_count: number
   category_count: number
   tag_count: number
+  message_count: number
   comment_count: number
   total_views: number
   total_likes: number
@@ -25,6 +26,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     draft_count: 0,
     category_count: 0,
     tag_count: 0,
+    message_count: 0,
     comment_count: 0,
     total_views: 0,
     total_likes: 0,

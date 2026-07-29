@@ -23,6 +23,14 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING(50),
       allowNull: true
     },
+    province: {
+      type: DataTypes.STRING(50),
+      allowNull: true
+    },
+    city: {
+      type: DataTypes.STRING(50),
+      allowNull: true
+    },
     created_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW

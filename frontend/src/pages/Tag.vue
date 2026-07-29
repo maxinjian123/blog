@@ -33,7 +33,9 @@ onMounted(() => {
   fetchArticles()
 })
 
-watch(id, () => {
+watch(id, (newId) => {
+  // 路由离开时 id 会变为 undefined，避免发出杂散请求
+  if (!newId || route.name !== 'Tag') return
   currentPage.value = 1
   fetchArticles()
 })
@@ -55,12 +57,20 @@ async function fetchArticles() {
 }
 
 function goBack() {
-  router.back()
+  // 无历史记录（直接打开本页）时回退首页，避免空白
+  if (window.history.state?.back) {
+    router.back()
+  } else {
+    router.push('/')
+  }
 }
 </script>
 
 <template>
-  <div class="tag-page mt-5">
+  <div class="tag-page mt-5 max-w-[960px] mx-auto px-4 lg:px-8">
+    <!-- 注意：根节点外不可有注释，dev 模式下会形成多根 fragment，导致 App.vue 的 <transition mode="out-in"> 卡死、全站导航空白 -->
+
+    <!-- 返回按钮 -->
     <button
         @click="goBack"
         class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-sm
@@ -70,6 +80,8 @@ function goBack() {
       <LeftOutlined/>
       返回
     </button>
+
+    <!-- 标签标题 -->
     <div class="flex items-center gap-3 mb-8 pt-2">
       <div class="w-1 h-6 rounded-full" style="background: var(--gradient-primary)"/>
       <h1 class="text-xl font-bold tracking-tight" style="color: var(--color-text)">
@@ -82,11 +94,13 @@ function goBack() {
       </span>
     </div>
 
+    <!-- 加载状态 -->
     <div v-if="loading" class="flex justify-center py-20">
       <div class="w-10 h-10 border-2 rounded-full animate-spin"
            style="border-color: var(--color-primary); border-top-color: transparent"/>
     </div>
 
+    <!-- 空状态 -->
     <div v-else-if="articles.length === 0" class="text-center py-20">
       <svg class="w-20 h-20 mx-auto mb-4 opacity-15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
            stroke-width="1" style="color: var(--color-primary)">
@@ -98,7 +112,8 @@ function goBack() {
       </router-link>
     </div>
 
-    <div v-else class="space-y-6 animate-fade-in">
+    <!-- 文章列表：列表式卡片，封面仅作小图展示 -->
+    <div v-else class="space-y-4 animate-fade-in">
       <router-link
           v-for="article in articles"
           :key="article.id"
@@ -106,6 +121,7 @@ function goBack() {
           class="block no-underline"
       >
         <ArticleCard
+            layout="list"
             :article="{
             id: String(article.id),
             title: article.title,

@@ -1,0 +1,27 @@
+<!--
+  订阅系列 - 共用布局（暖橙绿渐变，与评论回复明显区分）
+  变量：
+    - siteName: 站点名称
+    - title: 邮件顶部标题
+    - body: 主内容（已渲染好的 HTML）
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{title}}</title>
+</head>
+<body style="margin:0;padding:0;background:#fff8f0;font-family:'Microsoft YaHei','PingFang SC',Arial,sans-serif">
+  <div style="max-width:600px;margin:0 auto;padding:24px">
+    <div style="background:linear-gradient(135deg,#ff8a65 0%,#ffb74d 50%,#4db6ac 100%);padding:24px;text-align:center;border-radius:12px 12px 0 0;box-shadow:0 4px 12px rgba(255,138,101,0.15)">
+      <div style="display:inline-block;background:rgba(255,255,255,0.18);padding:6px 14px;border-radius:999px;font-size:12px;color:#fff;margin-bottom:8px">📬 博客订阅</div>
+      <h2 style="color:#fff;margin:0;font-size:22px;font-weight:600;letter-spacing:1px">{{title}}</h2>
+    </div>
+    <div style="background:#ffffff;padding:28px;box-shadow:0 4px 16px rgba(0,0,0,0.05);border-radius:0 0 12px 12px">
+      {{body}}
+    </div>
+    <p style="color:#b08968;font-size:12px;text-align:center;margin-top:18px">来自 {{siteName}} · 此邮件由系统自动发送，请勿直接回复</p>
+  </div>
+</body>
+</html>

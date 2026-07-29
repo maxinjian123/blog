@@ -1,9 +1,10 @@
 const express = require('express');
-const { auth } = require('../middleware/auth');
+const { auth, adminOnly } = require('../middleware/auth');
 const { success, error, paginated } = require('../utils/response');
-const { Comment, Article, User, sequelize } = require('../models');
+const { Comment, Article, User } = require('../models');
 const ai = require('../services/ai');
 const { loadPrompt, replacePlaceholders } = require('../utils');
+const { Op } = require('sequelize');
 
 const router = express.Router();
 
@@ -12,16 +13,16 @@ async function getAllChildIds(parentId) {
   const children = await Comment.findAll({
     where: { parent_id: parentId },
     attributes: ['id']
-  })
-  const ids = children.map(c => c.id)
+  });
+  const ids = children.map(c => c.id);
   for (const child of children) {
-    const grandChildIds = await getAllChildIds(child.id)
-    ids.push(...grandChildIds)
+    const grandChildIds = await getAllChildIds(child.id);
+    ids.push(...grandChildIds);
   }
-  return ids
+  return ids;
 }
 
-router.get('/', auth, async (req, res, next) => {
+router.get('/', auth, adminOnly, async (req, res, next) => {
   try {
     const { page = 1, pageSize = 20, approved, keyword } = req.query;
 
@@ -30,7 +31,6 @@ router.get('/', auth, async (req, res, next) => {
       where.is_approved = approved === 'true';
     }
     if (keyword) {
-      const { Op } = require('sequelize');
       where.content = { [Op.like]: `%${keyword}%` };
     }
 
@@ -53,7 +53,7 @@ router.get('/', auth, async (req, res, next) => {
   }
 });
 
-router.put('/:id', auth, async (req, res, next) => {
+router.put('/:id', auth, adminOnly, async (req, res, next) => {
   try {
     const comment = await Comment.findByPk(req.params.id);
     if (!comment) {
@@ -72,7 +72,7 @@ router.put('/:id', auth, async (req, res, next) => {
   }
 });
 
-router.post('/:id/ai-reply', auth, async (req, res, next) => {
+router.post('/:id/ai-reply', auth, adminOnly, async (req, res, next) => {
   try {
     const comment = await Comment.findByPk(req.params.id, {
       include: [{ model: Article, as: 'article', attributes: ['id', 'title', 'summary'] }]
@@ -81,11 +81,9 @@ router.post('/:id/ai-reply', auth, async (req, res, next) => {
       return error(res, '评论不存在', 404);
     }
 
-    // 获取admin用户的email
     const adminUser = await User.findOne({ where: { role: 'admin' } });
     const adminEmail = adminUser ? adminUser.email : 'admin@techmind.com';
 
-    // 加载外部提示词文件并替换占位符
     const promptTemplate = await loadPrompt('comment-reply-prompt.txt');
     const systemPrompt = replacePlaceholders(promptTemplate, {
       commentContent: comment.content,
@@ -113,7 +111,7 @@ router.post('/:id/ai-reply', auth, async (req, res, next) => {
 });
 
 // 获取指定评论的所有回复对话（递归获取完整线程）
-router.get('/:id/replies', auth, async (req, res, next) => {
+router.get('/:id/replies', auth, adminOnly, async (req, res, next) => {
   try {
     const comment = await Comment.findByPk(req.params.id, {
       include: [
@@ -126,7 +124,6 @@ router.get('/:id/replies', auth, async (req, res, next) => {
       return error(res, '评论不存在', 404);
     }
 
-    // 递归获取所有子回复
     const childIds = await getAllChildIds(req.params.id);
     const allIds = [req.params.id, ...childIds];
 
@@ -146,7 +143,7 @@ router.get('/:id/replies', auth, async (req, res, next) => {
 });
 
 // 管理员手动回复评论
-router.post('/:id/reply', auth, async (req, res, next) => {
+router.post('/:id/reply', auth, adminOnly, async (req, res, next) => {
   try {
     const comment = await Comment.findByPk(req.params.id);
     if (!comment) {
@@ -170,7 +167,6 @@ router.post('/:id/reply', auth, async (req, res, next) => {
       is_approved: true
     });
 
-    // 返回带用户信息的回复
     const result = await Comment.findByPk(replyComment.id, {
       include: [
         { model: User, as: 'user', attributes: ['id', 'username', 'avatar', 'role'] }
@@ -183,14 +179,13 @@ router.post('/:id/reply', auth, async (req, res, next) => {
   }
 });
 
-router.delete('/:id', auth, async (req, res, next) => {
+router.delete('/:id', auth, adminOnly, async (req, res, next) => {
   try {
     const comment = await Comment.findByPk(req.params.id);
     if (!comment) {
       return error(res, '评论不存在', 404);
     }
 
-    // 级联删除：获取所有子评论ID并一起删除
     const childIds = await getAllChildIds(req.params.id);
     const allIds = [req.params.id, ...childIds];
 

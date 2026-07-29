@@ -1,11 +1,20 @@
 const express = require('express')
-const {auth} = require('../middleware/auth')
+const {auth, adminOnly} = require('../middleware/auth')
 const {success, error, paginated} = require('../utils/response')
 const {Tag, Article, User} = require('../models')
 const {Sequelize, Op, literal} = require('sequelize')
 const {sequelize} = require('../models')
+const redis = require('../utils/redis')
 
 const router = express.Router()
+
+// 清除热门标签缓存（标签增删改时调用）
+function clearHotTagsCache() {
+  if (redis.status !== 'ready') return
+  redis.keys('blog:hot:tags:*').then(keys => {
+    if (keys && keys.length) redis.del(...keys)
+  }).catch(() => {})
+}
 
 router.get('/', async (req, res, next) => {
     try {
@@ -49,6 +58,53 @@ router.get('/', async (req, res, next) => {
     } catch (err) {
         next(err)
     }
+})
+
+/**
+ * 热门标签（结合 Redis 缓存动态计算，按关联文章数降序）
+ * GET /tags/hot?limit=20
+ * 缓存 key: blog:hot:tags:<limit>，TTL 10 分钟
+ */
+router.get('/hot', async (req, res, next) => {
+  const limit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 100)
+  const cacheKey = `blog:hot:tags:${limit}`
+  try {
+    if (redis.status === 'ready') {
+      const cached = await redis.get(cacheKey).catch(() => null)
+      if (cached) {
+        try { return success(res, JSON.parse(cached)) } catch (_) { /* 解析失败回源 */ }
+      }
+    }
+
+    // 关联已发布文章数
+    const rows = await Tag.findAll({
+      attributes: [
+        'id', 'name', 'slug',
+        [literal(`(
+          SELECT COUNT(*)
+          FROM article_tags at
+          INNER JOIN articles a ON a.id = at.article_id AND a.status = 'published'
+          WHERE at.tag_id = Tag.id
+        )`), 'article_count']
+      ],
+      having: literal(`(
+        SELECT COUNT(*)
+        FROM article_tags at
+        INNER JOIN articles a ON a.id = at.article_id AND a.status = 'published'
+        WHERE at.tag_id = Tag.id
+      ) > 0`),
+      order: [[literal('article_count'), 'DESC']],
+      limit,
+      raw: true
+    })
+
+    if (redis.status === 'ready') {
+      redis.set(cacheKey, JSON.stringify(rows), 'EX', 600).catch(() => {})
+    }
+    return success(res, rows)
+  } catch (err) {
+    next(err)
+  }
 })
 
 router.get('/:id/articles', async (req, res, next) => {
@@ -96,7 +152,7 @@ router.get('/:id/articles', async (req, res, next) => {
     }
 })
 
-router.post('/', auth, async (req, res, next) => {
+router.post('/', auth, adminOnly, async (req, res, next) => {
     try {
         const {name, slug} = req.body
 
@@ -108,6 +164,7 @@ router.post('/', auth, async (req, res, next) => {
             name,
             slug: slug || name.toLowerCase().replace(/\s+/g, '-')
         })
+        clearHotTagsCache()
 
         return success(res, tag, '标签创建成功', 201)
     } catch (err) {
@@ -115,7 +172,7 @@ router.post('/', auth, async (req, res, next) => {
     }
 })
 
-router.put('/:id', auth, async (req, res, next) => {
+router.put('/:id', auth, adminOnly, async (req, res, next) => {
     try {
         const tag = await Tag.findByPk(req.params.id)
         if (!tag) {
@@ -128,6 +185,7 @@ router.put('/:id', auth, async (req, res, next) => {
             name: name || tag.name,
             slug: slug || tag.slug
         })
+        clearHotTagsCache()
 
         return success(res, tag, '标签更新成功')
     } catch (err) {
@@ -135,7 +193,7 @@ router.put('/:id', auth, async (req, res, next) => {
     }
 })
 
-router.delete('/:id', auth, async (req, res, next) => {
+router.delete('/:id', auth, adminOnly, async (req, res, next) => {
     try {
         const tag = await Tag.findByPk(req.params.id)
         if (!tag) {
@@ -143,6 +201,7 @@ router.delete('/:id', auth, async (req, res, next) => {
         }
 
         await tag.destroy()
+        clearHotTagsCache()
 
         return success(res, null, '标签删除成功')
     } catch (err) {

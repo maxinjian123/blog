@@ -1,7 +1,8 @@
 const express = require('express')
-const {auth, optionalAuth} = require('../middleware/auth')
+const {auth, optionalAuth, adminOnly} = require('../middleware/auth')
 const {success, error, paginated} = require('../utils/response')
-const {Article, User, Category, Tag, Comment} = require('../models')
+const {Article, User, Category, Tag, Comment, ArticleVersion, VisitorLog} = require('../models')
+const config = require('../config')
 const {Op, Sequelize} = require('sequelize')
 const {getQQInfo} = require('../services/qq')
 const {sendReplyNotification} = require('../services/mail')
@@ -9,8 +10,21 @@ const captchaRouter = require('./captcha')
 const verifyCaptcha = captchaRouter.verifyCaptcha
 const redis = require('../utils/redis')
 const {recordVisitStats} = require('../utils/visitStats')
+const {resolveIpLocation} = require('../utils/ipLocation')
 
 const router = express.Router()
+
+// 清除热门分类/标签缓存（文章增删改时调用，因为热门排行依赖文章数）
+function clearHotCaches() {
+  if (redis.status !== 'ready') return
+  Promise.all([
+    redis.keys('blog:hot:categories:*'),
+    redis.keys('blog:hot:tags:*')
+  ]).then(([catKeys, tagKeys]) => {
+    const all = [...(catKeys || []), ...(tagKeys || [])]
+    if (all.length) redis.del(...all)
+  }).catch(() => {})
+}
 
 // 从 markdown 内容提取目录（h1-h6），跳过代码块内的 #
 function extractCatalog(md) {
@@ -110,17 +124,148 @@ router.get('/', optionalAuth, async (req, res, next) => {
             include[2].where = {id: tag_id}
         }
 
+        // P6-4: 排序字段白名单
+        const allowedSort = ['created_at', 'view_count', 'like_count', 'published_at', 'updated_at']
+        const safeSort = allowedSort.includes(sort) ? sort : 'created_at'
+        const safeOrder = String(order).toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
+
         const {count, rows} = await Article.findAndCountAll({
             where,
             // 返回已发布的
             include,
-            order: [[sort, order]],
+            order: [[safeSort, safeOrder]],
             limit: Number(pageSize),
             offset: (Number(page) - 1) * Number(pageSize),
             distinct: true
         })
 
         return paginated(res, {list: rows, total: count, page, pageSize})
+    } catch (err) {
+        next(err)
+    }
+})
+
+// P4-5: 批量导出文章（JSON 格式）
+router.get('/export', auth, adminOnly, async (req, res, next) => {
+    try {
+        const { ids, status } = req.query
+        const where = {}
+        if (ids) {
+            const idArr = String(ids).split(',').map(s => s.trim()).filter(Boolean)
+            if (idArr.length) where.id = { [Op.in]: idArr }
+        }
+        if (status) where.status = status
+
+        const articles = await Article.findAll({
+            where,
+            include: [
+                { model: Category, as: 'category', attributes: ['id', 'name', 'slug'] },
+                { model: Tag, as: 'tags', attributes: ['id', 'name', 'slug'], through: { attributes: [] } }
+            ],
+            order: [['created_at', 'DESC']]
+        })
+
+        const payload = articles.map(a => ({
+            title: a.title,
+            slug: a.slug,
+            content: a.content,
+            content_type: a.content_type,
+            summary: a.summary,
+            cover: a.cover,
+            status: a.status,
+            catalog: a.catalog,
+            category_name: a.category ? a.category.name : null,
+            tags: a.tags ? a.tags.map(t => t.name) : [],
+            published_at: a.published_at
+        }))
+
+        const exportData = {
+            version: 1,
+            exported_at: new Date().toISOString(),
+            count: payload.length,
+            articles: payload
+        }
+
+        res.setHeader('Content-Type', 'application/json; charset=utf-8')
+        res.setHeader('Content-Disposition', `attachment; filename="articles-export-${Date.now()}.json"`)
+        return res.json(exportData)
+    } catch (err) {
+        next(err)
+    }
+})
+
+// P4-5: 批量导入文章（JSON 格式）
+router.post('/import', auth, adminOnly, async (req, res, next) => {
+    try {
+        const data = req.body
+        const articles = Array.isArray(data) ? data : (data && Array.isArray(data.articles) ? data.articles : null)
+        if (!articles) {
+            return error(res, '导入数据格式不正确，需为文章数组或 { articles: [...] }', 400)
+        }
+
+        const results = { success: 0, failed: 0, skipped: 0, errors: [] }
+
+        for (let i = 0; i < articles.length; i++) {
+            const item = articles[i]
+            try {
+                if (!item.title || !item.content) {
+                    results.skipped++
+                    results.errors.push(`第 ${i + 1} 篇：标题或内容为空，已跳过`)
+                    continue
+                }
+
+                // slug 唯一性处理：若已存在则追加随机后缀
+                let slug = item.slug || item.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+                if (slug) {
+                    const exist = await Article.findOne({ where: { slug }, attributes: ['id'] })
+                    if (exist) slug = `${slug}-${Date.now().toString(36)}`
+                }
+
+                // 按名称匹配分类
+                let categoryId = null
+                if (item.category_name) {
+                    const cat = await Category.findOne({ where: { name: item.category_name } })
+                    if (cat) categoryId = cat.id
+                }
+
+                const contentType = ['html', 'markdown'].includes(item.content_type) ? item.content_type : 'markdown'
+                const article = await Article.create({
+                    title: item.title,
+                    slug,
+                    content: item.content,
+                    content_type: contentType,
+                    summary: item.summary || null,
+                    cover: item.cover || null,
+                    status: item.status || 'draft',
+                    catalog: item.catalog || (contentType === 'markdown' ? extractCatalog(item.content) : null),
+                    category_id: categoryId,
+                    author_id: req.user.id,
+                    published_at: item.status === 'published' ? (item.published_at || new Date()) : null
+                })
+
+                // 标签 findOrCreate
+                if (Array.isArray(item.tags) && item.tags.length) {
+                    const tagInstances = await Promise.all(
+                        item.tags.filter(Boolean).map(async tagName => {
+                            const [tag] = await Tag.findOrCreate({
+                                where: { name: tagName },
+                                defaults: { name: tagName, slug: tagName.toLowerCase().replace(/\s+/g, '-') }
+                            })
+                            return tag
+                        })
+                    )
+                    await article.setTags(tagInstances)
+                }
+
+                results.success++
+            } catch (e) {
+                results.failed++
+                results.errors.push(`第 ${i + 1} 篇「${item.title || '无标题'}」：${e.message}`)
+            }
+        }
+        if (results.success > 0) clearHotCaches()
+
+        return success(res, results, `导入完成：成功 ${results.success} 篇，跳过 ${results.skipped} 篇，失败 ${results.failed} 篇`)
     } catch (err) {
         next(err)
     }
@@ -159,6 +304,19 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
             const referer = req.headers['referer'] || req.headers['referrer'] || ''
             const userAgent = req.headers['user-agent'] || ''
             await recordVisitStats({ referer, userAgent, redis })
+
+            // 落库访客日志（仪表盘"近7天访问量"数据源），异步解析IP归属地，不阻塞响应
+            const articleId = req.params.id
+            resolveIpLocation(ip)
+                .then(location => VisitorLog.create({
+                    article_id: articleId,
+                    ip,
+                    user_agent: userAgent.slice(0, 500),
+                    action: 'view',
+                    province: location.province,
+                    city: location.city
+                }))
+                .catch(err => console.error('记录访客日志失败:', err.message))
         }
 
         // 获取评论数
@@ -169,6 +327,28 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
         const result = article.toJSON()
         result.comment_count = commentCount
 
+        return success(res, result)
+    } catch (err) {
+        next(err)
+    }
+})
+
+// P4-2: 草稿预览（需登录，不受 published 状态限制，不计阅读量）
+router.get('/:id/preview', auth, adminOnly, async (req, res, next) => {
+    try {
+        const article = await Article.findByPk(req.params.id, {
+            include: [
+                {model: User, as: 'author', attributes: ['id', 'username', 'avatar']},
+                {model: Category, as: 'category', attributes: ['id', 'name', 'slug']},
+                {model: Tag, as: 'tags', attributes: ['id', 'name', 'slug'], through: {attributes: []}}
+            ]
+        })
+        if (!article) {
+            return error(res, '文章不存在', 404)
+        }
+        const result = article.toJSON()
+        result.comment_count = 0
+        result.is_preview = true
         return success(res, result)
     } catch (err) {
         next(err)
@@ -321,7 +501,7 @@ router.get('/:id/neighbors', async (req, res, next) => {
     }
 })
 
-router.post('/', auth, async (req, res, next) => {
+router.post('/', auth, adminOnly, async (req, res, next) => {
     try {
         const {title, slug, content, summary, cover, status, category_id, tags, content_type, catalog} = req.body
         if (!title || !content) {
@@ -366,6 +546,7 @@ router.post('/', auth, async (req, res, next) => {
                 {model: Tag, as: 'tags', through: {attributes: []}}
             ]
         })
+        clearHotCaches()
 
         return success(res, result, '文章创建成功', 201)
     } catch (err) {
@@ -373,14 +554,55 @@ router.post('/', auth, async (req, res, next) => {
     }
 })
 
-router.put('/:id', auth, async (req, res, next) => {
+router.put('/:id', auth, adminOnly, async (req, res, next) => {
     try {
         const article = await Article.findByPk(req.params.id)
         if (!article) {
             return error(res, '文章不存在', 404)
         }
 
-        const {title, slug, content, summary, cover, status, category_id, tags, content_type, catalog} = req.body
+        const {title, slug, content, summary, cover, status, category_id, tags, content_type, catalog, scheduled_at} = req.body
+
+        // P4-1: 保存版本历史（仅当内容或标题变更时）
+        const titleChanged = title && title !== article.title
+        const contentChanged = content && content !== article.content
+        if (titleChanged || contentChanged) {
+            await ArticleVersion.create({
+                article_id: article.id,
+                title: article.title,
+                content: article.content,
+                summary: article.summary,
+                cover: article.cover,
+                category_id: article.category_id,
+                content_type: article.content_type,
+                catalog: article.catalog,
+                created_by: req.user?.id || null
+            })
+            // 仅保留最近 10 个版本
+            const versionCount = await ArticleVersion.count({ where: { article_id: article.id } })
+            if (versionCount > 10) {
+                const oldVersions = await ArticleVersion.findAll({
+                    where: { article_id: article.id },
+                    order: [['created_at', 'ASC']],
+                    limit: versionCount - 10,
+                    attributes: ['id']
+                })
+                await ArticleVersion.destroy({
+                    where: { id: oldVersions.map(v => v.id) }
+                })
+            }
+        }
+
+        // P4-2: 处理定时发布
+        let finalStatus = status || article.status
+        let finalScheduledAt = scheduled_at !== undefined ? scheduled_at : article.scheduled_at
+        let finalPublishedAt = article.published_at
+        if (finalStatus === 'published') {
+            finalPublishedAt = new Date()
+            finalScheduledAt = null
+        } else if (finalStatus === 'draft' && finalScheduledAt) {
+            // 草稿 + 定时时间 = 等待发布
+        }
 
         await article.update({
             title: title || article.title,
@@ -388,8 +610,9 @@ router.put('/:id', auth, async (req, res, next) => {
             content: content || article.content,
             summary: summary !== undefined ? summary : article.summary,
             cover: cover !== undefined ? cover : article.cover,
-            status: status || article.status,
-            published_at: status === 'published' ? new Date() : null,
+            status: finalStatus,
+            published_at: finalPublishedAt,
+            scheduled_at: finalScheduledAt,
             category_id: category_id !== undefined ? category_id : article.category_id,
             content_type: content_type !== undefined ? (['html', 'markdown'].includes(content_type) ? content_type : article.content_type) : article.content_type,
             catalog: catalog !== undefined ? catalog : (content && (content_type === 'markdown' || (content_type === undefined && article.content_type === 'markdown')) ? extractCatalog(content) : article.catalog)
@@ -415,6 +638,7 @@ router.put('/:id', auth, async (req, res, next) => {
                 {model: Tag, as: 'tags', through: {attributes: []}}
             ]
         })
+        clearHotCaches()
 
         return success(res, result, '文章更新成功')
     } catch (err) {
@@ -422,14 +646,17 @@ router.put('/:id', auth, async (req, res, next) => {
     }
 })
 
-router.delete('/:id', auth, async (req, res, next) => {
+router.delete('/:id', auth, adminOnly, async (req, res, next) => {
     try {
         const article = await Article.findByPk(req.params.id)
         if (!article) {
             return error(res, '文章不存在', 404)
         }
 
+        // P4-1: 删除文章时一并删除其版本历史
+        await ArticleVersion.destroy({ where: { article_id: article.id } })
         await article.destroy()
+        clearHotCaches()
 
         return success(res, null, '文章删除成功')
     } catch (err) {
@@ -437,7 +664,96 @@ router.delete('/:id', auth, async (req, res, next) => {
     }
 })
 
-router.post('/batch-delete', auth, async (req, res, next) => {
+// P4-1: 获取文章版本历史列表
+router.get('/:id/versions', auth, adminOnly, async (req, res, next) => {
+    try {
+        const article = await Article.findByPk(req.params.id)
+        if (!article) {
+            return error(res, '文章不存在', 404)
+        }
+        const versions = await ArticleVersion.findAll({
+            where: { article_id: req.params.id },
+            order: [['created_at', 'DESC']],
+            attributes: ['id', 'title', 'summary', 'version_note', 'content_type', 'created_by', 'created_at']
+        })
+        return success(res, versions)
+    } catch (err) {
+        next(err)
+    }
+})
+
+// P4-1: 获取单个版本详情（含完整内容，用于对比/恢复）
+router.get('/:id/versions/:versionId', auth, adminOnly, async (req, res, next) => {
+    try {
+        const version = await ArticleVersion.findByPk(req.params.versionId)
+        if (!version || version.article_id !== req.params.id) {
+            return error(res, '版本不存在', 404)
+        }
+        return success(res, version)
+    } catch (err) {
+        next(err)
+    }
+})
+
+// P4-1: 恢复到指定版本（将版本内容写回文章，同时保存当前为新版本）
+router.post('/:id/versions/:versionId/restore', auth, adminOnly, async (req, res, next) => {
+    try {
+        const article = await Article.findByPk(req.params.id)
+        if (!article) {
+            return error(res, '文章不存在', 404)
+        }
+        const version = await ArticleVersion.findByPk(req.params.versionId)
+        if (!version || version.article_id !== article.id) {
+            return error(res, '版本不存在', 404)
+        }
+        // 先保存当前内容为新版本
+        await ArticleVersion.create({
+            article_id: article.id,
+            title: article.title,
+            content: article.content,
+            summary: article.summary,
+            cover: article.cover,
+            category_id: article.category_id,
+            content_type: article.content_type,
+            catalog: article.catalog,
+            version_note: `恢复前自动保存（恢复到 ${version.created_at.toLocaleString('zh-CN')}）`,
+            created_by: req.user?.id || null
+        })
+        // 将版本内容写回文章
+        await article.update({
+            title: version.title,
+            content: version.content,
+            summary: version.summary,
+            cover: version.cover,
+            category_id: version.category_id,
+            content_type: version.content_type,
+            catalog: version.catalog
+        })
+        // 清理超出 10 个的旧版本
+        const versionCount = await ArticleVersion.count({ where: { article_id: article.id } })
+        if (versionCount > 10) {
+            const oldVersions = await ArticleVersion.findAll({
+                where: { article_id: article.id },
+                order: [['created_at', 'ASC']],
+                limit: versionCount - 10,
+                attributes: ['id']
+            })
+            await ArticleVersion.destroy({ where: { id: oldVersions.map(v => v.id) } })
+        }
+        const result = await Article.findByPk(article.id, {
+            include: [
+                {model: User, as: 'author', attributes: ['id', 'username', 'avatar']},
+                {model: Category, as: 'category'},
+                {model: Tag, as: 'tags', through: {attributes: []}}
+            ]
+        })
+        return success(res, result, '已恢复到指定版本')
+    } catch (err) {
+        next(err)
+    }
+})
+
+router.post('/batch-delete', auth, adminOnly, async (req, res, next) => {
     try {
         const {ids} = req.body
         if (!ids || !Array.isArray(ids) || ids.length === 0) {
@@ -445,6 +761,7 @@ router.post('/batch-delete', auth, async (req, res, next) => {
         }
 
         await Article.destroy({where: {id: {[Op.in]: ids}}})
+        clearHotCaches()
 
         return success(res, null, `成功删除 ${ids.length} 篇文章`)
     } catch (err) {
@@ -454,35 +771,71 @@ router.post('/batch-delete', auth, async (req, res, next) => {
 
 router.get('/:id/comments', async (req, res, next) => {
     try {
-        const {cursor, pageSize = 30} = req.query
+        const {cursor, pageSize = 30, sort = 'latest'} = req.query
 
-        const where = {
+        const baseWhere = {
             article_id: req.params.id,
             is_approved: true
         }
 
-        if (cursor) {
-            where.id = {[Op.lt]: cursor}
-        }
+        // 评论总数（含回复）
+        const total = await Comment.count({where: baseWhere})
 
-        const rows = await Comment.findAll({
-            where,
-            order: [
+        // 顶层评论分页：latest 按时间倒序（游标用 id）；hot 按点赞数倒序（游标用偏移量）
+        const rootWhere = {...baseWhere, parent_id: null}
+        let order
+        let offset = 0
+        if (sort === 'hot') {
+            order = [
+                ['like_count', 'DESC'],
                 ['created_at', 'DESC'],
                 ['id', 'DESC']
-            ],
+            ]
+            offset = cursor ? Number(cursor) || 0 : 0
+        } else {
+            order = [
+                ['created_at', 'DESC'],
+                ['id', 'DESC']
+            ]
+            if (cursor) {
+                rootWhere.id = {[Op.lt]: cursor}
+            }
+        }
+
+        const roots = await Comment.findAll({
+            where: rootWhere,
+            order,
             limit: Number(pageSize),
+            offset,
             include: [{model: User, as: 'user', attributes: ['id', 'username', 'avatar', 'role']}],
             raw: true,
             nest: true
         })
 
+        // 逐层加载本页顶层评论的全部后代回复，保证线程完整
+        const replies = []
+        let parentIds = roots.map(c => c.id)
+        while (parentIds.length > 0) {
+            const children = await Comment.findAll({
+                where: {...baseWhere, parent_id: {[Op.in]: parentIds}},
+                order: [['created_at', 'ASC'], ['id', 'ASC']],
+                include: [{model: User, as: 'user', attributes: ['id', 'username', 'avatar', 'role']}],
+                raw: true,
+                nest: true
+            })
+            if (children.length === 0) break
+            replies.push(...children)
+            parentIds = children.map(c => c.id)
+        }
+
+        const rows = [...roots, ...replies]
+
         // 获取所有父评论的作者名（用于回复显示）
-        const parentIds = rows.filter(c => c.parent_id).map(c => c.parent_id)
+        const replyParentIds = rows.filter(c => c.parent_id).map(c => c.parent_id)
         const parentAuthors = {}
-        if (parentIds.length > 0) {
+        if (replyParentIds.length > 0) {
             const parents = await Comment.findAll({
-                where: {id: {[Op.in]: [...new Set(parentIds)]}},
+                where: {id: {[Op.in]: [...new Set(replyParentIds)]}},
                 attributes: ['id', 'author_name'],
                 raw: true
             })
@@ -513,14 +866,17 @@ router.get('/:id/comments', async (req, res, next) => {
             }
         }
 
-        const hasMore = rows.length === Number(pageSize)
-        const lastCursor = rows.length > 0 ? rows[rows.length - 1].id : null
+        const hasMore = roots.length === Number(pageSize)
+        // hot 模式用累计偏移量作为游标，latest 模式用末条顶层评论 id
+        const lastCursor = sort === 'hot'
+            ? String(offset + roots.length)
+            : (roots.length > 0 ? roots[roots.length - 1].id : null)
 
         return success(res, {
             list: rootComments,
             cursor: lastCursor,
             hasMore,
-            total: rootComments.length
+            total
         })
     } catch (err) {
         next(err)
@@ -580,17 +936,43 @@ router.post('/:id/comments', async (req, res, next) => {
             content_type: ['markdown', 'text'].includes(content_type) ? content_type : 'text'
         })
 
-        // 回复通知邮件
-        if (parentComment && parentComment.author_email) {
-            const articleUrl = `${req.protocol}://${req.get('host')}/article/${req.params.id}`
-            sendReplyNotification({
-                to: parentComment.author_email,
-                articleTitle: article.title,
-                replyContent: content.substring(0, 200),
-                replyAuthor: authorName,
-                articleUrl
-            }).catch(() => {
-            })
+        // 评论通知邮件
+        // - 一级评论（直接对文章）：通知博主（admin 用户邮箱）
+        // - 回复评论：通知被回复者；如果是博主本人被回复则不重复发（避免博主收到自己回复自己的邮件）
+        const notifyCtx = {
+            articleId: req.params.id,
+            commentId: comment.id,
+            articleTitle: article.title,
+            replyContent: content.substring(0, 200),
+            replyAuthor: authorName,
+            fallbackHost: `${req.protocol}://${req.get('host')}`
+        }
+
+        if (parentComment) {
+            // 回复评论场景：只通知被回复者
+            if (parentComment.author_email) {
+                sendReplyNotification({
+                    ...notifyCtx,
+                    to: parentComment.author_email
+                }).catch(() => {})
+            }
+        } else {
+            // 一级评论场景：通知博主
+            // 博主邮箱优先取 site_config 中的 admin_email，回退到 admin 用户的 email
+            let adminEmail = null
+            if (config.adminEmail) {
+                adminEmail = config.adminEmail
+            } else {
+                const admin = await User.findOne({ where: { role: 'admin' }, attributes: ['email'] })
+                adminEmail = admin?.email || null
+            }
+            // 避免博主自己评论自己时重复发邮件
+            if (adminEmail && adminEmail !== qqEmail) {
+                sendReplyNotification({
+                    ...notifyCtx,
+                    to: adminEmail
+                }).catch(() => {})
+            }
         }
 
         return success(res, comment, '评论发表成功', 201)

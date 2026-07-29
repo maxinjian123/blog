@@ -19,7 +19,6 @@ function formatDate(dateStr: string) {
 </script>
 
 <template>
-<!--  {{article}}-->
   <article
     class="article-card group cursor-pointer overflow-hidden transition-all duration-300"
     :class="[

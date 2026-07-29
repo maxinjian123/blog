@@ -11,7 +11,8 @@ module.exports = (sequelize) => {
     },
     article_id: {
       type: DataTypes.STRING(36),
-      allowNull: false
+      allowNull: false,
+      comment: '文章 ID'
     },
     user_id: {
       type: DataTypes.INTEGER,

@@ -1,5 +1,5 @@
 const express = require('express');
-const { auth } = require('../middleware/auth');
+const { auth, adminOnly } = require('../middleware/auth');
 const { success, error } = require('../utils/response');
 const { Link } = require('../models');
 const crypto = require('crypto');
@@ -26,7 +26,7 @@ router.get('/', async (req, res, next) => {
 });
 
 // 后台：创建友链
-router.post('/', auth, async (req, res, next) => {
+router.post('/', auth, adminOnly, async (req, res, next) => {
   try {
     const { name, url, description, avatar, category, sort_order, is_active } = req.body;
     if (!name || !url) {
@@ -49,7 +49,7 @@ router.post('/', auth, async (req, res, next) => {
 });
 
 // 后台：更新友链
-router.put('/:id', auth, async (req, res, next) => {
+router.put('/:id', auth, adminOnly, async (req, res, next) => {
   try {
     const link = await Link.findByPk(req.params.id);
     if (!link) {
@@ -72,7 +72,7 @@ router.put('/:id', auth, async (req, res, next) => {
 });
 
 // 后台：删除友链
-router.delete('/:id', auth, async (req, res, next) => {
+router.delete('/:id', auth, adminOnly, async (req, res, next) => {
   try {
     const link = await Link.findByPk(req.params.id);
     if (!link) {

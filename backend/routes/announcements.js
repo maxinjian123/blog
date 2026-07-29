@@ -1,5 +1,5 @@
 const express = require('express');
-const { auth, optionalAuth } = require('../middleware/auth');
+const { auth, optionalAuth, adminOnly } = require('../middleware/auth');
 const { success, error } = require('../utils/response');
 const { Announcement } = require('../models');
 
@@ -8,7 +8,6 @@ const router = express.Router();
 router.get('/', optionalAuth, async (req, res, next) => {
   try {
     const announcements = await Announcement.findAll({
-      where: { is_active: true },
       order: [['sort_order', 'ASC'], ['created_at', 'DESC']]
     });
     return success(res, announcements);
@@ -29,7 +28,7 @@ router.get('/latest', optionalAuth, async (req, res, next) => {
   }
 });
 
-router.post('/', auth, async (req, res, next) => {
+router.post('/', auth, adminOnly, async (req, res, next) => {
   try {
     const { content, is_active, sort_order } = req.body;
     if (!content) {
@@ -46,7 +45,7 @@ router.post('/', auth, async (req, res, next) => {
   }
 });
 
-router.put('/:id', auth, async (req, res, next) => {
+router.put('/:id', auth, adminOnly, async (req, res, next) => {
   try {
     const announcement = await Announcement.findByPk(req.params.id);
     if (!announcement) {
@@ -64,7 +63,7 @@ router.put('/:id', auth, async (req, res, next) => {
   }
 });
 
-router.delete('/:id', auth, async (req, res, next) => {
+router.delete('/:id', auth, adminOnly, async (req, res, next) => {
   try {
     const announcement = await Announcement.findByPk(req.params.id);
     if (!announcement) {

@@ -8,6 +8,25 @@ const { User } = require('../models')
 
 const router = express.Router()
 
+/**
+ * @swagger
+ * /auth/login:
+ *   post:
+ *     summary: 用户登录
+ *     tags: [认证]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username: { type: string }
+ *               password: { type: string }
+ *     responses:
+ *       200:
+ *         description: 登录成功
+ */
 router.post('/login', async (req, res, next) => {
   try {
     const { username, password } = req.body

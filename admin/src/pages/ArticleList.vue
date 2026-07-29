@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {useArticleStore} from '@/stores/article'
 import api from '@/utils/api'
-import {ExclamationCircleOutlined, PlusOutlined, SearchOutlined} from '@ant-design/icons-vue'
+import {DownloadOutlined, ExclamationCircleOutlined, ImportOutlined, PlusOutlined, SearchOutlined, UploadOutlined} from '@ant-design/icons-vue'
 import {message, Modal} from 'ant-design-vue'
 import dayjs from 'dayjs'
 import {h, onMounted, reactive, ref} from 'vue'
@@ -24,6 +24,13 @@ const selectedRowKeys = ref<string[]>([])
 const batchLoading = ref(false)
 const coverPreviewVisible = ref(false)
 const coverPreviewUrl = ref('')
+
+// P4-5: 导入导出
+const importModalVisible = ref(false)
+const importLoading = ref(false)
+const importFileList = ref<any[]>([])
+const importResult = ref<any>(null)
+const exportLoading = ref(false)
 
 const columns = [
   {title: 'ID', dataIndex: 'id', key: 'id'},
@@ -155,6 +162,82 @@ function handleTableChange(pag: { current: number; pageSize: number }) {
   loadData()
 }
 
+// P4-5: 导出文章
+async function handleExport(selectedOnly = false) {
+  const ids = selectedOnly ? selectedRowKeys.value : []
+  if (selectedOnly && ids.length === 0) {
+    message.warning('请先选择要导出的文章')
+    return
+  }
+  exportLoading.value = true
+  try {
+    const params: any = {}
+    if (ids.length) params.ids = ids.join(',')
+    const blob: any = await api.get('/articles/export', {
+      params,
+      responseType: 'blob'
+    })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `articles-export-${dayjs().format('YYYYMMDD-HHmmss')}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(url)
+    message.success(`已导出 ${selectedOnly ? ids.length : '全部'} 文章`)
+  } catch {
+    message.error('导出失败')
+  } finally {
+    exportLoading.value = false
+  }
+}
+
+// P4-5: 导入文章
+function openImportModal() {
+  importFileList.value = []
+  importResult.value = null
+  importModalVisible.value = true
+}
+
+function handleBeforeUpload(file: File) {
+  importFileList.value = [file]
+  return false
+}
+
+function handleRemoveFile() {
+  importFileList.value = []
+  importResult.value = null
+  return true
+}
+
+async function handleImportSubmit() {
+  if (importFileList.value.length === 0) {
+    message.warning('请先选择 JSON 文件')
+    return
+  }
+  const file = importFileList.value[0]
+  importLoading.value = true
+  try {
+    const text = await file.text()
+    let data
+    try {
+      data = JSON.parse(text)
+    } catch {
+      message.error('文件不是有效的 JSON 格式')
+      return
+    }
+    const res: any = await api.post('/articles/import', data)
+    importResult.value = res.data || res
+    message.success(res.message || '导入完成')
+    loadData()
+  } catch {
+    message.error('导入失败')
+  } finally {
+    importLoading.value = false
+  }
+}
+
 onMounted(() => {
   loadCategories()
   loadData()
@@ -168,6 +251,28 @@ onMounted(() => {
       <a-space>
         <a-button v-if="selectedRowKeys.length > 0" danger :loading="batchLoading" @click="handleBatchDelete"> 批量删除
           ({{ selectedRowKeys.length }})
+        </a-button>
+        <a-dropdown>
+          <a-button :loading="exportLoading">
+            <template #icon>
+              <DownloadOutlined/>
+            </template>
+            导出
+          </a-button>
+          <template #overlay>
+            <a-menu>
+              <a-menu-item @click="handleExport(false)">导出全部</a-menu-item>
+              <a-menu-item @click="handleExport(true)" :disabled="selectedRowKeys.length === 0">
+                导出选中 ({{ selectedRowKeys.length }})
+              </a-menu-item>
+            </a-menu>
+          </template>
+        </a-dropdown>
+        <a-button @click="openImportModal">
+          <template #icon>
+            <ImportOutlined/>
+          </template>
+          导入
         </a-button>
         <a-button type="primary" @click="router.push('/articles/create')">
           <template #icon>
@@ -249,6 +354,52 @@ onMounted(() => {
     <a-modal v-model:open="coverPreviewVisible" title="封面预览" :footer="null" width="600px"
              @cancel="coverPreviewVisible = false">
       <img :src="coverPreviewUrl" style="width: 100%; border-radius: 4px"/>
+    </a-modal>
+
+    <!-- P4-5: 导入文章弹窗 -->
+    <a-modal
+      v-model:open="importModalVisible"
+      title="批量导入文章"
+      width="560px"
+      :ok-text="importResult ? '关闭' : '开始导入'"
+      :confirm-loading="importLoading"
+      @ok="importResult ? (importModalVisible = false) : handleImportSubmit()"
+    >
+      <a-alert
+        type="info"
+        show-icon
+        style="margin-bottom: 16px"
+        message="支持从导出的 JSON 文件导入文章。分类按名称匹配，标签不存在时自动创建。"
+      />
+      <a-upload-dragger
+        :file-list="importFileList"
+        :before-upload="handleBeforeUpload"
+        @remove="handleRemoveFile"
+        accept=".json"
+        :max-count="1"
+        :disabled="!!importResult"
+      >
+        <p class="ant-upload-drag-icon">
+          <UploadOutlined/>
+        </p>
+        <p class="ant-upload-text">点击或拖拽 JSON 文件到此区域</p>
+        <p class="ant-upload-hint">仅支持单个 .json 文件</p>
+      </a-upload-dragger>
+
+      <div v-if="importResult" style="margin-top: 16px">
+        <a-alert
+          :type="importResult.failed > 0 ? 'warning' : 'success'"
+          show-icon
+          :message="`导入完成：成功 ${importResult.success} 篇，跳过 ${importResult.skipped} 篇，失败 ${importResult.failed} 篇`"
+        />
+        <div v-if="importResult.errors && importResult.errors.length" style="margin-top: 12px; max-height: 200px; overflow-y: auto">
+          <a-list size="small" bordered :data-source="importResult.errors">
+            <template #renderItem="{ item }">
+              <a-list-item style="font-size: 12px; color: #666">{{ item }}</a-list-item>
+            </template>
+          </a-list>
+        </div>
+      </div>
     </a-modal>
   </div>
 </template>

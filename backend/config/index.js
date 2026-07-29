@@ -1,6 +1,9 @@
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+
+// 启动必需配置仍从 .env 读取（数据库未连接前需要这些）
+// 邮件、上传、站点等运行时可调配置由数据库 SiteConfig 表管理（见 services/configService.js）
 module.exports = {
-  port: process.env.BACKEND_PORT || 3001,
+  port: process.env.BACKEND_PORT || 3000,
   db: {
     host: process.env.DB_HOST || 'localhost',
     port: process.env.DB_PORT || 3306,
@@ -29,14 +32,43 @@ module.exports = {
     chatEnabled: process.env.OLLAMA_CHAT_ENABLED === 'true',
     chatModel: process.env.OLLAMA_CHAT_MODEL || 'gemma3:4b'
   },
-  upload: {
-    dir: process.env.UPLOAD_DIR || './uploads',
-    maxSize: process.env.MAX_FILE_SIZE || '10mb'
-  },
   cors: {
     origin: process.env.CORS_ORIGIN || ''
   },
+
+  // 评论回复邮件中"查看详情"按钮的跳转链接前缀
+  // 留空时 mail.js 会回退到 request host
+  commentReplyUrlPrefix: process.env.COMMENT_REPLY_URL_PREFIX || '',
+
+  // 以下配置由 configService.applyToConfig() 在运行时从数据库填充
+  // 这里仅保留默认结构，便于启动前/数据库未就绪时引用
   site: {
-    url: process.env.SITE_URL || ''
+    name: 'Blog',
+    description: '',
+    url: ''
+  },
+  adminEmail: '',
+  mail: {
+    host: 'smtp.qq.com',
+    port: 465,
+    secure: true,
+    user: '',
+    pass: '',
+    fromName: 'Blog'
+  },
+  upload: {
+    dir: './uploads',
+    maxSize: '10mb',
+    defaultStorage: 'local',
+    minio: {
+      enabled: false,
+      endpoint: '',
+      port: 9000,
+      useSSL: false,
+      accessKey: '',
+      secretKey: '',
+      bucket: 'blog',
+      publicBaseUrl: ''
+    }
   }
 };

@@ -1,0 +1,19 @@
+<!--
+  评论回复通知 - 邮件正文
+  变量：
+    - siteName: 站点名称
+    - replyAuthor: 回复者昵称
+    - articleTitle: 文章标题
+    - replyContent: 回复内容
+    - articleUrl: 文章链接
+-->
+<p style="color:#333;font-size:15px;line-height:1.6">
+  <strong style="color:#49B1F5">{{replyAuthor}}</strong> 回复了你在文章
+  <strong>《{{articleTitle}}》</strong> 中的评论：
+</p>
+<div style="background:#f0f7ff;padding:16px;margin:16px 0;border-left:3px solid #49B1F5;border-radius:4px">
+  <p style="color:#555;font-size:14px;line-height:1.6;margin:0">{{replyContent}}</p>
+</div>
+<div style="text-align:left;margin-top:16px">
+  <a href="{{articleUrl}}" style="display:inline-block;background:#49B1F5;color:#fff;padding:10px 24px;text-decoration:none;font-size:14px;border-radius:4px;margin-top:8px">查看详情</a>
+</div>

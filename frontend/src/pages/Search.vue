@@ -2,6 +2,7 @@
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useArticleStore } from '@/stores/article'
+import api from '@/utils/api'
 
 const route = useRoute()
 const router = useRouter()
@@ -9,6 +10,33 @@ const articleStore = useArticleStore()
 const searchQuery = ref((route.query.q as string) || '')
 const inputRef = ref<HTMLInputElement | null>(null)
 const showHistory = ref(false)
+
+// P6-4: 筛选与排序
+const categories = ref<Array<{ id: string; name: string; slug: string }>>([])
+const tags = ref<Array<{ id: string; name: string; slug: string }>>([])
+const selectedCategory = ref<string>('')
+const selectedTag = ref<string>('')
+const sortBy = ref<'created_at' | 'view_count' | 'like_count'>('created_at')
+
+const sortOptions = [
+  { label: '最新发布', value: 'created_at' },
+  { label: '最多阅读', value: 'view_count' },
+  { label: '最多点赞', value: 'like_count' }
+]
+
+async function loadFilters() {
+  try {
+    const [catRes, tagRes] = await Promise.all([
+      api.get('/categories').catch(() => null),
+      // 标签接口为分页结构，需 All 头获取全部标签，且数据在 data.list 中
+      api.get('/tags', { headers: { All: 'true' } }).catch(() => null)
+    ])
+    const catData = catRes?.data?.data ?? catRes?.data
+    categories.value = Array.isArray(catData) ? catData : (catData?.list || [])
+    const tagData = tagRes?.data?.data ?? tagRes?.data
+    tags.value = Array.isArray(tagData) ? tagData : (tagData?.list || [])
+  } catch { /* ignore */ }
+}
 
 // F6: 搜索历史（localStorage，最多5条）
 const HISTORY_KEY = 'search-history'
@@ -43,10 +71,11 @@ function clearHistory() {
 
 onMounted(() => {
   loadHistory()
+  loadFilters()
   if (searchQuery.value) {
     doSearch()
   } else {
-    articleStore.fetchArticles({ page: 1, pageSize: 10 })
+    doFetch()
   }
 })
 
@@ -58,18 +87,26 @@ watch(
   }
 )
 
+function doFetch() {
+  articleStore.fetchArticles({
+    page: 1,
+    pageSize: 10,
+    keyword: searchQuery.value.trim() || undefined,
+    category_id: selectedCategory.value || undefined,
+    tag_id: selectedTag.value || undefined,
+    sort: sortBy.value,
+    order: 'DESC'
+  } as any)
+}
+
 function doSearch() {
   const q = searchQuery.value.trim()
-  if (q) {
-    saveHistory(q)
-    articleStore.searchArticles(q)
-  }
+  if (q) saveHistory(q)
+  doFetch()
 }
 
 function handleSearch() {
-  if (searchQuery.value.trim()) {
-    doSearch()
-  }
+  doSearch()
 }
 
 function handleKeydown(e: KeyboardEvent) {
@@ -81,7 +118,7 @@ function handleKeydown(e: KeyboardEvent) {
 
 function clearSearch() {
   searchQuery.value = ''
-  articleStore.fetchArticles({ page: 1, pageSize: 10 })
+  doFetch()
   inputRef.value?.focus()
 }
 
@@ -93,6 +130,10 @@ function onFocus() {
 function onBlur() {
   // 延迟关闭，允许点击历史项
   setTimeout(() => { showHistory.value = false }, 200)
+}
+
+function onFilterChange() {
+  doFetch()
 }
 
 // F6: 关键词高亮函数
@@ -178,6 +219,47 @@ function formatDate(dateStr: string) {
         style="background: var(--gradient-primary)"
       >
         搜索
+      </button>
+    </div>
+
+    <!-- P6-4: 筛选与排序 -->
+    <div class="flex flex-wrap items-center gap-3 mb-6">
+      <select
+        v-model="selectedCategory"
+        @change="onFilterChange"
+        class="px-3 py-2 rounded-lg text-sm outline-none cursor-pointer transition-colors"
+        style="background-color: var(--color-card); color: var(--color-text); border: 1px solid var(--color-border)"
+      >
+        <option value="">全部分类</option>
+        <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+      </select>
+
+      <select
+        v-model="selectedTag"
+        @change="onFilterChange"
+        class="px-3 py-2 rounded-lg text-sm outline-none cursor-pointer transition-colors"
+        style="background-color: var(--color-card); color: var(--color-text); border: 1px solid var(--color-border)"
+      >
+        <option value="">全部标签</option>
+        <option v-for="tag in tags" :key="tag.id" :value="tag.id">{{ tag.name }}</option>
+      </select>
+
+      <select
+        v-model="sortBy"
+        @change="onFilterChange"
+        class="px-3 py-2 rounded-lg text-sm outline-none cursor-pointer transition-colors"
+        style="background-color: var(--color-card); color: var(--color-text); border: 1px solid var(--color-border)"
+      >
+        <option v-for="opt in sortOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+      </select>
+
+      <button
+        v-if="selectedCategory || selectedTag || sortBy !== 'created_at'"
+        @click="() => { selectedCategory = ''; selectedTag = ''; sortBy = 'created_at'; doFetch() }"
+        class="px-3 py-2 rounded-lg text-xs cursor-pointer border transition-colors"
+        style="border-color: var(--color-border); color: var(--color-text-secondary); background: transparent"
+      >
+        重置筛选
       </button>
     </div>
 

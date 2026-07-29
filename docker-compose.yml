@@ -14,7 +14,7 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
     ports:
-      - "3306:3306"
+      - "127.0.0.1:3306:3306"
     command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     networks:
       - blog-network
@@ -27,7 +27,7 @@ services:
     volumes:
       - redis_data:/data
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes
     networks:
       - blog-network
@@ -55,7 +55,7 @@ services:
     volumes:
       - backend_uploads:/blog-app/uploads
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     networks:
       - blog-network
 

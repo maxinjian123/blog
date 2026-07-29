@@ -27,6 +27,11 @@ const VisitorLog = require('./VisitorLog')(sequelize);
 const ArticleTag = require('./ArticleTags')(sequelize);
 const Announcement = require('./Announcement')(sequelize);
 const Link = require('./Link')(sequelize);
+const ArticleVersion = require('./ArticleVersion')(sequelize);
+const Message = require('./Message')(sequelize);
+const Subscriber = require('./Subscriber')(sequelize);
+const SiteConfig = require('./SiteConfig')(sequelize);
+const MediaFile = require('./MediaFile')(sequelize);
 
 User.hasMany(Article, {foreignKey: 'author_id', as: 'articles'});
 Article.belongsTo(User, {foreignKey: 'author_id', as: 'author'});
@@ -60,11 +65,20 @@ Comment.belongsTo(Article, {foreignKey: 'article_id', as: 'article'});
 User.hasMany(Comment, {foreignKey: 'user_id', as: 'comments'});
 Comment.belongsTo(User, {foreignKey: 'user_id', as: 'user'});
 
+User.hasMany(Message, {foreignKey: 'user_id', as: 'messages'});
+Message.belongsTo(User, {foreignKey: 'user_id', as: 'user'});
+
 Comment.hasMany(Comment, {foreignKey: 'parent_id', as: 'replies'});
 Comment.belongsTo(Comment, {foreignKey: 'parent_id', as: 'parent'});
 
+Message.hasMany(Message, {foreignKey: 'parent_id', as: 'replies'});
+Message.belongsTo(Message, {foreignKey: 'parent_id', as: 'parent'});
+
 Article.hasMany(VisitorLog, {foreignKey: 'article_id', as: 'visitorLogs'});
 VisitorLog.belongsTo(Article, {foreignKey: 'article_id', as: 'article'});
+
+Article.hasMany(ArticleVersion, {foreignKey: 'article_id', as: 'versions'});
+ArticleVersion.belongsTo(Article, {foreignKey: 'article_id', as: 'article'});
 
 
 async function syncDatabase() {
@@ -89,5 +103,10 @@ module.exports = {
     Comment,
     VisitorLog,
     Announcement,
-    Link
+    Link,
+    ArticleVersion,
+    Message,
+    Subscriber,
+    SiteConfig,
+    MediaFile
 };

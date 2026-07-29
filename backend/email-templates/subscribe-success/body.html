@@ -1,0 +1,26 @@
+<!--
+  订阅成功欢迎邮件 - 正文
+  变量：
+    - siteName: 站点名称
+    - email: 订阅者邮箱
+    - siteUrl: 博客首页地址
+-->
+<div style="text-align:center;margin:0 0 20px 0">
+  <div style="display:inline-block;background:linear-gradient(135deg,#4db6ac,#26a69a);color:#fff;width:64px;height:64px;line-height:64px;border-radius:50%;font-size:32px">🎉</div>
+</div>
+<h3 style="color:#5d4037;font-size:20px;text-align:center;margin:0 0 8px 0">订阅成功！</h3>
+<p style="color:#8d6e63;font-size:14px;text-align:center;margin:0 0 24px 0">欢迎加入 {{siteName}} 的读者圈</p>
+<div style="background:#f1f8e9;padding:18px 20px;border-radius:8px;margin:0 0 20px 0;border-left:3px solid #4db6ac">
+  <p style="color:#33691e;font-size:14px;line-height:1.7;margin:0">
+    你好 <strong>{{email}}</strong>，你已成功订阅 <strong style="color:#ff7043">{{siteName}}</strong>。
+  </p>
+  <p style="color:#33691e;font-size:14px;line-height:1.7;margin:10px 0 0 0">
+    从现在起，每当博客发布新文章，你都将第一时间收到推送。
+  </p>
+</div>
+<div style="text-align:center;margin:24px 0">
+  <a href="{{siteUrl}}" style="display:inline-block;background:linear-gradient(135deg,#4db6ac,#26a69a);color:#fff;padding:12px 32px;text-decoration:none;font-size:14px;border-radius:999px;font-weight:600;box-shadow:0 4px 12px rgba(77,182,172,0.3)">🏠 访问博客</a>
+</div>
+<p style="color:#a1887f;font-size:12px;line-height:1.6;text-align:center;margin-top:24px">
+  如果你想取消订阅，可以随时在每封推送邮件底部点击「取消订阅」链接。
+</p>

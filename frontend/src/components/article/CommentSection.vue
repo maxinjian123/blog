@@ -2,6 +2,7 @@
 import {computed, onMounted, ref, watch} from 'vue'
 import api from '@/utils/api'
 import {Marked} from 'marked'
+import {sanitizeHtml, escapeHtml, textToSafeHtml} from '@/utils/sanitize'
 
 import {LoadingOutlined, SendOutlined} from '@ant-design/icons-vue'
 import CommentNode, {type CommentItem} from './CommentNode.vue'
@@ -28,7 +29,9 @@ const submitting = ref(false)
 const cursor = ref<string | null>(null)
 const hasMore = ref(false)
 const error = ref<string | null>(null)
-// F5: 评论排序（latest 最新 / hot 最热按赞数）
+// 评论总数（含回复，由后端返回）
+const total = ref(0)
+// F5: 评论排序（latest 最新 / hot 最热按赞数，服务端排序）
 const sortBy = ref<'latest' | 'hot'>('latest')
 // F5: 已点赞的评论 id 集合（本地防抖，避免重复点击）
 const likedIds = ref<Set<string>>(new Set())
@@ -47,7 +50,7 @@ async function fetchComments(append = false) {
   loading.value = true
   error.value = null
   try {
-    const params: any = {pageSize: 30}
+    const params: any = {pageSize: 30, sort: sortBy.value}
     if (append && cursor.value) {
       params.cursor = cursor.value
     }
@@ -65,6 +68,7 @@ async function fetchComments(append = false) {
 
     cursor.value = payload.cursor || null
     hasMore.value = payload.hasMore || false
+    total.value = payload.total ?? total.value
   } catch (e: any) {
     error.value = e?.response?.data?.message || '加载评论失败'
   } finally {
@@ -74,15 +78,15 @@ async function fetchComments(append = false) {
 
 function renderMarkdown(text: string): string {
   try {
-    return marked.parse(text) as string
+    return sanitizeHtml(marked.parse(text) as string)
   } catch {
-    return text
+    return escapeHtml(text)
   }
 }
 
 function renderContent(item: CommentItem): string {
   if (item.content_type === 'markdown') return renderMarkdown(item.content)
-  return item.content.replace(/\n/g, '<br>')
+  return textToSafeHtml(item.content)
 }
 
 function startReply(comment: CommentItem) {
@@ -186,21 +190,10 @@ async function refreshCaptcha() {
   }
 }
 
-// F5: 评论总赞数（含回复，用于排序）
-function commentTotalLikes(c: CommentItem): number {
-  let total = c.like_count || 0
-  if (c.replies?.length) {
-    total += c.replies.reduce((s, r) => s + commentTotalLikes(r), 0)
-  }
-  return total
-}
-
-// F5: 排序后的评论（latest 按 created_at DESC，hot 按总赞数 DESC）
-const sortedComments = computed<CommentItem[]>(() => {
-  if (sortBy.value === 'hot') {
-    return [...comments.value].sort((a, b) => commentTotalLikes(b) - commentTotalLikes(a))
-  }
-  return comments.value
+// F5: 切换排序时重置游标并从服务端重新拉取
+watch(sortBy, () => {
+  cursor.value = null
+  fetchComments()
 })
 
 async function onLike(commentId: string) {
@@ -263,9 +256,10 @@ watch(() => props.articleId, () => {
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
         </svg>
         评论
+        <span v-if="total > 0" class="text-sm font-medium px-2 py-0.5 rounded" style="background: var(--color-hover); color: var(--color-primary)">{{ total }}</span>
       </h3>
       <!-- F5: 排序切换 -->
-      <div v-if="comments.length > 0" class="flex items-center gap-1 text-xs p-1 rounded-lg" style="background: var(--color-hover)">
+      <div v-if="total > 0" class="flex items-center gap-1 text-xs p-1 rounded-lg" style="background: var(--color-hover)">
         <button
           @click="sortBy = 'latest'"
           class="px-3 py-1 rounded-md cursor-pointer border-0 transition-all"
@@ -360,7 +354,7 @@ watch(() => props.articleId, () => {
 
     <!-- 评论列表 (递归渲染) -->
     <div v-else class="comments-list space-y-4">
-      <template v-for="comment in sortedComments" :key="comment.id">
+      <template v-for="comment in comments" :key="comment.id">
         <CommentNode
             :comment="comment"
             :depth="0"

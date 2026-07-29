@@ -1,11 +1,12 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import { useSiteStore } from '@/stores/site'
 
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'Home',
     component: () => import('@/pages/Home.vue'),
-    meta: { title: 'LinzyBlog' },
+    meta: { title: '首页' },
   },
   {
     path: '/article/:id',
@@ -56,6 +57,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '关于' },
   },
   {
+    path: '/guestbook',
+    name: 'Guestbook',
+    component: () => import('@/pages/Guestbook.vue'),
+    meta: { title: '留言板' },
+  },
+  {
     path: '/links',
     name: 'Links',
     component: () => import('@/pages/Links.vue'),
@@ -76,8 +83,12 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  const title = (to.meta.title as string) || 'LinzyBlog'
-  document.title = title
+  // 标题交由 @unhead/vue 在 App.vue 中通过 titleTemplate 统一处理
+  // 这里仅设置基础标题（站点名称由 useSiteStore 动态注入）
+  const siteStore = useSiteStore()
+  siteStore.ensureLoaded()
+  const title = (to.meta.title as string) || siteStore.info.site_name || 'Blog'
+  document.title = `${title} - ${siteStore.info.site_name || 'Blog'}`
 })
 
 export default router

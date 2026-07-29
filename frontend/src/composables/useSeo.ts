@@ -1,19 +1,22 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useHead, useSeoMeta } from '@unhead/vue'
+import { useSiteStore } from '@/stores/site'
 
 export function useArticleSeo(article: any) {
   const route = useRoute()
+  const siteStore = useSiteStore()
+  const siteName = computed(() => siteStore.info.site_name || 'Blog')
 
   const title = computed(() => article.value?.title || '文章详情')
-  const description = computed(() => article.value?.summary || 'TechMind Blog - 技术博客')
+  const description = computed(() => article.value?.summary || `${siteName.value} - 技术博客`)
   const keywords = computed(() => {
     if (article.value?.tags && Array.isArray(article.value.tags)) {
       return article.value.tags
         .map((tag: any) => (typeof tag === 'string' ? tag : tag.name))
         .join(', ')
     }
-    return 'TechMind, Blog, Vue, 前端, 技术'
+    return `${siteName.value}, Blog, Vue, 前端, 技术`
   })
   const canonical = computed(() => `${window.location.origin}${route.fullPath}`)
 
@@ -42,27 +45,39 @@ export function useArticleSeo(article: any) {
 
 export function usePageSeo(meta: {
   title: string
-  description?: string
-  keywords?: string
+  description?: string | (() => string)
+  keywords?: string | (() => string)
 }) {
   const route = useRoute()
+  const siteStore = useSiteStore()
+  const siteName = computed(() => siteStore.info.site_name || 'Blog')
+
+  const resolveDesc = () => {
+    const d = typeof meta.description === 'function' ? meta.description() : meta.description
+    return d || `${siteName.value} - 个人技术博客`
+  }
+  const resolveKeywords = () => {
+    const k = typeof meta.keywords === 'function' ? meta.keywords() : meta.keywords
+    return k || `${siteName.value}, Blog, Vue, 前端, 技术`
+  }
+
   const canonical = computed(() => `${window.location.origin}${route.fullPath}`)
 
   useSeoMeta({
     title: meta.title,
-    description: meta.description || 'TechMind Blog - 个人技术博客',
+    description: () => resolveDesc(),
     ogTitle: meta.title,
-    ogDescription: meta.description || 'TechMind Blog - 个人技术博客',
+    ogDescription: () => resolveDesc(),
     ogType: 'website',
     ogUrl: canonical,
     twitterCard: 'summary_large_image',
     twitterTitle: meta.title,
-    twitterDescription: meta.description || 'TechMind Blog - 个人技术博客',
+    twitterDescription: () => resolveDesc(),
   })
 
   useHead({
     meta: () => [
-      { name: 'keywords', content: meta.keywords || 'TechMind, Blog, Vue, 前端, 技术' },
+      { name: 'keywords', content: resolveKeywords() },
       { name: 'robots', content: 'index, follow' },
     ],
     link: () => [{ rel: 'canonical', href: canonical.value }],

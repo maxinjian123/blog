@@ -6,26 +6,20 @@ const rateLimit = require('express-rate-limit');
 const path = require('path');
 const config = require('./config');
 const { syncDatabase } = require('./models');
-const redis = require('./utils/redis');
+require('./utils/redis');
 const errorHandler = require('./middleware/errorHandler');
 
-const authRoutes = require('./routes/auth');
-const articleRoutes = require('./routes/articles');
-const commentRoutes = require('./routes/comments');
-const categoryRoutes = require('./routes/categories');
-const tagRoutes = require('./routes/tags');
-const uploadRoutes = require('./routes/upload');
-const aiRoutes = require('./routes/ai');
-const adminRoutes = require('./routes/admin');
-const announcementRoutes = require('./routes/announcements');
-const siteRoutes = require('./routes/site');
-const captchaRoutes = require('./routes/captcha');
-const commentUploadRoutes = require('./routes/commentUpload');
-const shareRoutes = require('./routes/share');
-const sitemapRoutes = require('./routes/sitemap');
-const linkRoutes = require('./routes/links');
+const { registerRoutes } = require('./routes');
+const { startScheduler } = require('./utils/scheduler');
+const { verifyMailer } = require('./services/mail');
+const { initDefaults, loadConfigs } = require('./services/configService');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpecs = require('./config/swagger');
 
 const app = express();
+
+// 位于 Nginx 反向代理后，信任一层代理以正确获取客户端 IP（影响限流与日志）
+app.set('trust proxy', 1);
 
 app.use(helmet());
 
@@ -54,21 +48,18 @@ app.use('/api/', limiter);
 
 app.use('/uploads', express.static(path.join(__dirname, '.', config.upload.dir)));
 
-app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/articles', articleRoutes);
-app.use('/api/v1/comments', commentRoutes);
-app.use('/api/v1/categories', categoryRoutes);
-app.use('/api/v1/tags', tagRoutes);
-app.use('/api/v1/upload', uploadRoutes);
-app.use('/api/v1/comment-upload', commentUploadRoutes);
-app.use('/api/v1/ai', aiRoutes);
-app.use('/api/v1/admin', adminRoutes);
-app.use('/api/v1/announcements', announcementRoutes);
-app.use('/api/v1/site', siteRoutes);
-app.use('/api/v1/captcha', captchaRoutes);
-app.use('/api/v1/articles', shareRoutes);
-app.use('/api/v1/links', linkRoutes);
-app.use('/', sitemapRoutes);
+// Swagger API 文档（开发环境无需鉴权，便于调试）
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs, {
+  explorer: true,
+  customSiteTitle: '3D Blog API Docs'
+}));
+app.get('/api-docs.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpecs);
+});
+
+// 统一注册所有路由
+registerRoutes(app);
 
 app.use((req, res) => {
   res.status(404).json({ code: 404, message: 'Route not found', data: null });
@@ -79,9 +70,22 @@ app.use(errorHandler);
 // syncDatabase();
 
 const PORT = config.port;
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`[Server] Running on http://localhost:${PORT}`);
   console.log(`[Server] Environment: ${process.env.NODE_ENV || 'development'}`);
+  // P4-2: 启动定时发布调度器
+  startScheduler();
+
+  // 启动后同步数据库模型 + 加载站点/邮件/上传配置
+  try {
+    await syncDatabase();
+    await initDefaults();
+    await loadConfigs();
+    // 配置加载完成后，验证邮件服务（按最新配置）
+    await verifyMailer();
+  } catch (err) {
+    console.error('[Server] 配置加载失败:', err.message);
+  }
 });
 
 module.exports = app;

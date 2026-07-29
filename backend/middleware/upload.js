@@ -1,21 +1,9 @@
 const multer = require('multer');
-const path = require('path');
-const {v4: uuidv4} = require('uuid');
 const config = require('../config');
-const {error} = require('../utils/response');
-const {getPureUUID} = require("../utils");
+const { error } = require('../utils/response');
 
-const storage = multer.diskStorage({
-    destination(req, file, cb) {
-        const uploadDir = path.resolve(__dirname, '..', config.upload.dir);
-        cb(null, uploadDir);
-    },
-    filename(req, file, cb) {
-        const ext = path.extname(file.originalname);
-        const filename = `${getPureUUID()}${ext}`;
-        cb(null, filename);
-    }
-});
+// 使用内存存储：由 storageService 统一决定最终落地（本地/MinIO）
+const storage = multer.memoryStorage();
 
 function fileFilter(req, file, cb) {
     const allowedTypes = [
@@ -50,8 +38,8 @@ const upload = multer({
 });
 
 function parseMaxSize(size) {
-    const units = {b: 1, kb: 1024, mb: 1024 * 1024};
-    const match = size.toLowerCase().match(/^(\d+)(b|kb|mb)$/);
+    const units = { b: 1, kb: 1024, mb: 1024 * 1024 };
+    const match = String(size || '10mb').toLowerCase().match(/^(\d+)(b|kb|mb)$/);
     if (match) {
         return Number(match[1]) * units[match[2]];
     }
@@ -71,4 +59,4 @@ function handleMulterError(err, req, res, next) {
     next();
 }
 
-module.exports = {upload, handleMulterError};
+module.exports = { upload, handleMulterError };

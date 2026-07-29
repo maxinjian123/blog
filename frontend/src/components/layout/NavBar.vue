@@ -1,17 +1,33 @@
 <script setup lang="ts">
-import {onMounted, onUnmounted, ref} from 'vue'
+import {onMounted, onUnmounted, ref, computed} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import {useThemeStore} from '@/stores/theme'
+import {useSiteStore} from '@/stores/site'
 import Sidebar from '@/components/layout/Sidebar.vue'
 import {CloseOutlined, MenuOutlined} from '@ant-design/icons-vue'
 
 const router = useRouter()
 const route = useRoute()
 const themeStore = useThemeStore()
+const siteStore = useSiteStore()
 
 const isMobileMenuOpen = ref(false)
 const isScrolled = ref(false)
 const scrollProgress = ref(0)
+
+// 站点名称与 Logo（来自后台动态配置）
+const siteName = computed(() => siteStore.info.site_name || 'Blog')
+const siteLogo = computed(() => siteStore.info.site_logo || '')
+
+// 渲染站点名称：支持 "LinzyBlog" 类命名（保持首段+末尾 Blog 着色）
+const siteNameParts = computed(() => {
+  const name = siteName.value.trim()
+  if (!name) return { prefix: '', highlight: '' }
+  // 末尾以 "Blog" 结尾则拆分高亮
+  const m = name.match(/^(.+?)(Blog)$/i)
+  if (m) return { prefix: m[1], highlight: 'Blog' }
+  return { prefix: '', highlight: name }
+})
 
 const navLinks = [
   {
@@ -37,6 +53,7 @@ const navLinks = [
   {to: '/search', label: '搜索', icon: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'},
   {to: '/links', label: '友链', icon: 'M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71'},
   {to: '/about', label: '关于', icon: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'},
+  {to: '/guestbook', label: '留言', icon: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10Z'}
 ]
 
 function isActive(path: string) {
@@ -93,18 +110,19 @@ onUnmounted(() => {
           @click="closeMobileMenu"
       >
         <div
-            class="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 group-hover:shadow-md"
+            class="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 group-hover:shadow-md overflow-hidden"
             style="background: var(--gradient-primary)"
         >
-
-          <svg class="w-4.5 h-4.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          <img v-if="siteLogo" :src="siteLogo" alt="logo" class="w-full h-full object-cover" />
+          <svg v-else class="w-4.5 h-4.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                stroke-linecap="round" stroke-linejoin="round">
             <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
             <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
           </svg>
         </div>
         <span class="text-lg font-bold tracking-tight" style="color: var(--color-text)">
-          Linzy<span class="text-gradient">Blog</span>
+          <template v-if="siteNameParts.prefix">{{ siteNameParts.prefix }}<span class="text-gradient">{{ siteNameParts.highlight }}</span></template>
+          <template v-else>{{ siteName }}</template>
         </span>
       </router-link>
 

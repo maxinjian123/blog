@@ -9,6 +9,21 @@ const { getPureUUID } = require('../utils');
 
 const router = express.Router();
 
+/**
+ * 修复 multer 解析中文文件名时出现的乱码问题。
+ */
+function fixFilenameEncoding(name) {
+  if (!name) return name;
+  if (/[\u4e00-\u9fa5\uff00-\uffef]/.test(name)) {
+    return name;
+  }
+  try {
+    return Buffer.from(name, 'latin1').toString('utf8');
+  } catch (err) {
+    return name;
+  }
+}
+
 // Redis 限流中间件：每个 IP 每分钟最多 3 条评论
 const commentRateLimiter = createRateLimit({
   keyPrefix: 'rate:comment_upload',
@@ -88,7 +103,8 @@ router.post(
 
       // 保存图片到磁盘
       const fs = require('fs');
-      const ext = path.extname(req.file.originalname) || '.png';
+      const originalname = fixFilenameEncoding(req.file.originalname);
+      const ext = path.extname(originalname) || '.png';
       const filename = `${getPureUUID()}${ext}`;
       const uploadDir = path.resolve(__dirname, '..', config.upload.dir);
 
@@ -103,7 +119,7 @@ router.post(
 
       return success(res, {
         filename,
-        originalname: req.file.originalname,
+        originalname,
         size: req.file.size,
         mimetype: req.file.mimetype,
         url: fileUrl

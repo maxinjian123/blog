@@ -51,6 +51,18 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '评论管理', requiresAuth: true }
   },
   {
+    path: '/guestbook',
+    name: 'GuestbookManage',
+    component: () => import('@/pages/GuestbookManage.vue'),
+    meta: { title: '留言管理', requiresAuth: true }
+  },
+  {
+    path: '/subscribers',
+    name: 'SubscriberManage',
+    component: () => import('@/pages/SubscriberManage.vue'),
+    meta: { title: '邮件订阅', requiresAuth: true }
+  },
+  {
     path: '/settings',
     name: 'Settings',
     component: () => import('@/pages/Settings.vue'),
@@ -67,6 +79,24 @@ const routes: RouteRecordRaw[] = [
     name: 'LinkManage',
     component: () => import('@/pages/LinkManage.vue'),
     meta: { title: '友链管理', requiresAuth: true }
+  },
+  {
+    path: '/media',
+    name: 'MediaLibrary',
+    component: () => import('@/pages/MediaLibrary.vue'),
+    meta: { title: '媒体库', requiresAuth: true }
+  },
+  {
+    path: '/profile',
+    name: 'AdminProfile',
+    component: () => import('@/pages/AdminProfile.vue'),
+    meta: { title: '个人信息', requiresAuth: true }
+  },
+  {
+    path: '/crawler',
+    name: 'GitHubCrawler',
+    component: () => import('@/pages/GitHubCrawler.vue'),
+    meta: { title: 'GitHub 爬虫', requiresAuth: true }
   }
 ]
 

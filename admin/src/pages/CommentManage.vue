@@ -3,6 +3,7 @@ import {h, onMounted, reactive, ref} from 'vue'
 import api from '@/utils/api'
 import {message, Modal} from 'ant-design-vue'
 import {Marked} from 'marked'
+import {sanitizeHtml, escapeHtml, textToSafeHtml} from '@/utils/sanitize'
 import {MdEditor} from 'md-editor-v3'
 import {Emoji} from '@vavt/v3-extension'
 import '@vavt/v3-extension/lib/asset/Emoji.css'
@@ -97,7 +98,7 @@ const columns = [
     dataIndex: 'article_title',
     key: 'article_title',
     width: 180,
-    ellipsis: true,
+    ellipsis: true
   },
   {
     title: '状态',
@@ -124,11 +125,12 @@ const columns = [
 async function loadData() {
   loading.value = true
   try {
-    const params: any = {...query}
-    if (params.is_approved === undefined) delete params.is_approved
-    if (!params.keyword) delete params.keyword
+    // 后端参数名为 approved，与前端字段 is_approved 不同，需显式映射
+    const params: any = {page: query.page, pageSize: query.pageSize}
+    if (query.is_approved !== undefined) params.approved = query.is_approved
+    if (query.keyword) params.keyword = query.keyword
     const res: any = await api.get('/comments', {params})
-    const list = res.data?.rows || res.data?.list || res.data || []
+    const list = res.data?.list || res.data?.rows || res.data || []
     comments.value = list.map((item: any) => ({
       id: item.id,
       content: item.content,
@@ -146,7 +148,7 @@ async function loadData() {
       parent_author_name: item.parent?.author_name || null,
       created_at: item.created_at
     }))
-    total.value = res.data?.count || res.data?.total || 0
+    total.value = res.data?.pagination?.total ?? res.data?.count ?? res.data?.total ?? 0
   } finally {
     loading.value = false
   }
@@ -207,6 +209,10 @@ async function handleViewThread(record: Comment) {
 
 // 预览文章
 async function handlePreviewArticle(record: Comment) {
+  if (!record.article_id) {
+    message.info('该评论无对应文章')
+    return
+  }
   articlePreviewTitle.value = record.article_title
   articlePreviewContent.value = ''
   articlePreviewVisible.value = true
@@ -224,6 +230,10 @@ async function handlePreviewArticle(record: Comment) {
 
 // 跳转到客户端文章详情页
 function handleGoToArticle(record: Comment) {
+  if (!record.article_id) {
+    message.info('该评论无对应文章链接')
+    return
+  }
   window.open(`${CLIENT_BASE_URL}/article/${record.article_id}?c=${record.id}`, '_blank')
 }
 
@@ -332,9 +342,9 @@ function canReply(record: Comment): boolean {
 // 用marked渲染markdown内容
 function renderMarkdown(content: string): string {
   try {
-    return marked.parse(content) as string
+    return sanitizeHtml(marked.parse(content) as string)
   } catch {
-    return content
+    return escapeHtml(content)
   }
 }
 
@@ -342,7 +352,7 @@ function renderThreadContent(content: string, contentType: string): string {
   if (contentType === 'markdown') {
     return renderMarkdown(content)
   }
-  return content.replace(/\n/g, '<br>')
+  return textToSafeHtml(content)
 }
 
 // md-editor-v3 工具栏配置
@@ -597,7 +607,7 @@ onMounted(() => {
         width="800px"
         :footer="null"
     >
-      <div class="article-preview-content" v-html="articlePreviewContent"></div>
+      <div class="article-preview-content markdown-body" v-html="renderMarkdown(articlePreviewContent)"></div>
       <div v-if="!articlePreviewContent" style="text-align: center; padding: 40px; color: #999">
         加载中...
       </div>

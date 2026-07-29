@@ -29,10 +29,21 @@ function optionalAuth(req, res, next) {
       const decoded = jwt.verify(token, config.jwt.secret);
       req.user = decoded;
     } catch (err) {
-      console.log(err)
+      // 可选鉴权：令牌无效时以游客身份继续
     }
   }
   next();
 }
 
-module.exports = { auth, optionalAuth };
+// 需要管理员角色（须在 auth 之后使用）
+function adminOnly(req, res, next) {
+  if (!req.user) {
+    return error(res, '请先登录', 401);
+  }
+  if (req.user.role !== 'admin') {
+    return error(res, '需要管理员权限', 403);
+  }
+  next();
+}
+
+module.exports = { auth, optionalAuth, adminOnly };

@@ -1,0 +1,26 @@
+<!--
+  评论回复通知 - 共用布局（蓝色科技风，与订阅系列区分）
+  变量：
+    - siteName: 站点名称
+    - title: 邮件顶部标题
+    - body: 主内容（已渲染好的 HTML）
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{title}}</title>
+</head>
+<body style="margin:0;padding:0;background:#f5f7fa;font-family:'Microsoft YaHei','PingFang SC',Arial,sans-serif">
+  <div style="max-width:600px;margin:0 auto;padding:20px">
+    <div style="background:linear-gradient(135deg,#49B1F5,#7dd3fc);padding:20px;text-align:center;border-radius:8px 8px 0 0">
+      <h2 style="color:#fff;margin:0;font-size:20px;font-weight:600">{{title}}</h2>
+    </div>
+    <div style="background:#fff;padding:24px;box-shadow:0 2px 8px rgba(0,0,0,0.06);border-radius:0 0 8px 8px">
+      {{body}}
+    </div>
+    <p style="color:#999;font-size:12px;text-align:center;margin-top:16px">此邮件由系统自动发送，请勿直接回复</p>
+  </div>
+</body>
+</html>

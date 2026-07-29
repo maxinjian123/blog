@@ -26,6 +26,7 @@ watch(text, (val) => {
 })
 
 // 工具栏配置：0 对应 defToolbars 插槽中的 Emoji 组件
+// 注：已移除图片上传按钮，客户端评论不再支持直接上传图片
 const toolbars: ToolbarNames[] = [
   'bold',
   'italic',
@@ -34,7 +35,6 @@ const toolbars: ToolbarNames[] = [
   'quote',
   'code',
   'link',
-  'image',
   '-',
   0,
   '-',
@@ -42,56 +42,6 @@ const toolbars: ToolbarNames[] = [
   'preview',
   'previewOnly'
 ]
-
-// 图片上传处理函数
-async function handleUploadImg(
-  files: Array<File>,
-  callback: (urls: Array<{ url: string; alt: string; title: string }>) => void
-) {
-  const results = await Promise.all(
-    files.map(async (file) => {
-      const formData = new FormData()
-      formData.append('file', file)
-
-      try {
-        const token = localStorage.getItem('token') || ''
-        const res = await fetch('/api/v1/comment-upload', {
-          method: 'POST',
-          headers: {
-            'Authorization': token ? `Bearer ${token}` : '',
-          },
-          body: formData,
-        })
-
-        if (!res.ok) {
-          throw new Error(`上传失败: ${res.status}`)
-        }
-
-        const data = await res.json()
-        const fileData = data.data || data
-        const url = fileData.url || fileData.path || fileData
-
-        return {
-          url: typeof url === 'string' ? url : '',
-          alt: file.name,
-          title: file.name
-        }
-      } catch (err) {
-        console.error('[Comment] 图片上传失败:', err)
-        return {
-          url: '',
-          alt: file.name,
-          title: `上传失败: ${file.name}`
-        }
-      }
-    })
-  )
-
-  const validResults = results.filter(r => r.url)
-  if (validResults.length > 0) {
-    callback(validResults)
-  }
-}
 </script>
 
 <template>
@@ -99,14 +49,12 @@ async function handleUploadImg(
     <MdEditor
         v-model="text"
         language="zh-CN"
-        :preview="false"
         :theme="theme"
         :toolbars="toolbars"
         :show-code-row-number="false"
         :placeholder="placeholder || '支持 Markdown 语法，尝试 **加粗**、*斜体*、`代码` 等'"
         :footers="[]"
-        :on-upload-img="handleUploadImg"
-        style="height: 250px"
+        style="height: 320px"
     >
       <template #defToolbars>
         <Emoji title="表情" />
@@ -128,11 +76,11 @@ async function handleUploadImg(
 }
 
 .md-comment-editor .md-editor-content {
-  height: 300px;
+  height: 280px;
 }
 
 .md-comment-editor .md-editor-preview-wrapper {
-  max-height: 200px;
+  max-height: 280px;
   overflow-y: auto;
 }
 </style>

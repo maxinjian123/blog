@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4f6ef7"/>
+      <stop offset="100%" style="stop-color:#8b5cf6"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="26" fill="url(#bg)"/>
+  <!-- 文档图标 - 白色实心，小尺寸清晰可辨，代表文章/博客 -->
+  <rect x="34" y="22" width="60" height="80" rx="6" fill="#ffffff" opacity="0.95"/>
+  <!-- 文档折角 -->
+  <path d="M76 22 L94 40 L76 40 Z" fill="#d4d9f7" opacity="0.6"/>
+  <path d="M76 22 L94 40 H80 Q76 40 76 36 Z" fill="#c0c7f5" opacity="0.4"/>
+  <!-- 文字行（渐变色，由深到浅） -->
+  <rect x="46" y="54" width="32" height="5" rx="2.5" fill="url(#bg)" opacity="0.55"/>
+  <rect x="46" y="66" width="36" height="5" rx="2.5" fill="url(#bg)" opacity="0.4"/>
+  <rect x="46" y="78" width="28" height="5" rx="2.5" fill="url(#bg)" opacity="0.4"/>
+  <rect x="46" y="90" width="20" height="5" rx="2.5" fill="url(#bg)" opacity="0.3"/>
+</svg>

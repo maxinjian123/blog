@@ -2,6 +2,7 @@
 import {ref, watch} from 'vue'
 import api from '@/utils/api'
 import {message} from 'ant-design-vue'
+import {sanitizeHtml} from '@/utils/sanitize'
 import {
   CopyOutlined,
   EditOutlined,
@@ -228,7 +229,7 @@ async function handleCopy() {
     </div>
 
     <div v-if="result && !loading && tagsResult.length === 0" class="ai-result">
-      <div v-html="result"></div>
+      <div v-html="sanitizeHtml(result)"></div>
 
       <div style="margin-top: 12px; display: flex; gap: 8px">
         <a-button size="small" type="primary" @click="handleInsert">

@@ -64,7 +64,10 @@ export const useArticleStore = defineStore('article', () => {
         page?: number
         pageSize?: number
         category_id?: string
+        tag_id?: string
         keyword?: string
+        sort?: string
+        order?: string
         featured?: boolean
     }) {
         loading.value = true

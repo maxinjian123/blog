@@ -45,7 +45,7 @@ function toggleExpand() {
     <Transition name="summary">
       <div v-if="isExpanded" class="px-4 pb-4 border-t" style="border-color: var(--color-border)">
         <div class="flex items-center gap-2 pt-3 mb-2">
-          <span class="text-xs tracking-wider" style="color: var(--color-text-secondary)">AI SUMMARY</span>
+          <span class="text-xs tracking-wider" style="color: var(--color-text-secondary)">SUMMARY</span>
         </div>
         <p class="text-sm leading-relaxed" style="color: var(--color-text-secondary)">{{ summary }}</p>
       </div>

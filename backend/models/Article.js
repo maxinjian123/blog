@@ -57,6 +57,11 @@ module.exports = (sequelize) => {
       type: DataTypes.DATE,
       allowNull: true
     },
+    scheduled_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: '定时发布时间（到点自动将 status 从 draft 改为 published）'
+    },
     content_type: {
       type: DataTypes.ENUM('html', 'markdown'),
       defaultValue: 'html'

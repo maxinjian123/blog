@@ -4,6 +4,7 @@ import api from '@/utils/api'
 
 interface User {
   id: number
+  nickname?: string
   username: string
   email: string
   avatar: string

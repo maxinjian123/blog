@@ -19,17 +19,24 @@ onMounted(() => {
 })
 
 watch(id, (newId) => {
+  // 路由离开时 id 会变为 undefined，避免发出杂散请求覆盖其他页面的文章列表
+  if (!newId || route.name !== 'Category') return
   currentPage.value = 1
   articleStore.fetchArticlesByCategory(newId)
 })
 
 function goBack() {
-  router.back()
+  // 无历史记录（直接打开本页）时回退首页，避免空白
+  if (window.history.state?.back) {
+    router.back()
+  } else {
+    router.push('/')
+  }
 }
 </script>
 
 <template>
-  <div class="category-page mt-5">
+  <div class="category-page mt-5 max-w-[960px] mx-auto">
     <button
         @click="goBack"
         class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-sm
@@ -64,14 +71,14 @@ function goBack() {
       </router-link>
     </div>
 
-    <div v-else class="space-y-6 animate-fade-in">
+    <div v-else class="space-y-4 animate-fade-in">
       <router-link
           v-for="article in articleStore.articles"
           :key="article.id"
           :to="`/article/${article.id}`"
           class="block no-underline"
       >
-        <ArticleCard :article="article"/>
+        <ArticleCard :article="article" layout="list"/>
       </router-link>
     </div>
   </div>

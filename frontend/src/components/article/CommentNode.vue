@@ -1,11 +1,11 @@
 <script setup lang="ts">
 
 import {useRoute} from "vue-router";
-import {onMounted} from "vue";
+import {onMounted, ref, computed} from "vue";
 
 export interface CommentItem {
   id: string
-  article_id: string
+  article_id?: string
   parent_id: string | null
   parent_author_name: string | null
   author_name: string
@@ -13,7 +13,7 @@ export interface CommentItem {
   avatar: string | null
   content: string
   content_type: string
-  is_ai_reply: boolean
+  is_ai_reply?: boolean
   is_approved: boolean
   like_count: number
   created_at: string
@@ -29,7 +29,7 @@ const props = defineProps<{
   getAvatar: (item: CommentItem) => string | null
   getInitial: (item: CommentItem) => string
   onLike: (id: string) => void
-  articleId: string
+  articleId?: string
   likedIds?: Set<string>
 }>()
 
@@ -48,6 +48,31 @@ function onReply() {
 
 function onLikeClick() {
   props.onLike(props.comment.id)
+}
+
+// 回复条数过多时折叠：默认仅展示前 3 条，其余可展开查看
+const REPLY_COLLAPSE_COUNT = 2
+
+function containsComment(list: CommentItem[], id: string): boolean {
+  return list.some(r => r.id === id || containsComment(r.replies || [], id))
+}
+
+// 若通过 ?c=评论ID 定位的目标在被折叠的回复里，默认展开
+const targetCommentId = route.query.c as string | undefined
+const repliesExpanded = ref(
+  !!targetCommentId && containsComment((props.comment.replies || []).slice(REPLY_COLLAPSE_COUNT), targetCommentId)
+)
+
+const visibleReplies = computed(() => {
+  const replies = props.comment.replies || []
+  if (repliesExpanded.value || replies.length <= REPLY_COLLAPSE_COUNT) return replies
+  return replies.slice(0, REPLY_COLLAPSE_COUNT)
+})
+
+const hiddenReplyCount = computed(() => (props.comment.replies?.length || 0) - REPLY_COLLAPSE_COUNT)
+
+function toggleReplies() {
+  repliesExpanded.value = !repliesExpanded.value
 }
 
 const scrollToSection = () => {
@@ -156,10 +181,10 @@ export default {
       </div>
     </div>
 
-    <!-- 递归子回复 -->
+    <!-- 递归子回复：条数过多时折叠 -->
     <template v-if="comment.replies?.length > 0 && depth < maxDepth">
       <CommentNode
-          v-for="reply in comment.replies"
+          v-for="reply in visibleReplies"
           :key="reply.id"
           :comment="reply"
           :depth="depth + 1"
@@ -168,9 +193,21 @@ export default {
           :getAvatar="getAvatar"
           :getInitial="getInitial"
           :onLike="onLike"
-          :articleId="articleId"
+          :articleId="articleId || undefined"
           @reply="(item: CommentItem) => emit('reply', item)"
       />
+
+      <button
+          v-if="comment.replies.length > REPLY_COLLAPSE_COUNT"
+          @click="toggleReplies"
+          class="reply-toggle mb-3 text-xs cursor-pointer border-0 bg-transparent transition-opacity duration-200 hover:opacity-70 inline-flex items-center gap-1"
+          :style="{ marginLeft: `${Math.min(depth + 1, 2) * 28 + 48}px`, color: 'var(--color-primary)' }"
+      >
+        {{ repliesExpanded ? '收起回复' : `展开剩余 ${hiddenReplyCount} 条回复` }}
+        <svg class="w-3 h-3 transition-transform" :style="repliesExpanded ? 'transform: rotate(180deg)' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
     </template>
   </div>
 </template>

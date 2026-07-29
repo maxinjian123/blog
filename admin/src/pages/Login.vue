@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { message } from 'ant-design-vue'
 import { UserOutlined, LockOutlined } from '@ant-design/icons-vue'
+import api from '@/utils/api'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -13,6 +14,22 @@ const formState = reactive({
   username: '',
   password: ''
 })
+
+// 站点信息（动态从后端读取 logo 与名称）
+const siteInfo = ref<{ site_name: string; site_logo: string }>({ site_name: '', site_logo: '/logo.svg' })
+
+async function fetchSiteInfo() {
+  try {
+    const res: any = await api.get('/site/info')
+    const data = res.data || res
+    siteInfo.value = {
+      site_name: data?.site_name || '管理后台',
+      site_logo: data?.site_logo || '/logo.svg'
+    }
+  } catch {
+    // 静默失败
+  }
+}
 
 const rules = {
   username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
@@ -31,14 +48,18 @@ async function handleLogin() {
     loading.value = false
   }
 }
+
+onMounted(() => {
+  fetchSiteInfo()
+})
 </script>
 
 <template>
   <div class="login-page">
     <div class="login-card">
       <div class="login-header">
-        <img src="/vite.svg" alt="logo" class="login-logo" />
-        <h2>3D Blog 管理后台</h2>
+        <img :src="siteInfo.site_logo" alt="logo" class="login-logo" />
+        <h2>{{ siteInfo.site_name }} 管理后台</h2>
         <p>请登录以继续</p>
       </div>
       <a-form

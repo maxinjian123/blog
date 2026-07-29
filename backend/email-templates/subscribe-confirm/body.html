@@ -1,0 +1,25 @@
+<!--
+  订阅确认邮件 - 正文
+  变量：
+    - siteName: 站点名称
+    - email: 订阅者邮箱
+    - confirmUrl: 确认订阅链接
+-->
+<p style="color:#5d4037;font-size:15px;line-height:1.7">
+  你好！感谢你愿意订阅 <strong style="color:#ff7043">{{siteName}}</strong> 🎉
+</p>
+<p style="color:#5d4037;font-size:15px;line-height:1.7">
+  请点击下方按钮完成订阅确认，确认后你将第一时间收到新文章推送。
+</p>
+<div style="text-align:center;margin:28px 0">
+  <a href="{{confirmUrl}}" style="display:inline-block;background:linear-gradient(135deg,#ff8a65,#ffb74d);color:#fff;padding:14px 36px;text-decoration:none;font-size:15px;border-radius:999px;font-weight:600;box-shadow:0 4px 12px rgba(255,138,101,0.3)">✅ 确认订阅</a>
+</div>
+<div style="background:#fff3e0;padding:14px 16px;border-radius:8px;margin:16px 0;border:1px dashed #ffcc80">
+  <p style="color:#8d6e63;font-size:13px;line-height:1.6;margin:0">
+    如果按钮无法点击，请复制以下链接到浏览器打开：<br>
+    <a href="{{confirmUrl}}" style="color:#ff7043;word-break:break-all">{{confirmUrl}}</a>
+  </p>
+</div>
+<p style="color:#a1887f;font-size:12px;line-height:1.6">
+  如果这不是你的操作，请忽略本邮件，你不会被订阅。
+</p>

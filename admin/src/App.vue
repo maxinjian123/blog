@@ -1,15 +1,24 @@
 <script setup lang="ts">
 import { useAuthStore } from '@/stores/auth'
-import { AppstoreOutlined, CommentOutlined, DashboardOutlined, FileTextOutlined, LinkOutlined, LogoutOutlined, MenuFoldOutlined, MenuUnfoldOutlined, NotificationOutlined, SettingOutlined, TagsOutlined, UserOutlined } from '@ant-design/icons-vue'
+import { AppstoreOutlined, CommentOutlined, DashboardOutlined, FileTextOutlined, FolderOpenOutlined, GithubOutlined, LinkOutlined, LogoutOutlined, MailOutlined, MenuFoldOutlined, MenuUnfoldOutlined, MessageOutlined, NotificationOutlined, SettingOutlined, TagsOutlined, UserOutlined } from '@ant-design/icons-vue'
 import zhCN from 'ant-design-vue/es/locale/zh_CN'
 import dayjs from 'dayjs'
 import 'dayjs/locale/zh-cn'
-import { computed, h, ref, watch } from 'vue'
+import { computed, h, onMounted, ref, watch } from 'vue'
+import api from '@/utils/api'
 
 import { useRoute, useRouter } from 'vue-router'
 dayjs.locale('zh-cn')
 
 const locale = ref(zhCN)
+
+// 企业级中后台视觉规范：收敛圆角，保持专业简洁
+const antdTheme = {
+  token: {
+    borderRadius: 4,
+    colorPrimary: '#1677ff'
+  }
+}
 
 const router = useRouter()
 const route = useRoute()
@@ -17,6 +26,44 @@ const authStore = useAuthStore()
 
 const collapsed = ref(false)
 const selectedKeys = ref<string[]>([])
+
+// 站点信息（从后台动态加载 logo 与名称，不再硬编码）
+const siteInfo = ref<{ site_name: string; site_logo: string }>({ site_name: '', site_logo: '' })
+
+async function fetchSiteInfo() {
+  try {
+    const res: any = await api.get('/site/info')
+    const data = res.data || res
+    siteInfo.value = {
+      site_name: data?.site_name || '',
+      site_logo: data?.site_logo || '/logo.svg'
+    }
+    // 同步浏览器标题与 favicon
+    if (data?.site_name) document.title = `${data.site_name} 管理后台`
+    if (data?.site_logo) updateFavicon(data.site_logo)
+  } catch {
+    // 静默失败，使用默认 logo
+  }
+}
+
+function updateFavicon(href: string) {
+  let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
+  if (!link) {
+    link = document.createElement('link')
+    link.rel = 'icon'
+    document.head.appendChild(link)
+  }
+  link.href = href
+}
+
+onMounted(() => {
+  fetchSiteInfo()
+})
+
+// 切换到设置页时刷新站点信息（保存 logo/名称后回到 App 可即时反映）
+watch(() => route.path, (p) => {
+  if (p === '/' || p === '/settings') fetchSiteInfo()
+})
 
 const menuItems = [
   { key: '/', icon: h(DashboardOutlined), label: '仪表盘' },
@@ -31,8 +78,12 @@ const menuItems = [
     ]
   },
   { key: '/comments', icon: h(CommentOutlined), label: '评论管理' },
+  { key: '/guestbook', icon: h(MessageOutlined), label: '留言管理' },
   { key: '/announcements', icon: h(NotificationOutlined), label: '公告管理' },
   { key: '/links', icon: h(LinkOutlined), label: '友链管理' },
+  { key: '/media', icon: h(FolderOpenOutlined), label: '媒体库' },
+  { key: '/crawler', icon: h(GithubOutlined), label: 'GitHub 爬虫' },
+  { key: '/subscribers', icon: h(MailOutlined), label: '邮件订阅' },
   { key: '/settings', icon: h(SettingOutlined), label: '系统设置' }
 ]
 
@@ -48,10 +99,18 @@ function updateSelectedKeys() {
     selectedKeys.value = ['/tags']
   } else if (path.startsWith('/comments')) {
     selectedKeys.value = ['/comments']
+  } else if (path.startsWith('/guestbook')) {
+    selectedKeys.value = ['/guestbook']
   } else if (path.startsWith('/announcements')) {
     selectedKeys.value = ['/announcements']
   } else if (path.startsWith('/links')) {
     selectedKeys.value = ['/links']
+  } else if (path.startsWith('/media')) {
+    selectedKeys.value = ['/media']
+  } else if (path.startsWith('/crawler')) {
+    selectedKeys.value = ['/crawler']
+  } else if (path.startsWith('/subscribers')) {
+    selectedKeys.value = ['/subscribers']
   } else if (path.startsWith('/settings')) {
     selectedKeys.value = ['/settings']
   }
@@ -72,15 +131,15 @@ const isLoginPage = computed(() => route.path === '/login')
 </script>
 
 <template>
-  <a-config-provider :locale="locale">
+  <a-config-provider :locale="locale" :theme="antdTheme">
     <div v-if="isLoginPage" class="login-layout">
       <router-view />
     </div>
     <a-layout v-else class="admin-layout">
       <a-layout-sider v-model:collapsed="collapsed" :trigger="null" collapsible class="admin-sider">
         <div class="logo">
-          <img src="/vite.svg" alt="logo" class="logo-img" />
-          <span v-show="!collapsed" class="logo-text">3D Blog</span>
+          <img :src="siteInfo.site_logo || '/logo.svg'" alt="logo" class="logo-img" />
+          <span v-show="!collapsed" class="logo-text">{{ siteInfo.site_name || '管理后台' }}</span>
         </div>
         <a-menu v-model:selectedKeys="selectedKeys" theme="dark" mode="inline" :items="menuItems" @click="handleMenuClick" />
       </a-layout-sider>
@@ -92,15 +151,19 @@ const isLoginPage = computed(() => route.path === '/login')
           <div class="header-right">
             <a-dropdown>
               <a-space class="user-info">
-                <a-avatar size="small">
+                <a-avatar size="default" :src="authStore.user?.avatar || '/avatar.svg'">
                   <template #icon>
                     <UserOutlined />
                   </template>
                 </a-avatar>
-                <span>{{ authStore.user?.username || '管理员' }}</span>
+                <span>{{ authStore.user?.nickname || '管理员' }}</span>
               </a-space>
               <template #overlay>
                 <a-menu>
+                  <a-menu-item key="/profile" @click="router.push('/profile')">
+                    <UserOutlined />
+                    <span style="margin-left: 8px">个人信息</span>
+                  </a-menu-item>
                   <a-menu-item key="logout" @click="handleLogout">
                     <LogoutOutlined />
                     <span style="margin-left: 8px">退出登录</span>
@@ -124,7 +187,7 @@ const isLoginPage = computed(() => route.path === '/login')
 }
 
 .admin-sider {
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 1px 0 0 rgba(0, 0, 0, 0.06);
   z-index: 10;
 }
 
@@ -158,7 +221,8 @@ const isLoginPage = computed(() => route.path === '/login')
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid #f0f0f0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
   z-index: 9;
 }
 
@@ -182,12 +246,13 @@ const isLoginPage = computed(() => route.path === '/login')
 }
 
 .admin-content {
-  margin: 24px;
+  margin: 20px;
   padding: 24px;
   background: #fff;
-  border-radius: 8px;
+  border: 1px solid #f0f0f0;
+  border-radius: 4px;
   overflow: auto;
-  height: calc(100vh - 112px);
+  height: calc(100vh - 104px);
 }
 
 .login-layout {
