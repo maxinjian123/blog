@@ -52,7 +52,7 @@ const formState = reactive({
 })
 
 const columns = [
-  {title: 'ID', dataIndex: 'id', key: 'id', width: 200, ellipsis: true},
+  {title: 'ID', dataIndex: 'id', key: 'id', width: 300, ellipsis: true},
   {title: '名称', dataIndex: 'name', key: 'name'},
   {title: '别名', dataIndex: 'slug', key: 'slug'},
   {
@@ -79,7 +79,7 @@ const columns = [
 ]
 
 const articleColumns = [
-  {title: 'ID', dataIndex: 'id', key: 'id', width: 200, ellipsis: true},
+  {title: 'ID', dataIndex: 'id', key: 'id', width: 300, ellipsis: true},
   {title: '标题', dataIndex: 'title', key: 'title', ellipsis: true},
   {
     title: '状态',

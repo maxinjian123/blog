@@ -5,7 +5,7 @@ import {Marked} from 'marked'
 import {sanitizeHtml} from '@/utils/sanitize'
 import CommentNode, {type CommentItem} from '@/components/article/CommentNode.vue'
 import Message from 'vue-m-message'
-import { SendOutlined } from '@ant-design/icons-vue'
+import {SendOutlined} from '@ant-design/icons-vue'
 
 const marked = new Marked()
 marked.setOptions({breaks: true, gfm: true})
@@ -54,14 +54,15 @@ async function fetchComments(append = false) {
     const res = await api.get('/guestbook', {
       params: {page: append ? page.value : 1, pageSize}
     })
-    const payload = res.data?.data || res.data
+    const payload = res.data?.data
     if (append) {
       comments.value.push(...(payload.list || []))
     } else {
       comments.value = payload.list || []
       page.value = 1
     }
-    total.value = payload.total || 0
+
+    total.value = payload.pagination.total || 0
   } catch (e: any) {
     Message.error(e?.response?.data?.message || '加载留言失败')
   } finally {

@@ -8,7 +8,18 @@ import {MdEditor} from 'md-editor-v3'
 import {Emoji} from '@vavt/v3-extension'
 import '@vavt/v3-extension/lib/asset/Emoji.css'
 import 'md-editor-v3/lib/style.css'
-import {ExclamationCircleOutlined, RobotOutlined, SearchOutlined, ThunderboltOutlined} from '@ant-design/icons-vue'
+import {
+  ExclamationCircleOutlined,
+  SearchOutlined,
+  ThunderboltOutlined,
+  MoreOutlined,
+  MessageOutlined,
+  DeleteOutlined,
+  LinkOutlined,
+  CommentOutlined,
+  CheckOutlined,
+  StopOutlined
+} from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
 import {CLIENT_BASE_URL} from "@/config.ts";
 
@@ -116,9 +127,10 @@ const columns = [
         text ? dayjs(text).format('YYYY-MM-DD HH:mm') : '-'
   },
   {
-    title: '操作',
+    title: '#',
     key: 'action',
-    width: 300,
+    width: 90,
+    align: 'center'
   }
 ]
 
@@ -237,6 +249,27 @@ function handleGoToArticle(record: Comment) {
   window.open(`${CLIENT_BASE_URL}/article/${record.article_id}?c=${record.id}`, '_blank')
 }
 
+// 下拉菜单操作分发
+function handleMenuAction(key: string, record: Comment) {
+  switch (key) {
+    case 'thread':
+      handleViewThread(record)
+      break
+    case 'reply':
+      handleOpenReply(record)
+      break
+    case 'goto':
+      handleGoToArticle(record)
+      break
+    case 'approve':
+      handleApprove(record)
+      break
+    case 'delete':
+      handleDelete(record)
+      break
+  }
+}
+
 // AI回复
 async function handleAiReply(record: Comment) {
   aiReplyLoading.value[record.id] = true
@@ -316,7 +349,7 @@ function handleDelete(record: Comment) {
       try {
         await api.delete(`/comments/${record.id}`)
         message.success('删除成功')
-        loadData()
+        await loadData()
       } catch {
         message.error('删除失败')
       }
@@ -460,47 +493,39 @@ onMounted(() => {
           </a-tag>
         </template>
         <template v-if="column.key === 'action'">
-          <a-space :size="4" wrap>
-            <a-button size="small" type="link" @click="(e: Event) => { e.stopPropagation(); handleViewThread(record) }">
-              对话内容
+          <a-dropdown :trigger="['click']">
+            <a-button size="small" type="link" @click="(e: Event) => e.stopPropagation()">
+              操作
             </a-button>
-            <a-button size="small" type="link" danger
-                      @click="(e: Event) => { e.stopPropagation(); handleDelete(record) }">
-              删除
-            </a-button>
-            <a-button style="color: #E6A23C" size="small" type="link"
-                      @click="(e: Event) => { e.stopPropagation(); handleGoToArticle(record) }">
-              跳转
-            </a-button>
-            <a-button
-                v-if="canReply(record)"
-                size="small"
-                type="link"
-                @click="(e: Event) => { e.stopPropagation(); handleOpenReply(record) }"
-            >
-              回复
-            </a-button>
-            <a-button
-                v-if="canReply(record)"
-                size="small"
-                type="link"
-                :loading="aiReplyLoading[record.id]"
-                @click="(e: Event) => { e.stopPropagation(); handleAiReply(record) }"
-            >
-              <template #icon>
-                <RobotOutlined/>
-              </template>
-              AI回复
-            </a-button>
-            <a-button v-if="record.is_approved" size="small" type="link"
-                      @click="(e: Event) => { e.stopPropagation(); handleApprove(record) }">
-              驳回
-            </a-button>
-            <a-button v-else size="small" type="link"
-                      @click="(e: Event) => { e.stopPropagation(); handleApprove(record) }">
-              通过
-            </a-button>
-          </a-space>
+            <template #overlay>
+              <a-menu @click="(info: any) => { info.domEvent?.stopPropagation(); handleMenuAction(info.key, record) }">
+                <a-menu-item key="thread">
+                  <template #icon><MessageOutlined/></template>
+                  对话内容
+                </a-menu-item>
+                <a-menu-item key="reply" v-if="canReply(record)">
+                  <template #icon><CommentOutlined/></template>
+                  回复
+                </a-menu-item>
+                <a-menu-item key="goto">
+                  <template #icon><LinkOutlined style="color: #E6A23C"/></template>
+                  跳转文章
+                </a-menu-item>
+                <a-menu-item key="approve">
+                  <template #icon>
+                    <StopOutlined v-if="record.is_approved"/>
+                    <CheckOutlined v-else/>
+                  </template>
+                  {{ record.is_approved ? '驳回' : '通过' }}
+                </a-menu-item>
+                <a-menu-divider/>
+                <a-menu-item key="delete" danger>
+                  <template #icon><DeleteOutlined/></template>
+                  删除
+                </a-menu-item>
+              </a-menu>
+            </template>
+          </a-dropdown>
         </template>
       </template>
     </a-table>

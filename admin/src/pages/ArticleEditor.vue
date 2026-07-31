@@ -514,7 +514,6 @@ const filterOption = (input: string, option: { value: string, name: string, key:
         v-model:open="showMetaDrawer"
         title="文章信息"
         placement="left"
-        width="340"
         :mask="false"
         root-class-name="editor-side-drawer"
     >
@@ -598,7 +597,6 @@ const filterOption = (input: string, option: { value: string, name: string, key:
         v-model:open="showAiDrawer"
         title="AI 助手"
         placement="right"
-        width="360"
         :mask="false"
         root-class-name="editor-side-drawer"
     >
@@ -835,19 +833,19 @@ const filterOption = (input: string, option: { value: string, name: string, key:
 }
 
 .editor-body.is-pushed-right {
-  margin-left: 340px;
-  width: calc(100% - 340px);
+  margin-left: 200px;
+  width: calc(100% - 200px);
 }
 
 .editor-body.is-pushed-left {
-  margin-right: 360px;
-  width: calc(100% - 360px);
+  margin-right: 200px;
+  width: calc(100% - 200px);
 }
 
 .editor-body.is-pushed-right.is-pushed-left {
-  margin-left: 340px;
-  margin-right: 360px;
-  width: calc(100% - 340px - 360px);
+  margin-left: 200px;
+  margin-right: 250px;
+  width: calc(100% - 250px - 250px);
 }
 
 /* 编辑器主区域：像一张纸铺在桌面上 */

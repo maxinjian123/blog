@@ -3,12 +3,21 @@ import {h, onMounted, reactive, ref} from 'vue'
 import api from '@/utils/api'
 import {message, Modal} from 'ant-design-vue'
 import {Marked} from 'marked'
-import {sanitizeHtml, escapeHtml, textToSafeHtml} from '@/utils/sanitize'
+import {escapeHtml, sanitizeHtml, textToSafeHtml} from '@/utils/sanitize'
 import {MdEditor} from 'md-editor-v3'
 import {Emoji} from '@vavt/v3-extension'
 import '@vavt/v3-extension/lib/asset/Emoji.css'
 import 'md-editor-v3/lib/style.css'
-import {ExclamationCircleOutlined, SearchOutlined, ThunderboltOutlined} from '@ant-design/icons-vue'
+import {
+  CheckOutlined,
+  CommentOutlined,
+  DeleteOutlined,
+  ExclamationCircleOutlined,
+  MessageOutlined,
+  SearchOutlined,
+  StopOutlined,
+  ThunderboltOutlined
+} from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
 
 const marked = new Marked()
@@ -93,9 +102,10 @@ const columns = [
         text ? dayjs(text).format('YYYY-MM-DD HH:mm') : '-'
   },
   {
-    title: '操作',
+    title: '#',
     key: 'action',
-    width: 280,
+    width: 90,
+    align: 'center'
   }
 ]
 
@@ -238,6 +248,24 @@ function handleDelete(record: GuestbookMessage) {
   })
 }
 
+// 下拉菜单操作分发
+function handleMenuAction(key: string, record: GuestbookMessage) {
+  switch (key) {
+    case 'thread':
+      handleViewThread(record)
+      break
+    case 'reply':
+      handleOpenReply(record)
+      break
+    case 'approve':
+      handleApprove(record)
+      break
+    case 'delete':
+      handleDelete(record)
+      break
+  }
+}
+
 function handleTableChange(pag: { current: number; pageSize: number }) {
   query.page = pag.current
   query.pageSize = pag.pageSize
@@ -356,30 +384,41 @@ onMounted(() => {
           </a-tag>
         </template>
         <template v-if="column.key === 'action'">
-          <a-space :size="4" wrap>
-            <a-button size="small" type="link" @click="(e: Event) => { e.stopPropagation(); handleViewThread(record) }">
-              对话内容
+          <a-dropdown :trigger="['click']">
+            <a-button size="small" type="link" @click="(e: Event) => e.stopPropagation()">
+              操作
             </a-button>
-            <a-button size="small" type="link" danger
-                      @click="(e: Event) => { e.stopPropagation(); handleDelete(record) }">
-              删除
-            </a-button>
-            <a-button
-                size="small"
-                type="link"
-                @click="(e: Event) => { e.stopPropagation(); handleOpenReply(record) }"
-            >
-              回复
-            </a-button>
-            <a-button v-if="record.is_approved" size="small" type="link"
-                      @click="(e: Event) => { e.stopPropagation(); handleApprove(record) }">
-              驳回
-            </a-button>
-            <a-button v-else size="small" type="link"
-                      @click="(e: Event) => { e.stopPropagation(); handleApprove(record) }">
-              通过
-            </a-button>
-          </a-space>
+            <template #overlay>
+              <a-menu @click="(info: any) => { info.domEvent?.stopPropagation(); handleMenuAction(info.key, record) }">
+                <a-menu-item key="thread">
+                  <template #icon>
+                    <MessageOutlined/>
+                  </template>
+                  对话内容
+                </a-menu-item>
+                <a-menu-item key="reply">
+                  <template #icon>
+                    <CommentOutlined/>
+                  </template>
+                  回复
+                </a-menu-item>
+                <a-menu-item key="approve">
+                  <template #icon>
+                    <StopOutlined v-if="record.is_approved"/>
+                    <CheckOutlined v-else/>
+                  </template>
+                  {{ record.is_approved ? '驳回' : '通过' }}
+                </a-menu-item>
+                <a-menu-divider/>
+                <a-menu-item key="delete" danger>
+                  <template #icon>
+                    <DeleteOutlined/>
+                  </template>
+                  删除
+                </a-menu-item>
+              </a-menu>
+            </template>
+          </a-dropdown>
         </template>
       </template>
     </a-table>
@@ -442,10 +481,7 @@ onMounted(() => {
             管理员
           </a-tag>
         </div>
-        <div class="reply-preview-content">{{
-            currentReplyMessage.content?.substring(0, 150)
-          }}{{ currentReplyMessage.content?.length > 150 ? '...' : '' }}
-        </div>
+        <div class="reply-preview-content" v-html="renderMarkdown(currentReplyMessage.content)"></div>
       </div>
       <div style="margin-top: 16px; margin-bottom: 12px">
         <a-button

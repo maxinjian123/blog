@@ -48,7 +48,10 @@ function extractCatalog(md) {
 router.get('/archive', optionalAuth, async (req, res, next) => {
     try {
         const articles = await Article.findAll({
-            where: {status: 'published'},
+            where: {
+                status: 'published',
+                published_at: {[Op.ne]: null}
+            },
             attributes: ['id', 'title', 'published_at'],
             order: [['published_at', 'DESC']]
         })
