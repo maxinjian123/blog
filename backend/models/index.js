@@ -32,6 +32,9 @@ const Message = require('./Message')(sequelize);
 const Subscriber = require('./Subscriber')(sequelize);
 const SiteConfig = require('./SiteConfig')(sequelize);
 const MediaFile = require('./MediaFile')(sequelize);
+const Music = require('./Music')(sequelize);
+const Playlist = require('./Playlist')(sequelize);
+const PlaylistSong = require('./PlaylistSong')(sequelize);
 
 User.hasMany(Article, {foreignKey: 'author_id', as: 'articles'});
 Article.belongsTo(User, {foreignKey: 'author_id', as: 'author'});
@@ -80,12 +83,18 @@ VisitorLog.belongsTo(Article, {foreignKey: 'article_id', as: 'article'});
 Article.hasMany(ArticleVersion, {foreignKey: 'article_id', as: 'versions'});
 ArticleVersion.belongsTo(Article, {foreignKey: 'article_id', as: 'article'});
 
+// 歌单关联
+Playlist.hasMany(PlaylistSong, {foreignKey: 'playlist_id', as: 'playlistSongs'});
+PlaylistSong.belongsTo(Playlist, {foreignKey: 'playlist_id', as: 'playlist'});
+PlaylistSong.belongsTo(Music, {foreignKey: 'music_id', as: 'music'});
+Music.hasMany(PlaylistSong, {foreignKey: 'music_id', as: 'playlistItems'});
+
 
 async function syncDatabase() {
     try {
         await sequelize.authenticate();
         console.log('[MySQL] 连接已成功建立');
-        await sequelize.sync({alter: true});
+        await sequelize.sync();
         console.log('[MySQL] 模型已同步');
     } catch (err) {
         console.error('[MySQL] 连接失败:', err.message);
@@ -108,5 +117,8 @@ module.exports = {
     Message,
     Subscriber,
     SiteConfig,
-    MediaFile
+    MediaFile,
+    Music,
+    Playlist,
+    PlaylistSong
 };

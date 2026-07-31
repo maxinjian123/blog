@@ -18,6 +18,8 @@ const guestbookRoutes = require('./guestbook');
 const subscriberRoutes = require('./subscribers');
 const mediaRoutes = require('./media');
 const crawlerRoutes = require('./crawler');
+const musicRoutes = require('./music');
+const playlistRoutes = require('./playlists');
 
 // 加载 Swagger 文档声明（不注册为实际路由）
 require('./swagger-docs');
@@ -46,6 +48,8 @@ const routes = [
   { path: '/api/v1/subscribers', router: subscriberRoutes },
   { path: '/api/v1/media', router: mediaRoutes },
   { path: '/api/v1/crawler', router: crawlerRoutes },
+  { path: '/api/v1/music', router: musicRoutes },
+  { path: '/api/v1/playlists', router: playlistRoutes },
   { path: '/', router: sitemapRoutes }
 ];
 

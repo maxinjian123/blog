@@ -1,13 +1,16 @@
 <script setup lang="ts">
-import { useAuthStore } from '@/stores/auth'
-import { AppstoreOutlined, CommentOutlined, DashboardOutlined, FileTextOutlined, FolderOpenOutlined, GithubOutlined, LinkOutlined, LogoutOutlined, MailOutlined, MenuFoldOutlined, MenuUnfoldOutlined, MessageOutlined, NotificationOutlined, SettingOutlined, TagsOutlined, UserOutlined } from '@ant-design/icons-vue'
+import {useAuthStore} from '@/stores/auth'
+import MusicPlayer from '@/components/MusicPlayer.vue'
+import {LogoutOutlined, MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined} from '@ant-design/icons-vue'
+import menuItems from '@/nav'
 import zhCN from 'ant-design-vue/es/locale/zh_CN'
 import dayjs from 'dayjs'
 import 'dayjs/locale/zh-cn'
-import { computed, h, onMounted, ref, watch } from 'vue'
+import {computed, onMounted, ref, watch} from 'vue'
 import api from '@/utils/api'
 
-import { useRoute, useRouter } from 'vue-router'
+import {useRoute, useRouter} from 'vue-router'
+
 dayjs.locale('zh-cn')
 
 const locale = ref(zhCN)
@@ -28,7 +31,7 @@ const collapsed = ref(false)
 const selectedKeys = ref<string[]>([])
 
 // 站点信息（从后台动态加载 logo 与名称，不再硬编码）
-const siteInfo = ref<{ site_name: string; site_logo: string }>({ site_name: '', site_logo: '' })
+const siteInfo = ref<{ site_name: string; site_logo: string }>({site_name: '', site_logo: ''})
 
 async function fetchSiteInfo() {
   try {
@@ -65,60 +68,42 @@ watch(() => route.path, (p) => {
   if (p === '/' || p === '/settings') fetchSiteInfo()
 })
 
-const menuItems = [
-  { key: '/', icon: h(DashboardOutlined), label: '仪表盘' },
-  {
-    key: 'content',
-    icon: h(FileTextOutlined),
-    label: '内容管理',
-    children: [
-      { key: '/articles', icon: h(FileTextOutlined), label: '文章管理' },
-      { key: '/categories', icon: h(AppstoreOutlined), label: '分类管理' },
-      { key: '/tags', icon: h(TagsOutlined), label: '标签管理' }
-    ]
-  },
-  { key: '/comments', icon: h(CommentOutlined), label: '评论管理' },
-  { key: '/guestbook', icon: h(MessageOutlined), label: '留言管理' },
-  { key: '/announcements', icon: h(NotificationOutlined), label: '公告管理' },
-  { key: '/links', icon: h(LinkOutlined), label: '友链管理' },
-  { key: '/media', icon: h(FolderOpenOutlined), label: '媒体库' },
-  { key: '/crawler', icon: h(GithubOutlined), label: 'GitHub 爬虫' },
-  { key: '/subscribers', icon: h(MailOutlined), label: '邮件订阅' },
-  { key: '/settings', icon: h(SettingOutlined), label: '系统设置' }
-]
 
 function updateSelectedKeys() {
   const path = route.path
-  if (path === '/') {
-    selectedKeys.value = ['/']
-  } else if (path.startsWith('/articles')) {
-    selectedKeys.value = ['/articles']
-  } else if (path.startsWith('/categories')) {
-    selectedKeys.value = ['/categories']
-  } else if (path.startsWith('/tags')) {
-    selectedKeys.value = ['/tags']
-  } else if (path.startsWith('/comments')) {
-    selectedKeys.value = ['/comments']
-  } else if (path.startsWith('/guestbook')) {
-    selectedKeys.value = ['/guestbook']
-  } else if (path.startsWith('/announcements')) {
-    selectedKeys.value = ['/announcements']
-  } else if (path.startsWith('/links')) {
-    selectedKeys.value = ['/links']
-  } else if (path.startsWith('/media')) {
-    selectedKeys.value = ['/media']
-  } else if (path.startsWith('/crawler')) {
-    selectedKeys.value = ['/crawler']
-  } else if (path.startsWith('/subscribers')) {
-    selectedKeys.value = ['/subscribers']
-  } else if (path.startsWith('/settings')) {
-    selectedKeys.value = ['/settings']
-  }
+  selectedKeys.value = [path]
+  // if (path === '/') {
+  //   selectedKeys.value = ['/']
+  // } else if (path.startsWith('/articles')) {
+  //   selectedKeys.value = ['/articles']
+  // } else if (path.startsWith('/categories')) {
+  //   selectedKeys.value = ['/categories']
+  // } else if (path.startsWith('/tags')) {
+  //   selectedKeys.value = ['/tags']
+  // } else if (path.startsWith('/comments')) {
+  //   selectedKeys.value = ['/comments']
+  // } else if (path.startsWith('/guestbook')) {
+  //   selectedKeys.value = ['/guestbook']
+  // } else if (path.startsWith('/announcements')) {
+  //   selectedKeys.value = ['/announcements']
+  // } else if (path.startsWith('/links')) {
+  //   selectedKeys.value = ['/links']
+  // } else if (path.startsWith('/media')) {
+  //   selectedKeys.value = ['/media']
+  // } else if (path.startsWith('/crawler')) {
+  //   selectedKeys.value = ['/crawler']
+  // } else if (path.startsWith('/music')) {
+  //   selectedKeys.value = ['/music']
+  // } else if (path.startsWith('/subscribers')) {
+  //   selectedKeys.value = ['/subscribers']
+  // } else if (path.startsWith('/settings')) {
+  //   selectedKeys.value = ['/settings']
+  // }
 }
 
-watch(() => route.path, updateSelectedKeys, { immediate: true })
+watch(() => route.path, updateSelectedKeys, {immediate: true})
 
-function handleMenuClick({ key }: { key: string }) {
+function handleMenuClick({key}: { key: string }) {
   router.push(key)
 }
 
@@ -133,27 +118,29 @@ const isLoginPage = computed(() => route.path === '/login')
 <template>
   <a-config-provider :locale="locale" :theme="antdTheme">
     <div v-if="isLoginPage" class="login-layout">
-      <router-view />
+      <router-view/>
     </div>
     <a-layout v-else class="admin-layout">
       <a-layout-sider v-model:collapsed="collapsed" :trigger="null" collapsible class="admin-sider">
         <div class="logo">
-          <img :src="siteInfo.site_logo || '/logo.svg'" alt="logo" class="logo-img" />
+          <img :src="siteInfo.site_logo || '/logo.svg'" alt="logo" class="logo-img"/>
           <span v-show="!collapsed" class="logo-text">{{ siteInfo.site_name || '管理后台' }}</span>
         </div>
-        <a-menu v-model:selectedKeys="selectedKeys" theme="dark" mode="inline" :items="menuItems" @click="handleMenuClick" />
+        <a-menu v-model:selectedKeys="selectedKeys" theme="dark" mode="inline" :items="menuItems"
+                @click="handleMenuClick"/>
       </a-layout-sider>
       <a-layout>
         <a-layout-header class="admin-header">
           <div class="header-left">
-            <component :is="collapsed ? MenuUnfoldOutlined : MenuFoldOutlined" class="trigger" @click="collapsed = !collapsed" />
+            <component :is="collapsed ? MenuUnfoldOutlined : MenuFoldOutlined" class="trigger"
+                       @click="collapsed = !collapsed"/>
           </div>
           <div class="header-right">
             <a-dropdown>
               <a-space class="user-info">
                 <a-avatar size="default" :src="authStore.user?.avatar || '/avatar.svg'">
                   <template #icon>
-                    <UserOutlined />
+                    <UserOutlined/>
                   </template>
                 </a-avatar>
                 <span>{{ authStore.user?.nickname || '管理员' }}</span>
@@ -161,11 +148,11 @@ const isLoginPage = computed(() => route.path === '/login')
               <template #overlay>
                 <a-menu>
                   <a-menu-item key="/profile" @click="router.push('/profile')">
-                    <UserOutlined />
+                    <UserOutlined/>
                     <span style="margin-left: 8px">个人信息</span>
                   </a-menu-item>
                   <a-menu-item key="logout" @click="handleLogout">
-                    <LogoutOutlined />
+                    <LogoutOutlined/>
                     <span style="margin-left: 8px">退出登录</span>
                   </a-menu-item>
                 </a-menu>
@@ -174,10 +161,12 @@ const isLoginPage = computed(() => route.path === '/login')
           </div>
         </a-layout-header>
         <a-layout-content class="admin-content">
-          <router-view />
+          <router-view/>
         </a-layout-content>
       </a-layout>
     </a-layout>
+    <!-- 全局音乐播放器（底部播放条 + 最小化悬浮球） -->
+    <MusicPlayer/>
   </a-config-provider>
 </template>
 
