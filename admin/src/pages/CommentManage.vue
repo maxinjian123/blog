@@ -21,7 +21,7 @@ import {
   StopOutlined
 } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
-import {CLIENT_BASE_URL} from "@/config.ts";
+import {CLIENT_BASE_URL} from "@/config/config.ts";
 
 const marked = new Marked()
 marked.setOptions({breaks: true, gfm: true})

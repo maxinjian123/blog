@@ -892,6 +892,56 @@ router.post('/upload', auth, adminOnly, (req, res, next) => {
 });
 
 /**
+ * 从媒体库已有文件创建音乐记录（不重新上传文件，直接引用媒体库 URL）
+ */
+router.post('/upload-from-media', auth, adminOnly, async (req, res, next) => {
+  try {
+    const { media_id, name, singer, album, cover, lyric, duration } = req.body;
+    if (!media_id) {
+      return error(res, '请选择媒体库文件', 400);
+    }
+
+    const mediaFile = await MediaFile.findByPk(media_id);
+    if (!mediaFile) {
+      return error(res, '媒体库文件不存在', 404);
+    }
+
+    // 仅允许音频类型
+    if (!mediaFile.mime_type || !mediaFile.mime_type.startsWith('audio/')) {
+      return error(res, '只能选择音频类型的文件', 400);
+    }
+
+    const songName = (name || mediaFile.original_name).replace(/\.[^.]+$/, '');
+
+    const music = await Music.create({
+      song_id: `upload_${Date.now()}`,
+      name: (songName || '未知歌曲').slice(0, 200),
+      singer: (singer || '未知歌手').slice(0, 200),
+      album: (album || '').slice(0, 200),
+      cover: (cover || '').slice(0, 500),
+      play_url: mediaFile.url,
+      duration: Number(duration) || 0,
+      source: mediaFile.storage,
+      origin_platform: 'upload',
+      playlist_name: '手动上传',
+      sort_order: 0,
+      is_active: true,
+      lyric: lyric || null
+    });
+
+    return success(res, {
+      id: music.id,
+      name: music.name,
+      singer: music.singer,
+      url: mediaFile.url,
+      storage: mediaFile.storage
+    }, '音乐创建成功', 201);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
  * @swagger
  * /music/save-remote:
  *   post:

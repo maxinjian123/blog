@@ -93,7 +93,7 @@ const routes: RouteRecordRaw[] = [
         meta: {title: '个人信息', requiresAuth: true}
     },
     {
-        path: '/crawler',
+        path: '/',
         name: 'Crawler',
         meta: {title: '数据抓取', requiresAuth: true},
         children: [

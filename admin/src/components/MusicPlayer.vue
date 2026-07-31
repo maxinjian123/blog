@@ -1,21 +1,21 @@
 <script setup lang="ts">
-import {ref, shallowRef, computed, watch, onMounted, onBeforeUnmount, nextTick} from 'vue'
-import {useMusicStore, type MusicItem} from '@/stores/music'
+import {computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch} from 'vue'
+import {type MusicItem, useMusicStore} from '@/stores/music'
 import {message} from 'ant-design-vue'
 import {
-  PlayCircleOutlined,
+  CloseOutlined,
+  FolderOpenOutlined,
+  MenuOutlined,
+  MinusOutlined,
   PauseCircleOutlined,
+  PictureOutlined,
+  PlayCircleOutlined,
+  RedoOutlined,
+  ReloadOutlined,
+  RetweetOutlined,
+  SoundOutlined,
   StepBackwardOutlined,
   StepForwardOutlined,
-  SoundOutlined,
-  RetweetOutlined,
-  ReloadOutlined,
-  MinusOutlined,
-  CloseOutlined,
-  PictureOutlined,
-  MenuOutlined,
-  FolderOpenOutlined,
-  RedoOutlined,
   SwapOutlined
 } from '@ant-design/icons-vue'
 
@@ -49,10 +49,10 @@ function formatTime(sec: number): string {
   return `${m}:${String(s).padStart(2, '0')}`
 }
 
-// 进度百分比
+// 进度百分比（使用 liveCurrentTime 实现实时刷新）
 const progressPercent = computed(() => {
   if (!store.duration || store.duration === 0) return 0
-  return (store.currentTime / store.duration) * 100
+  return (liveCurrentTime.value / store.duration) * 100
 })
 
 // 音量百分比
@@ -140,7 +140,8 @@ function onEnded() {
   if (store.playMode === 'single') {
     if (audioEl.value) {
       audioEl.value.currentTime = 0
-      audioEl.value.play().catch(() => {})
+      audioEl.value.play().catch(() => {
+      })
     }
     store.setCurrentTime(0)
     store.play()
@@ -495,7 +496,8 @@ watch(playUrl, () => {
     if (audioEl.value) {
       audioEl.value.load()
       if (store.isPlaying) {
-        audioEl.value.play().catch(() => {})
+        audioEl.value.play().catch(() => {
+        })
       }
     }
   })
@@ -589,11 +591,15 @@ defineExpose({
         <div class="player-controls">
           <a-tooltip :title="playModeConfig.title">
             <a-button type="text" size="small" @click="store.togglePlayMode()" class="ctrl-btn">
-              <template #icon><component :is="playModeConfig.icon"/></template>
+              <template #icon>
+                <component :is="playModeConfig.icon"/>
+              </template>
             </a-button>
           </a-tooltip>
           <a-button type="text" size="small" @click="handlePrev" class="ctrl-btn" :disabled="!store.hasPrev">
-            <template #icon><StepBackwardOutlined/></template>
+            <template #icon>
+              <StepBackwardOutlined/>
+            </template>
           </a-button>
           <a-button
               type="primary"
@@ -608,16 +614,20 @@ defineExpose({
             </template>
           </a-button>
           <a-button type="text" size="small" @click="handleNext" class="ctrl-btn" :disabled="!store.hasNext">
-            <template #icon><StepForwardOutlined/></template>
+            <template #icon>
+              <StepForwardOutlined/>
+            </template>
           </a-button>
           <a-tooltip title="刷新链接">
             <a-button type="text" size="small" @click="store.refreshCurrentUrl()" class="ctrl-btn">
-              <template #icon><ReloadOutlined/></template>
+              <template #icon>
+                <ReloadOutlined/>
+              </template>
             </a-button>
           </a-tooltip>
         </div>
         <div class="player-progress">
-          <span class="time-text">{{ formatTime(store.currentTime) }}</span>
+          <span class="time-text">{{ formatTime(liveCurrentTime) }}</span>
           <a-tooltip
               :open="hoverVisible && store.duration > 0"
               :title="formatTime(hoverTime)"
@@ -643,14 +653,19 @@ defineExpose({
       <!-- 右侧：音量 + 列表 + 最小化 + 关闭 -->
       <div class="player-right">
         <a-tooltip :title="lyricVisible ? '隐藏歌词' : '显示歌词'">
-          <a-button :type="lyricVisible ? 'primary' : 'text'" size="small" @click="toggleLyric($event)" class="ctrl-btn">
-            <template #icon><FolderOpenOutlined/></template>
+          <a-button :type="lyricVisible ? 'primary' : 'text'" size="small" @click="toggleLyric($event)"
+                    class="ctrl-btn">
+            <template #icon>
+              <FolderOpenOutlined/>
+            </template>
           </a-button>
         </a-tooltip>
         <a-tooltip :title="playlistVisible ? '隐藏列表' : '播放列表'">
           <a-button type="text" size="small" @click="togglePlaylist" class="ctrl-btn"
                     :class="{active: playlistVisible}">
-            <template #icon><MenuOutlined/></template>
+            <template #icon>
+              <MenuOutlined/>
+            </template>
             <span class="list-count" v-if="store.playlistCount">{{ store.playlistCount }}</span>
           </a-button>
         </a-tooltip>
@@ -668,12 +683,16 @@ defineExpose({
         </div>
         <a-tooltip title="最小化">
           <a-button type="text" size="small" @click="store.minimize()" class="ctrl-btn">
-            <template #icon><MinusOutlined/></template>
+            <template #icon>
+              <MinusOutlined/>
+            </template>
           </a-button>
         </a-tooltip>
         <a-tooltip title="关闭">
           <a-button type="text" size="small" @click="store.closePlayer()" class="ctrl-btn close-btn">
-            <template #icon><CloseOutlined/></template>
+            <template #icon>
+              <CloseOutlined/>
+            </template>
           </a-button>
         </a-tooltip>
       </div>
@@ -684,7 +703,9 @@ defineExpose({
           <div class="playlist-header">
             <span>播放列表（{{ store.playlistCount }} 首）</span>
             <a-button type="text" size="small" @click="playlistVisible = false">
-              <template #icon><CloseOutlined/></template>
+              <template #icon>
+                <CloseOutlined/>
+              </template>
             </a-button>
           </div>
           <div class="playlist-body">
@@ -734,7 +755,9 @@ defineExpose({
             <div class="lyric-song-singer">{{ currentSong.singer }}</div>
           </div>
           <a-button type="text" size="small" class="lyric-close-btn" @click="resetLyricPosition">
-            <template #icon><CloseOutlined/></template>
+            <template #icon>
+              <CloseOutlined/>
+            </template>
           </a-button>
         </div>
 
@@ -1155,14 +1178,14 @@ defineExpose({
   backdrop-filter: blur(24px) saturate(1.2);
   -webkit-backdrop-filter: blur(24px) saturate(1.2);
   border: 1px solid rgba(0, 0, 0, 0.06);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(255,255,255,0.6) inset;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.6) inset;
   user-select: none;
 }
 
 .lyric-panel.dragging {
   transition: none !important;
   cursor: grabbing;
-  box-shadow: 0 24px 72px rgba(22, 119, 255, 0.2), 0 0 0 2px rgba(22,119,255,0.3), 0 0 0 1px rgba(255,255,255,0.5) inset;
+  box-shadow: 0 24px 72px rgba(22, 119, 255, 0.2), 0 0 0 2px rgba(22, 119, 255, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.5) inset;
 }
 
 /* 封面图背景层 */
@@ -1255,24 +1278,24 @@ defineExpose({
   padding: 0 24px;
   scroll-behavior: smooth;
   scrollbar-width: thin;
-  scrollbar-color: rgba(0,0,0,0.15) transparent;
+  scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
   mask-image: linear-gradient(
-    180deg,
-    transparent 0%,
-    rgba(0,0,0,0.5) 10%,
-    #000 22%,
-    #000 78%,
-    rgba(0,0,0,0.5) 90%,
-    transparent 100%
+      180deg,
+      transparent 0%,
+      rgba(0, 0, 0, 0.5) 10%,
+      #000 22%,
+      #000 78%,
+      rgba(0, 0, 0, 0.5) 90%,
+      transparent 100%
   );
   -webkit-mask-image: linear-gradient(
-    180deg,
-    transparent 0%,
-    rgba(0,0,0,0.5) 10%,
-    #000 22%,
-    #000 78%,
-    rgba(0,0,0,0.5) 90%,
-    transparent 100%
+      180deg,
+      transparent 0%,
+      rgba(0, 0, 0, 0.5) 10%,
+      #000 22%,
+      #000 78%,
+      rgba(0, 0, 0, 0.5) 90%,
+      transparent 100%
   );
 }
 
@@ -1281,12 +1304,12 @@ defineExpose({
 }
 
 .lyric-body::-webkit-scrollbar-thumb {
-  background: rgba(0,0,0,0.15);
+  background: rgba(0, 0, 0, 0.15);
   border-radius: 2px;
 }
 
 .lyric-body::-webkit-scrollbar-thumb:hover {
-  background: rgba(0,0,0,0.3);
+  background: rgba(0, 0, 0, 0.3);
 }
 
 .lyric-spacer {
@@ -1314,8 +1337,14 @@ defineExpose({
 }
 
 @keyframes lyric-pulse {
-  0%, 100% { opacity: 0.3; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(1.1); }
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.1);
+  }
 }
 
 .lyric-line {

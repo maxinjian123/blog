@@ -1,34 +1,49 @@
 <script setup lang="ts">
-import {ref, computed, onMounted} from 'vue'
+import {computed, h, onMounted, ref} from 'vue'
 import api from '@/utils/api'
 import {message, Modal} from 'ant-design-vue'
-import {h} from 'vue'
 import {
-  SearchOutlined,
-  CustomerServiceOutlined,
-  ImportOutlined,
-  DeleteOutlined,
-  ReloadOutlined,
-  PlayCircleOutlined,
-  ExclamationCircleOutlined,
-  MoreOutlined,
-  StopOutlined,
   CaretRightOutlined,
-  UnorderedListOutlined,
-  UploadOutlined,
+  CheckCircleFilled,
   CloudDownloadOutlined,
-  FolderOpenOutlined,
-  PictureOutlined,
-  FileTextOutlined,
+  CustomerServiceOutlined,
+  DeleteOutlined,
   EditOutlined,
+  ExclamationCircleOutlined,
+  FileTextOutlined,
+  FolderOpenOutlined,
+  ImportOutlined,
+  MoreOutlined,
+  PictureOutlined,
+  PlayCircleOutlined,
+  ReloadOutlined,
+  SearchOutlined,
+  StopOutlined,
   SwapOutlined,
-  ShareAltOutlined,
-  PlusOutlined,
-  LinkOutlined
+  UnorderedListOutlined,
+  UploadOutlined
 } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
 import {useMusicStore} from '@/stores/music'
 import PlaylistManage from './PlaylistManage.vue'
+
+// 媒体库选择模式辅助函数
+function formatSize(bytes: number): string {
+  if (!bytes || bytes === 0) return '0 B'
+  const units = ['B', 'KB', 'MB', 'GB']
+  let i = 0
+  let size = bytes
+  while (size >= 1024 && i < units.length - 1) {
+    size /= 1024
+    i++
+  }
+  return `${size.toFixed(i > 0 ? 1 : 0)} ${units[i]}`
+}
+
+function formatDateTime(time: string): string {
+  if (!time) return '-'
+  return dayjs(time).format('YYYY-MM-DD HH:mm')
+}
 
 const musicStore = useMusicStore()
 
@@ -68,7 +83,7 @@ const activeTab = ref<Tab>('search')
 
 // 平台选择
 type Platform = 'netease' | 'qq'
-const platforms = ref<{id: Platform, label: string}[]>([
+const platforms = ref<{ id: Platform, label: string }[]>([
   {id: 'netease', label: '网易云音乐'},
   {id: 'qq', label: 'QQ音乐'}
 ])
@@ -204,6 +219,27 @@ const uploadForm = ref({
   album: '',
   storage: 'local' as 'local' | 'minio'
 })
+// 从媒体库选择模式
+const uploadMode = ref<'file' | 'media'>('file')
+const mediaMp3List = ref<any[]>([])
+const mediaMp3Loading = ref(false)
+const selectedMediaId = ref('')
+
+async function fetchMediaMp3List() {
+  mediaMp3Loading.value = true
+  try {
+    const res: any = await api.get('/media', { params: { mime: 'audio', pageSize: 200 } })
+    const data = res.data || res
+    mediaMp3List.value = (data?.list || []).map((item: any) => ({
+      ...item,
+      created_at: item.created_at || item.createdAt
+    }))
+  } catch {
+    message.error('获取媒体库文件失败')
+  } finally {
+    mediaMp3Loading.value = false
+  }
+}
 
 // 编辑音乐
 const editVisible = ref(false)
@@ -352,12 +388,16 @@ const selectedPlaylistSongs = computed(() => playlistSongs.value.filter(s => s._
 // 全选
 const searchSelectAll = computed({
   get: () => searchSongs.value.length > 0 && searchSongs.value.every(s => s._selected),
-  set: (val: boolean) => searchSongs.value.forEach(s => { s._selected = val })
+  set: (val: boolean) => searchSongs.value.forEach(s => {
+    s._selected = val
+  })
 })
 
 const playlistSelectAll = computed({
   get: () => playlistSongs.value.length > 0 && playlistSongs.value.every(s => s._selected),
-  set: (val: boolean) => playlistSongs.value.forEach(s => { s._selected = val })
+  set: (val: boolean) => playlistSongs.value.forEach(s => {
+    s._selected = val
+  })
 })
 
 // 导入歌曲 - 打开弹窗选择保存源
@@ -478,6 +518,11 @@ function handleLibraryChange(pag: { current: number; pageSize: number }) {
 }
 
 async function handleRefreshUrl(record: MusicItem) {
+  // 手动上传的音乐不通过平台接口刷新链接
+  if (record.origin_platform === 'upload') {
+    message.warning('手动上传的音乐无需刷新链接，请检查文件是否被删除')
+    return
+  }
   try {
     await api.put(`/music/refresh-url/${record.id}`)
     message.success('播放链接已刷新')
@@ -498,10 +543,11 @@ async function handleToggleActive(record: MusicItem) {
 }
 
 function handleDeleteMusic(record: MusicItem) {
+  const isPlaying = musicStore.currentSong?.id === record.id
   Modal.confirm({
     title: '确认删除',
     icon: h(ExclamationCircleOutlined),
-    content: `确定要删除「${record.name}」吗？`,
+    content: `确定要删除「${record.name}」吗？${isPlaying ? '（当前正在播放，将自动跳转下一首）' : ''}`,
     okText: '删除',
     okType: 'danger',
     cancelText: '取消',
@@ -509,7 +555,14 @@ function handleDeleteMusic(record: MusicItem) {
       try {
         await api.delete(`/music/${record.id}`)
         message.success('删除成功')
-        loadLibrary()
+        await loadLibrary()
+        // 删除的是当前播放的歌曲，自动跳转下一首
+        if (isPlaying && musicStore.currentSong?.id !== record.id) {
+          // 刷新后该歌曲已不在列表中，无需额外操作
+          // 若列表为空，播放器会自动关闭
+        } else if (isPlaying) {
+          musicStore.next()
+        }
       } catch {
         message.error('删除失败')
       }
@@ -677,14 +730,19 @@ function originPlatformColor(platform: string): string {
   }
 }
 
-// 手动上传
-function handleUploadModalOpen() {
-  uploadVisible.value = true
+// 手动上传 - 打开弹窗并重置表单、预加载数据
+function openUploadModal() {
   uploadForm.value = {name: '', singer: '', album: '', storage: 'local'}
   uploadFileList.value = null
   uploadCoverFile.value = null
   uploadLyricFile.value = null
   uploadDuration.value = 0
+  uploadMode.value = 'file'
+  selectedMediaId.value = ''
+  mediaMp3List.value = []
+  // 预加载媒体库音频文件列表
+  fetchMediaMp3List()
+  uploadVisible.value = true
 }
 
 // 从音频文件提取时长（秒）
@@ -702,6 +760,39 @@ function extractAudioDuration(file: File): Promise<number> {
     audio.onerror = () => {
       URL.revokeObjectURL(url)
       resolve(0)
+    }
+  })
+}
+
+// 从音频 URL 提取时长（秒）——用于媒体库选择模式
+function extractAudioDurationFromUrl(url: string): Promise<number> {
+  return new Promise((resolve) => {
+    const audio = new Audio()
+    audio.preload = 'metadata'
+    audio.crossOrigin = 'anonymous'
+    audio.src = url
+    audio.onloadedmetadata = () => {
+      const dur = audio.duration
+      resolve(isFinite(dur) ? Math.round(dur) : 0)
+    }
+    audio.onerror = () => {
+      resolve(0)
+    }
+  })
+}
+
+// 媒体库选择模式 - 选中某个音频文件
+function handleMediaSelect(item: any) {
+  selectedMediaId.value = item.id
+  uploadDuration.value = 0
+  if (!uploadForm.value.name) {
+    uploadForm.value.name = item.original_name.replace(/\.[^.]+$/, '')
+  }
+  // 从 URL 加载音频元数据获取时长
+  extractAudioDurationFromUrl(item.url).then(dur => {
+    // 仅当选中的仍是当前项时才更新，避免竞态
+    if (selectedMediaId.value === item.id) {
+      uploadDuration.value = dur
     }
   })
 }
@@ -749,35 +840,66 @@ function handleLyricRemove() {
 }
 
 async function handleUploadSubmit() {
-  if (!uploadFileList.value) {
-    message.warning('请选择音乐文件')
-    return
-  }
   uploadLoading.value = true
   try {
-    const formData = new FormData()
-    formData.append('file', uploadFileList.value)
-    if (uploadCoverFile.value) {
-      formData.append('cover', uploadCoverFile.value)
-    }
-    if (uploadLyricFile.value) {
-      formData.append('lyric', uploadLyricFile.value)
-    }
-    formData.append('name', uploadForm.value.name)
-    formData.append('singer', uploadForm.value.singer)
-    formData.append('album', uploadForm.value.album)
-    formData.append('storage', uploadForm.value.storage)
-    formData.append('duration', String(uploadDuration.value))
+    if (uploadMode.value === 'media') {
+      // 从媒体库选择模式
+      if (!selectedMediaId.value) {
+        message.warning('请选择媒体库中的音频文件')
+        uploadLoading.value = false
+        return
+      }
+      // 若选择了封面图片，先上传到媒体库获取 URL
+      let coverUrl = ''
+      if (uploadCoverFile.value) {
+        const coverFormData = new FormData()
+        coverFormData.append('file', uploadCoverFile.value)
+        coverFormData.append('storage', 'local')
+        const coverRes: any = await api.post('/media', coverFormData, {
+          headers: {'Content-Type': 'multipart/form-data'}
+        })
+        coverUrl = coverRes.data?.url || ''
+      }
+      await api.post('/music/upload-from-media', {
+        media_id: selectedMediaId.value,
+        name: uploadForm.value.name,
+        singer: uploadForm.value.singer,
+        album: uploadForm.value.album,
+        cover: coverUrl,
+        duration: uploadDuration.value
+      })
+      message.success('创建成功')
+    } else {
+      // 本地文件上传模式
+      if (!uploadFileList.value) {
+        message.warning('请选择音乐文件')
+        uploadLoading.value = false
+        return
+      }
+      const formData = new FormData()
+      formData.append('file', uploadFileList.value)
+      if (uploadCoverFile.value) {
+        formData.append('cover', uploadCoverFile.value)
+      }
+      if (uploadLyricFile.value) {
+        formData.append('lyric', uploadLyricFile.value)
+      }
+      formData.append('name', uploadForm.value.name)
+      formData.append('singer', uploadForm.value.singer)
+      formData.append('album', uploadForm.value.album)
+      formData.append('storage', uploadForm.value.storage)
+      formData.append('duration', String(uploadDuration.value))
 
-    await api.post('/music/upload', formData, {
-      headers: {'Content-Type': 'multipart/form-data'}
-    })
-    message.success('上传成功')
+      await api.post('/music/upload', formData, {
+        headers: {'Content-Type': 'multipart/form-data'}
+      })
+      message.success('上传成功')
+    }
     uploadVisible.value = false
     await loadLibrary()
     activeTab.value = 'library'
   } catch {
-    message.error('上传失败')
+    message.error('操作失败')
   } finally {
     uploadLoading.value = false
   }
@@ -863,7 +985,9 @@ onMounted(() => {
                   :disabled="selectedSearchSongs.length === 0"
                   @click="handleImport(searchSongs, '', searchPlatform)"
               >
-                <template #icon><ImportOutlined/></template>
+                <template #icon>
+                  <ImportOutlined/>
+                </template>
                 导入选中 ({{ selectedSearchSongs.length }})
               </a-button>
             </div>
@@ -894,11 +1018,16 @@ onMounted(() => {
                 <template v-if="column.key === 'action'">
                   <a-space size="small">
                     <a-button type="link" size="small" @click="handlePreviewSong(record, searchPlatform)">
-                      <template #icon><PlayCircleOutlined/></template>
+                      <template #icon>
+                        <PlayCircleOutlined/>
+                      </template>
                       播放
                     </a-button>
-                    <a-button type="link" size="small" style="color: #52c41a" @click="handleSaveRemote(record, searchPlatform)">
-                      <template #icon><CloudDownloadOutlined/></template>
+                    <a-button type="link" size="small" style="color: #52c41a"
+                              @click="handleSaveRemote(record, searchPlatform)">
+                      <template #icon>
+                        <CloudDownloadOutlined/>
+                      </template>
                       保存
                     </a-button>
                   </a-space>
@@ -948,7 +1077,9 @@ onMounted(() => {
                   :disabled="selectedPlaylistSongs.length === 0"
                   @click="handleImport(playlistSongs, playlistName, playlistPlatform)"
               >
-                <template #icon><ImportOutlined/></template>
+                <template #icon>
+                  <ImportOutlined/>
+                </template>
                 导入选中 ({{ selectedPlaylistSongs.length }})
               </a-button>
             </div>
@@ -983,11 +1114,16 @@ onMounted(() => {
                 <template v-if="column.key === 'action'">
                   <a-space size="small">
                     <a-button type="link" size="small" @click="handlePreviewSong(record, playlistPlatform)">
-                      <template #icon><PlayCircleOutlined/></template>
+                      <template #icon>
+                        <PlayCircleOutlined/>
+                      </template>
                       播放
                     </a-button>
-                    <a-button type="link" size="small" style="color: #52c41a" @click="handleSaveRemote(record, playlistPlatform)">
-                      <template #icon><CloudDownloadOutlined/></template>
+                    <a-button type="link" size="small" style="color: #52c41a"
+                              @click="handleSaveRemote(record, playlistPlatform)">
+                      <template #icon>
+                        <CloudDownloadOutlined/>
+                      </template>
                       保存
                     </a-button>
                   </a-space>
@@ -1000,7 +1136,7 @@ onMounted(() => {
       </a-tab-pane>
 
       <!-- 音乐库管理 -->
-      <a-tab-pane key="library" >
+      <a-tab-pane key="library">
         <template #tab>
           <span><CustomerServiceOutlined/> 音乐库管理</span>
         </template>
@@ -1008,16 +1144,18 @@ onMounted(() => {
         <a-card title="音乐库管理">
           <template #extra>
             <a-space>
-              <a-button type="primary" @click="handleUploadModalOpen">
-                <template #icon><UploadOutlined/></template>
+              <a-button type="primary" @click="openUploadModal">
+                <template #icon>
+                  <UploadOutlined/>
+                </template>
                 上传音乐
               </a-button>
               <a-input-search
-                v-model:value="libraryKeyword"
-                placeholder="搜索歌曲、歌手、专辑..."
-                style="width: 240px"
-                allow-clear
-                @search="handleLibrarySearch"
+                  v-model:value="libraryKeyword"
+                  placeholder="搜索歌曲、歌手、专辑..."
+                  style="width: 240px"
+                  allow-clear
+                  @search="handleLibrarySearch"
               >
                 <template #enterButton>
                   <SearchOutlined/>
@@ -1056,16 +1194,17 @@ onMounted(() => {
               <template v-if="column.key === 'play_url'">
                 <a-typography-text
                     v-if="record.play_url"
+                    :content="record.play_url"
                     :ellipsis="{ tooltip: record.play_url }"
                     style="max-width: 180px; font-size: 12px; color: #999"
-                >
-                  {{ record.play_url }}
-                </a-typography-text>
+                />
                 <span v-else style="color: #ccc">无</span>
               </template>
               <template v-if="column.key === 'source'">
                 <a-tag :color="record.source === 'minio' ? 'blue' : 'green'">
-                  {{ record.source === 'minio' ? 'MinIO' : record.source === 'local' ? '本地' : record.source === 'qq' ? 'QQ音乐' : record.source }}
+                  {{
+                    record.source === 'minio' ? 'MinIO' : record.source === 'local' ? '本地' : record.source === 'qq' ? 'QQ音乐' : record.source
+                  }}
                 </a-tag>
               </template>
               <template v-if="column.key === 'origin_platform'">
@@ -1081,24 +1220,35 @@ onMounted(() => {
               <template v-if="column.key === 'action'">
                 <a-dropdown :trigger="['click']">
                   <a-button size="small" type="text">
-                    <template #icon><MoreOutlined/></template>
+                    <template #icon>
+                      <MoreOutlined/>
+                    </template>
                   </a-button>
                   <template #overlay>
                     <a-menu @click="(info: any) => handleMenuAction(info.key, record)">
                       <a-menu-item key="play" :disabled="!record.play_url">
-                        <template #icon><PlayCircleOutlined/></template>
+                        <template #icon>
+                          <PlayCircleOutlined/>
+                        </template>
                         在线播放
                       </a-menu-item>
                       <a-menu-item key="edit">
-                        <template #icon><EditOutlined/></template>
+                        <template #icon>
+                          <EditOutlined/>
+                        </template>
                         编辑
                       </a-menu-item>
                       <a-menu-item key="refresh">
-                        <template #icon><ReloadOutlined/></template>
+                        <template #icon>
+                          <ReloadOutlined/>
+                        </template>
                         刷新链接
                       </a-menu-item>
-                      <a-menu-item key="migrate" :disabled="!record.play_url || (!record.play_url.startsWith('/uploads/') && !record.play_url.includes('/minio/api/'))">
-                        <template #icon><SwapOutlined/></template>
+                      <a-menu-item key="migrate"
+                                   :disabled="!record.play_url || (!record.play_url.startsWith('/uploads/') && !record.play_url.includes('/minio/api/'))">
+                        <template #icon>
+                          <SwapOutlined/>
+                        </template>
                         迁移存储
                       </a-menu-item>
                       <a-menu-item key="toggle">
@@ -1110,7 +1260,9 @@ onMounted(() => {
                       </a-menu-item>
                       <a-menu-divider/>
                       <a-menu-item key="delete" danger>
-                        <template #icon><DeleteOutlined/></template>
+                        <template #icon>
+                          <DeleteOutlined/>
+                        </template>
                         删除
                       </a-menu-item>
                     </a-menu>
@@ -1130,7 +1282,7 @@ onMounted(() => {
             歌单管理
           </span>
         </template>
-        <PlaylistManage />
+        <PlaylistManage/>
       </a-tab-pane>
     </a-tabs>
 
@@ -1155,11 +1307,14 @@ onMounted(() => {
           </div>
           <div class="preview-info">
             <div class="preview-title">{{ previewName }}</div>
-            <div class="preview-time">{{ formatPreviewTime(previewCurrentTime) }} / {{ formatPreviewTime(previewDuration) }}</div>
+            <div class="preview-time">{{ formatPreviewTime(previewCurrentTime) }} /
+              {{ formatPreviewTime(previewDuration) }}
+            </div>
           </div>
           <div class="preview-seek-bar" @click="handlePreviewSeek">
             <div class="preview-seek-track">
-              <div class="preview-seek-fill" :style="{width: previewDuration ? (previewCurrentTime / previewDuration * 100) + '%' : '0%'}"></div>
+              <div class="preview-seek-fill"
+                   :style="{width: previewDuration ? (previewCurrentTime / previewDuration * 100) + '%' : '0%'}"></div>
             </div>
           </div>
           <div class="preview-controls">
@@ -1209,26 +1364,73 @@ onMounted(() => {
         @ok="handleUploadSubmit"
         ok-text="上传"
         cancel-text="取消"
-        width="520px"
+        width="600px"
     >
       <a-form layout="vertical" style="margin-top: 16px">
-        <a-form-item label="音乐文件" required>
-          <a-upload
-              :before-upload="() => false"
-              :max-count="1"
-              accept=".mp3,.m4a,.aac,.ogg,.wav,.flac,audio/*"
-              @change="handleFileSelect"
-              @remove="handleFileRemove"
-          >
-            <a-button>
-              <template #icon><FolderOpenOutlined/></template>
-              选择音乐文件
-            </a-button>
-          </a-upload>
-          <div style="color: #999; font-size: 12px; margin-top: 4px">
-            支持 MP3 / M4A / AAC / OGG / WAV / FLAC，最大 50MB
-          </div>
+        <!-- 来源模式切换 -->
+        <a-form-item label="文件来源">
+          <a-radio-group v-model:value="uploadMode" button-style="solid">
+            <a-radio-button value="file">本地文件上传</a-radio-button>
+            <a-radio-button value="media">从媒体库选择</a-radio-button>
+          </a-radio-group>
         </a-form-item>
+
+        <!-- 本地文件上传模式 -->
+        <template v-if="uploadMode === 'file'">
+          <a-form-item label="音乐文件" required>
+            <a-upload
+                :before-upload="() => false"
+                :max-count="1"
+                accept=".mp3,.m4a,.aac,.ogg,.wav,.flac,audio/*"
+                @change="handleFileSelect"
+                @remove="handleFileRemove"
+            >
+              <a-button>
+                <template #icon>
+                  <FolderOpenOutlined/>
+                </template>
+                选择音乐文件
+              </a-button>
+            </a-upload>
+            <div style="color: #999; font-size: 12px; margin-top: 4px">
+              支持 MP3 / M4A / AAC / OGG / WAV / FLAC，最大 50MB
+            </div>
+          </a-form-item>
+        </template>
+
+        <!-- 媒体库选择模式 -->
+        <template v-else>
+          <a-form-item label="从媒体库选择音频文件" required>
+            <a-spin :spinning="mediaMp3Loading">
+              <div v-if="mediaMp3List.length > 0" class="media-select-list">
+                <div
+                    v-for="item in mediaMp3List"
+                    :key="item.id"
+                    class="media-select-item"
+                    :class="{selected: selectedMediaId === item.id}"
+                    @click="handleMediaSelect(item)"
+                >
+                  <div class="media-select-info">
+                    <div class="media-select-name">{{ item.original_name }}</div>
+                    <div class="media-select-meta">
+                      <span>{{ item.mime_type }}</span>
+                      <span>{{ formatSize(item.size) }}</span>
+                      <span>{{ formatDateTime(item.created_at) }}</span>
+                    </div>
+                  </div>
+                  <div class="media-select-check">
+                    <CheckCircleFilled v-if="selectedMediaId === item.id" style="color: #1677ff; font-size: 18px"/>
+                    <div v-else class="media-select-radio"></div>
+                  </div>
+                </div>
+              </div>
+              <a-empty v-else description="媒体库暂无音频文件" style="padding: 20px 0"/>
+            </a-spin>
+            <div style="color: #999; font-size: 12px; margin-top: 4px">
+              选择媒体库中已有的音频文件，直接引用其 URL（不重复上传）
+            </div>
+          </a-form-item>
+        </template>
         <a-form-item label="封面图片（可选）">
           <a-upload
               :before-upload="() => false"
@@ -1238,7 +1440,9 @@ onMounted(() => {
               @remove="handleCoverRemove"
           >
             <a-button>
-              <template #icon><PictureOutlined/></template>
+              <template #icon>
+                <PictureOutlined/>
+              </template>
               选择封面图片
             </a-button>
           </a-upload>
@@ -1255,7 +1459,9 @@ onMounted(() => {
               @remove="handleLyricRemove"
           >
             <a-button>
-              <template #icon><FileTextOutlined/></template>
+              <template #icon>
+                <FileTextOutlined/>
+              </template>
               选择 LRC 歌词文件
             </a-button>
           </a-upload>
@@ -1272,7 +1478,7 @@ onMounted(() => {
         <a-form-item label="专辑">
           <a-input v-model:value="uploadForm.album" placeholder="专辑名（可选）"/>
         </a-form-item>
-        <a-form-item label="保存到">
+        <a-form-item v-if="uploadMode === 'file'" label="保存到">
           <a-radio-group v-model:value="uploadForm.storage">
             <a-radio value="local">本地存储</a-radio>
             <a-radio value="minio">MinIO 存储</a-radio>
@@ -1312,7 +1518,9 @@ onMounted(() => {
               @change="handleEditCoverSelect"
           >
             <a-button>
-              <template #icon><PictureOutlined/></template>
+              <template #icon>
+                <PictureOutlined/>
+              </template>
               选择新封面
             </a-button>
           </a-upload>
@@ -1342,7 +1550,9 @@ onMounted(() => {
               @change="handleEditLyricSelect"
           >
             <a-button>
-              <template #icon><FileTextOutlined/></template>
+              <template #icon>
+                <FileTextOutlined/>
+              </template>
               {{ editHasLyric ? '替换歌词文件' : '选择歌词文件' }}
             </a-button>
           </a-upload>
@@ -1372,7 +1582,9 @@ onMounted(() => {
           </a-tag>
         </p>
         <p style="color: #999; margin-bottom: 16px">
-          系统将{{ saveRemotePlatform === 'qq' ? '从 QQ 音乐获取播放链接，VIP 歌曲会自动回退网易云' : '从网易云音乐获取播放链接' }}，下载音频文件后保存到选定存储源，并添加到音乐库。
+          系统将{{
+            saveRemotePlatform === 'qq' ? '从 QQ 音乐获取播放链接，VIP 歌曲会自动回退网易云' : '从网易云音乐获取播放链接'
+          }}，下载音频文件后保存到选定存储源，并添加到音乐库。
           <br/>VIP 或版权受限歌曲可能无法获取链接。
         </p>
         <a-form layout="vertical">
@@ -1406,7 +1618,9 @@ onMounted(() => {
           </a-tag>
         </p>
         <p style="color: #999; margin-bottom: 16px">
-          系统将{{ importPlatform === 'qq' ? '从 QQ 音乐获取播放链接，VIP 歌曲会自动回退网易云' : '从网易云音乐获取播放链接' }}，下载音频后保存到选定存储源。
+          系统将{{
+            importPlatform === 'qq' ? '从 QQ 音乐获取播放链接，VIP 歌曲会自动回退网易云' : '从网易云音乐获取播放链接'
+          }}，下载音频后保存到选定存储源。
           <br/>过程可能需要一些时间，请耐心等待。
         </p>
         <a-form layout="vertical">
@@ -1517,8 +1731,12 @@ onMounted(() => {
 }
 
 @keyframes preview-disc-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .preview-disc-inner {
@@ -1654,5 +1872,80 @@ onMounted(() => {
 
 .preview-empty svg {
   color: #ddd;
+}
+
+/* ============ 媒体库选择列表 ============ */
+.media-select-list {
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid #f0f0f0;
+  border-radius: 6px;
+}
+
+.media-select-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.media-select-list::-webkit-scrollbar-thumb {
+  background: #d9d9d9;
+  border-radius: 3px;
+}
+
+.media-select-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid #f5f5f5;
+  transition: background 0.15s;
+}
+
+.media-select-item:last-child {
+  border-bottom: none;
+}
+
+.media-select-item:hover {
+  background: #fafafa;
+}
+
+.media-select-item.selected {
+  background: #e6f4ff;
+}
+
+.media-select-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.media-select-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.media-select-meta {
+  display: flex;
+  gap: 12px;
+  margin-top: 3px;
+  font-size: 11px;
+  color: #999;
+}
+
+.media-select-check {
+  flex-shrink: 0;
+  margin-left: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.media-select-radio {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid #d9d9d9;
 }
 </style>

@@ -1,12 +1,19 @@
 <script setup lang="ts">
 import {useArticleStore} from '@/stores/article'
 import api from '@/utils/api'
-import {DownloadOutlined, ExclamationCircleOutlined, ImportOutlined, PlusOutlined, SearchOutlined, UploadOutlined} from '@ant-design/icons-vue'
+import {
+  DownloadOutlined,
+  ExclamationCircleOutlined,
+  ImportOutlined,
+  PlusOutlined,
+  SearchOutlined,
+  UploadOutlined
+} from '@ant-design/icons-vue'
 import {message, Modal} from 'ant-design-vue'
 import dayjs from 'dayjs'
 import {h, onMounted, reactive, ref} from 'vue'
 import {useRouter} from 'vue-router'
-import {CLIENT_BASE_URL} from "@/config.ts";
+import {CLIENT_BASE_URL} from "@/config/config.ts";
 
 const router = useRouter()
 const articleStore = useArticleStore()
@@ -358,26 +365,26 @@ onMounted(() => {
 
     <!-- P4-5: 导入文章弹窗 -->
     <a-modal
-      v-model:open="importModalVisible"
-      title="批量导入文章"
-      width="560px"
-      :ok-text="importResult ? '关闭' : '开始导入'"
-      :confirm-loading="importLoading"
-      @ok="importResult ? (importModalVisible = false) : handleImportSubmit()"
+        v-model:open="importModalVisible"
+        title="批量导入文章"
+        width="560px"
+        :ok-text="importResult ? '关闭' : '开始导入'"
+        :confirm-loading="importLoading"
+        @ok="importResult ? (importModalVisible = false) : handleImportSubmit()"
     >
       <a-alert
-        type="info"
-        show-icon
-        style="margin-bottom: 16px"
-        message="支持从导出的 JSON 文件导入文章。分类按名称匹配，标签不存在时自动创建。"
+          type="info"
+          show-icon
+          style="margin-bottom: 16px"
+          message="支持从导出的 JSON 文件导入文章。分类按名称匹配，标签不存在时自动创建。"
       />
       <a-upload-dragger
-        :file-list="importFileList"
-        :before-upload="handleBeforeUpload"
-        @remove="handleRemoveFile"
-        accept=".json"
-        :max-count="1"
-        :disabled="!!importResult"
+          :file-list="importFileList"
+          :before-upload="handleBeforeUpload"
+          @remove="handleRemoveFile"
+          accept=".json"
+          :max-count="1"
+          :disabled="!!importResult"
       >
         <p class="ant-upload-drag-icon">
           <UploadOutlined/>
@@ -388,11 +395,12 @@ onMounted(() => {
 
       <div v-if="importResult" style="margin-top: 16px">
         <a-alert
-          :type="importResult.failed > 0 ? 'warning' : 'success'"
-          show-icon
-          :message="`导入完成：成功 ${importResult.success} 篇，跳过 ${importResult.skipped} 篇，失败 ${importResult.failed} 篇`"
+            :type="importResult.failed > 0 ? 'warning' : 'success'"
+            show-icon
+            :message="`导入完成：成功 ${importResult.success} 篇，跳过 ${importResult.skipped} 篇，失败 ${importResult.failed} 篇`"
         />
-        <div v-if="importResult.errors && importResult.errors.length" style="margin-top: 12px; max-height: 200px; overflow-y: auto">
+        <div v-if="importResult.errors && importResult.errors.length"
+             style="margin-top: 12px; max-height: 200px; overflow-y: auto">
           <a-list size="small" bordered :data-source="importResult.errors">
             <template #renderItem="{ item }">
               <a-list-item style="font-size: 12px; color: #666">{{ item }}</a-list-item>

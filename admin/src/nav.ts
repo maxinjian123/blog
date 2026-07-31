@@ -37,11 +37,11 @@ export default [
             {key: '/music', icon: h(CustomerServiceOutlined), label: '音乐抓取'}
         ]
     },
+    {key: '/media', icon: h(FolderOpenOutlined), label: '媒体库'},
     {key: '/comments', icon: h(CommentOutlined), label: '评论管理'},
     {key: '/guestbook', icon: h(MessageOutlined), label: '留言管理'},
     {key: '/announcements', icon: h(NotificationOutlined), label: '公告管理'},
     {key: '/links', icon: h(LinkOutlined), label: '友链管理'},
-    {key: '/media', icon: h(FolderOpenOutlined), label: '媒体库'},
     {key: '/subscribers', icon: h(MailOutlined), label: '邮件订阅'},
     {key: '/settings', icon: h(SettingOutlined), label: '系统设置'}
 ]

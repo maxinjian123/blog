@@ -128,6 +128,53 @@ async function uploadFile(buffer, originalname, mimetype, storage = null) {
 }
 
 /**
+ * 读取本地文件为 Buffer
+ * @param {string} filePath - 文件存储路径（filename 或相对路径）
+ * @returns {Promise<Buffer>}
+ */
+async function readLocal(filePath) {
+  if (!filePath) throw new Error('readLocal: filePath 为空');
+  const uploadDir = path.resolve(__dirname, '..', config.upload.dir || './uploads');
+  const abs = path.isAbsolute(filePath)
+    ? filePath
+    : path.resolve(uploadDir, filePath);
+  if (!fs.existsSync(abs)) {
+    throw new Error(`本地文件不存在: ${abs}`);
+  }
+  return fs.promises.readFile(abs);
+}
+
+/**
+ * 读取 MinIO 文件为 Buffer
+ * @param {string} objectKey - MinIO 对象 key
+ * @returns {Promise<Buffer>}
+ */
+async function readMinio(objectKey) {
+  const client = getMinioClient();
+  if (!client) throw new Error('MinIO 未启用或未配置');
+  const bucket = config.upload.minio.bucket;
+  const stream = await client.getObject(bucket, objectKey);
+  const chunks = [];
+  for await (const chunk of stream) {
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks);
+}
+
+/**
+ * 通用读取：根据 storage 选择读取方式
+ * @param {string} storage - 'local' | 'minio'
+ * @param {string} filePath - 文件路径/objectKey
+ * @returns {Promise<Buffer>}
+ */
+async function readFile(storage, filePath) {
+  if (storage === 'minio') {
+    return readMinio(filePath);
+  }
+  return readLocal(filePath);
+}
+
+/**
  * 删除本地文件
  * @param {string} filePath - 文件存储路径（filename 或相对路径）
  */
@@ -177,6 +224,9 @@ module.exports = {
   uploadToLocal,
   uploadToMinio,
   uploadFile,
+  readLocal,
+  readMinio,
+  readFile,
   deleteLocal,
   deleteMinio,
   deleteFile,
