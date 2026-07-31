@@ -51,8 +51,8 @@ const KEY_META = Object.fromEntries(
  */
 async function ensureTables() {
   try {
-    await SiteConfig.sync({ alter: true });
-    await MediaFile.sync({ alter: true });
+    await SiteConfig.sync();
+    await MediaFile.sync();
   } catch (err) {
     console.error('[Config] 同步配置表失败:', err.message);
   }

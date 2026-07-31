@@ -373,7 +373,7 @@ router.post('/test-mail', auth, adminOnly, async (req, res, next) => {
       replyContent: '这是一封来自博客后台的测试邮件，用于验证邮件服务配置是否正确。',
       replyAuthor: config.mail.fromName,
       // 用 0 作为占位 articleId，邮件中"查看详情"链接的地址
-      // 来自 .env 的 COMMENT_REPLY_URL_PREFIX（未配置时回退到站点地址）
+      // 来自 .env.development.development 的 COMMENT_REPLY_URL_PREFIX（未配置时回退到站点地址）
       articleId: 0,
       fallbackHost: config.site.url || '/'
     });

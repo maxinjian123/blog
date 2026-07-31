@@ -80,7 +80,7 @@ async function sendTemplatedMail(to, templateKey, vars) {
  * 拼接评论回复邮件中的"查看详情"链接
  * 优先级：
  *   1. 显式传入的 articleUrl
- *   2. config.commentReplyUrlPrefix（来自 .env 的 COMMENT_REPLY_URL_PREFIX）+ /article/<id>
+ *   2. config.commentReplyUrlPrefix（来自 .env.development.development 的 COMMENT_REPLY_URL_PREFIX）+ /article/<id>
  *   3. fallbackHost（请求 host，例如开发环境的 localhost:3000）+ /article/<id>
  * @param {{ articleUrl?: string, articleId?: string | number, commentId?: string | number, fallbackHost?: string }} opts
  */

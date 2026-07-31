@@ -633,7 +633,7 @@ onMounted(() => {
                 </a-descriptions>
               </div>
               <div class="settings-section">
-                <h3>GitHub 爬虫配置</h3>
+                <h3>GitHub 抓取配置</h3>
                 <a-form layout="vertical">
                   <a-form-item
                     label="Personal Access Token"

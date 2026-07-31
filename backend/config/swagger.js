@@ -4,9 +4,9 @@ const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: '3D Blog API',
+      title: 'Blog API',
       version: '1.0.0',
-      description: '3D Blog 后端 API 接口文档'
+      description: 'Blog 后端 API 接口文档'
     },
     servers: [
       {
