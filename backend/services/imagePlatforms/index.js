@@ -1,6 +1,9 @@
 const bingPlatform = require('./bing');
 const baiduPlatform = require('./baidu');
 const dogetuPlatform = require('./dogetu');
+const pexelsPlatform = require('./pexels');
+const pixabayPlatform = require('./pixabay');
+const unsplashPlatform = require('./unsplash');
 
 /**
  * 图片平台注册表
@@ -9,7 +12,10 @@ const dogetuPlatform = require('./dogetu');
 const REGISTRY = {
   bing: bingPlatform,
   baidu: baiduPlatform,
-  dogetu: dogetuPlatform
+  dogetu: dogetuPlatform,
+  pexels: pexelsPlatform,
+  pixabay: pixabayPlatform,
+  unsplash: unsplashPlatform
 };
 
 /**

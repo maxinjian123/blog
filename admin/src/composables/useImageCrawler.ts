@@ -5,12 +5,14 @@ import { message } from 'ant-design-vue'
 /**
  * 图片抓取平台类型
  */
-export type ImagePlatformId = 'bing' | 'baidu' | 'dogetu'
+export type ImagePlatformId = 'bing' | 'baidu' | 'dogetu' | 'pexels' | 'pixabay' | 'unsplash'
 
 export interface ImagePlatform {
   id: ImagePlatformId
   label: string
   type: 'image' | 'meme'
+  /** 是否需要 API Key（用于前端提示） */
+  needsApiKey?: boolean
 }
 
 export interface ImageItem {
@@ -42,7 +44,10 @@ export function useImageCrawler() {
   const platforms = ref<ImagePlatform[]>([
     { id: 'bing', label: 'Bing 图片', type: 'image' },
     { id: 'baidu', label: '百度图片', type: 'image' },
-    { id: 'dogetu', label: 'dogetu 表情包', type: 'meme' }
+    { id: 'dogetu', label: 'dogetu 表情包', type: 'meme' },
+    { id: 'pexels', label: 'Pexels', type: 'image', needsApiKey: true },
+    { id: 'pixabay', label: 'Pixabay', type: 'image', needsApiKey: true },
+    { id: 'unsplash', label: 'Unsplash', type: 'image', needsApiKey: true }
   ])
 
   // ============ 搜索状态 ============

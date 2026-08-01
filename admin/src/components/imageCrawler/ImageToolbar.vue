@@ -4,9 +4,10 @@ import {
   SearchOutlined,
   PictureOutlined,
   SmileOutlined,
-  CloudDownloadOutlined
+  CloudDownloadOutlined,
+  CameraOutlined
 } from '@ant-design/icons-vue'
-import type { ImagePlatformId } from '@/composables/useImageCrawler'
+import type { ImagePlatformId, ImagePlatform } from '@/composables/useImageCrawler'
 
 const props = defineProps<{
   currentPlatform: ImagePlatformId
@@ -16,6 +17,7 @@ const props = defineProps<{
   minioEnabled: boolean
   targetStorage: 'local' | 'minio'
   selectedCount: number
+  platforms: ImagePlatform[]
 }>()
 
 const emit = defineEmits<{
@@ -56,36 +58,52 @@ function onStorageChange(val: 'local' | 'minio') {
   emit('storage-change', val)
 }
 
+// 各平台搜索框占位文本
 const placeholderMap: Record<ImagePlatformId, string> = {
   bing: '搜索图片，如：风景、动漫、壁纸',
   baidu: '搜索图片，如：风景、动漫、壁纸',
-  dogetu: '搜索表情包，如：狗、害羞、加油'
+  dogetu: '搜索表情包，如：狗、害羞、加油',
+  pexels: 'Search photos, e.g. nature, ocean, city',
+  pixabay: '搜索图片，如：花朵、星空、猫',
+  unsplash: 'Search photos, e.g. minimal, coffee, mountain'
 }
+
+// 各平台图标组件
+function platformIcon(id: ImagePlatformId) {
+  if (id === 'dogetu') return SmileOutlined
+  return PictureOutlined
+}
+
+// 当前平台是否需要 API Key
+const currentNeedsApiKey = computed(() => {
+  const p = props.platforms.find(it => it.id === props.currentPlatform)
+  return !!p?.needsApiKey
+})
 </script>
 
 <template>
   <a-card class="image-toolbar">
     <div class="toolbar-row">
-      <!-- 平台切换（单选按钮） -->
+      <!-- 平台切换（动态渲染，支持新增平台） -->
       <a-radio-group
         :value="currentPlatformId"
         @change="onPlatformChange"
         class="platform-radio"
       >
-        <a-radio-button value="bing">
-          <picture-outlined />
-          Bing 图片
-        </a-radio-button>
-        <a-radio-button value="baidu">
-          <picture-outlined />
-          百度图片
-        </a-radio-button>
-        <a-radio-button value="dogetu">
-          <smile-outlined />
-          dogetu 表情包
+        <a-radio-button v-for="p in platforms" :key="p.id" :value="p.id">
+          <component :is="p.id === 'pexels' || p.id === 'pixabay' || p.id === 'unsplash' ? CameraOutlined : platformIcon(p.id)" />
+          {{ p.label }}
         </a-radio-button>
       </a-radio-group>
     </div>
+
+    <a-alert
+      v-if="currentNeedsApiKey"
+      :message="`「${platforms.find(p => p.id === currentPlatform)?.label}」需要在「系统设置 → 图片抓取」中配置 API Key 才能使用`"
+      type="info"
+      show-icon
+      style="margin-top: 12px"
+    />
 
     <a-alert
       message="版权提示：图片来源网络，版权归原作者所有。请确认授权后再使用，商业用途请先联系原作者获取授权。"
