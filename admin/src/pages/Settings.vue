@@ -9,11 +9,12 @@ import {
   InfoCircleOutlined,
   KeyOutlined,
   UploadOutlined,
-  PictureOutlined
+  PictureOutlined,
+  RobotOutlined
 } from '@ant-design/icons-vue'
 
 const authStore = useAuthStore()
-const activeTab = ref<'site' | 'mail' | 'upload'>('site')
+const activeTab = ref<'site' | 'mail' | 'upload' | 'image_crawler' | 'ai'>('site')
 
 const loading = ref(false)
 const saving = ref(false)
@@ -165,6 +166,36 @@ const crawlerForm = reactive({
   github_token: ''
 })
 
+// 图片抓取平台 API Key 表单
+const imageCrawlerForm = reactive({
+  pexels_api_key: '',
+  pixabay_api_key: '',
+  unsplash_api_key: ''
+})
+
+// AI 配置表单（豆包 + Ollama）
+const aiForm = reactive({
+  doubao_api_key: '',
+  doubao_base_url: 'https://ark.cn-beijing.volces.com/api/v3',
+  doubao_chat_model: '',
+  doubao_image_model: '',
+  ollama_host: 'http://localhost:11434',
+  ollama_chat_enabled: 'true',
+  ollama_chat_model: ''
+})
+
+// 记录敏感字段是否已配置（后端不返回明文，仅返回 hasValue 标志）
+// 用于输入框 placeholder 提示：已配置时显示"已配置（不显示明文），如需修改请输入新值"
+const sensitiveHasValue = reactive<Record<string, boolean>>({
+  mail_pass: false,
+  minio_secret_key: false,
+  github_token: false,
+  pexels_api_key: false,
+  pixabay_api_key: false,
+  unsplash_api_key: false,
+  doubao_api_key: false
+})
+
 // 是否启用 MinIO（计算属性）
 const minioEnabledBool = computed({
   get: () => uploadForm.minio_enabled === 'true',
@@ -174,6 +205,11 @@ const minioEnabledBool = computed({
 const mailSecureBool = computed({
   get: () => mailForm.mail_secure === 'true',
   set: (v: boolean) => { mailForm.mail_secure = v ? 'true' : 'false' }
+})
+
+const ollamaEnabledBool = computed({
+  get: () => aiForm.ollama_chat_enabled === 'true',
+  set: (v: boolean) => { aiForm.ollama_chat_enabled = v ? 'true' : 'false' }
 })
 
 // 从分组数据填充表单
@@ -192,6 +228,8 @@ function applyGroupedToForms() {
   mailForm.mail_user = mail.mail_user?.value || ''
   mailForm.mail_pass = mail.mail_pass?.value || ''
   mailForm.mail_from_name = mail.mail_from_name?.value || 'LinzyBlog'
+  // 记录敏感字段是否已配置
+  sensitiveHasValue.mail_pass = !!mail.mail_pass?.hasValue
 
   const upload = grouped.value.upload || {}
   uploadForm.upload_dir = upload.upload_dir?.value || './uploads'
@@ -202,13 +240,33 @@ function applyGroupedToForms() {
   uploadForm.minio_port = upload.minio_port?.value || '9000'
   uploadForm.minio_use_ssl = upload.minio_use_ssl?.value || 'false'
   uploadForm.minio_access_key = upload.minio_access_key?.value || 'admin'
-  uploadForm.minio_secret_key = upload.minio_secret_key?.value || 'admin123'
+  uploadForm.minio_secret_key = upload.minio_secret_key?.value || ''
   uploadForm.minio_bucket = upload.minio_bucket?.value || 'blog'
   uploadForm.minio_public_base_url = upload.minio_public_base_url?.value || 'http://111.228.9.147:9000'
   uploadForm.minio_region = upload.minio_region?.value || ''
+  sensitiveHasValue.minio_secret_key = !!upload.minio_secret_key?.hasValue
 
   const crawler = grouped.value.crawler || {}
   crawlerForm.github_token = crawler.github_token?.value || ''
+  sensitiveHasValue.github_token = !!crawler.github_token?.hasValue
+
+  const imageCrawler = grouped.value.image_crawler || {}
+  imageCrawlerForm.pexels_api_key = imageCrawler.pexels_api_key?.value || ''
+  imageCrawlerForm.pixabay_api_key = imageCrawler.pixabay_api_key?.value || ''
+  imageCrawlerForm.unsplash_api_key = imageCrawler.unsplash_api_key?.value || ''
+  sensitiveHasValue.pexels_api_key = !!imageCrawler.pexels_api_key?.hasValue
+  sensitiveHasValue.pixabay_api_key = !!imageCrawler.pixabay_api_key?.hasValue
+  sensitiveHasValue.unsplash_api_key = !!imageCrawler.unsplash_api_key?.hasValue
+
+  const ai = grouped.value.ai || {}
+  aiForm.doubao_api_key = ai.doubao_api_key?.value || ''
+  aiForm.doubao_base_url = ai.doubao_base_url?.value || 'https://ark.cn-beijing.volces.com/api/v3'
+  aiForm.doubao_chat_model = ai.doubao_chat_model?.value || ''
+  aiForm.doubao_image_model = ai.doubao_image_model?.value || ''
+  aiForm.ollama_host = ai.ollama_host?.value || 'http://localhost:11434'
+  aiForm.ollama_chat_enabled = ai.ollama_chat_enabled?.value || 'true'
+  aiForm.ollama_chat_model = ai.ollama_chat_model?.value || ''
+  sensitiveHasValue.doubao_api_key = !!ai.doubao_api_key?.hasValue
 }
 
 async function fetchSettings() {
@@ -256,13 +314,27 @@ function handleSaveCrawler() {
   return saveConfigs({ ...crawlerForm }, 'GitHub Token 已保存')
 }
 
+function handleSaveImageCrawler() {
+  return saveConfigs({ ...imageCrawlerForm }, '图片抓取 API Key 已保存')
+}
+
+function handleSaveAI() {
+  return saveConfigs({ ...aiForm }, 'AI 配置已保存')
+}
+
 // 测试邮件发送
 async function handleTestMail() {
-  if (!mailForm.mail_user || !mailForm.mail_pass) {
-    message.warning('请先填写邮箱账号和授权码')
+  // mail_pass 为敏感字段：表单值可能为空（未修改时后端不返回明文）
+  // 只要 mail_user 已填且 mail_pass 已配置过（sensitiveHasValue）或本次新填，即可测试
+  if (!mailForm.mail_user) {
+    message.warning('请先填写发件人邮箱账号')
     return
   }
-  // 先保存再测试
+  if (!mailForm.mail_pass && !sensitiveHasValue.mail_pass) {
+    message.warning('请先填写 SMTP 授权码')
+    return
+  }
+  // 先保存再测试（mail_pass 为空时后端会跳过更新，保留原值）
   await handleSaveMail()
   testingMail.value = true
   try {
@@ -478,7 +550,10 @@ onMounted(() => {
                 <a-input v-model:value="mailForm.mail_user" placeholder="例：xxx@qq.com" />
               </a-form-item>
               <a-form-item label="SMTP 授权码">
-                <a-input-password v-model:value="mailForm.mail_pass" placeholder="邮箱授权码，非登录密码" />
+                <a-input-password
+                  v-model:value="mailForm.mail_pass"
+                  :placeholder="sensitiveHasValue.mail_pass ? '已配置（不显示明文），如需修改请输入新值' : '邮箱授权码，非登录密码'"
+                />
               </a-form-item>
               <a-form-item label="发件人显示名称">
                 <a-input v-model:value="mailForm.mail_from_name" />
@@ -559,7 +634,10 @@ onMounted(() => {
                 </a-col>
                 <a-col :span="12">
                   <a-form-item label="SecretKey">
-                    <a-input-password v-model:value="uploadForm.minio_secret_key" />
+                    <a-input-password
+                      v-model:value="uploadForm.minio_secret_key"
+                      :placeholder="sensitiveHasValue.minio_secret_key ? '已配置（不显示明文），如需修改请输入新值' : ''"
+                    />
                   </a-form-item>
                 </a-col>
               </a-row>
@@ -585,6 +663,110 @@ onMounted(() => {
                 <a-button :disabled="!minioEnabledBool" @click="handleTestMinio">测试连接</a-button>
               </a-space>
             </a-form>
+          </div>
+        </a-tab-pane>
+
+        <!-- 图片抓取平台 API Key -->
+        <a-tab-pane key="image_crawler">
+          <template #tab>
+            <span><picture-outlined /> 图片抓取</span>
+          </template>
+          <div class="settings-section">
+            <a-alert
+              message="Pexels / Pixabay / Unsplash 提供免费图片 API，需注册账号申请 API Key 后填入下方。保存后即可在「图片抓取」页面使用对应平台。"
+              type="info"
+              show-icon
+              style="margin-bottom: 16px"
+            />
+            <a-form layout="vertical" style="max-width: 600px">
+              <a-form-item label="Pexels API Key" help="在 https://www.pexels.com/api/ 注册申请">
+                <a-input-password
+                  v-model:value="imageCrawlerForm.pexels_api_key"
+                  :placeholder="sensitiveHasValue.pexels_api_key ? '已配置（不显示明文），如需修改请输入新值' : '563492ad6f9170000100000xxxxx...'"
+                  allow-clear
+                />
+              </a-form-item>
+              <a-form-item label="Pixabay API Key" help="在 https://pixabay.com/accounts/register/ 注册后在账户页面获取">
+                <a-input-password
+                  v-model:value="imageCrawlerForm.pixabay_api_key"
+                  :placeholder="sensitiveHasValue.pixabay_api_key ? '已配置（不显示明文），如需修改请输入新值' : '12345678-xxxx-xxxx-xxxx-xxxxxxxxxxxx'"
+                  allow-clear
+                />
+              </a-form-item>
+              <a-form-item label="Unsplash Access Key" help="在 https://unsplash.com/developers 注册应用后获取 Access Key">
+                <a-input-password
+                  v-model:value="imageCrawlerForm.unsplash_api_key"
+                  :placeholder="sensitiveHasValue.unsplash_api_key ? '已配置（不显示明文），如需修改请输入新值' : 'dQxxx...'"
+                  allow-clear
+                />
+              </a-form-item>
+              <a-form-item>
+                <a-button type="primary" :loading="saving" @click="handleSaveImageCrawler">
+                  保存 API Key
+                </a-button>
+              </a-form-item>
+            </a-form>
+          </div>
+        </a-tab-pane>
+
+        <!-- AI 配置 -->
+        <a-tab-pane key="ai">
+          <template #tab>
+            <span><robot-outlined /> AI 配置</span>
+          </template>
+          <div class="settings-section">
+            <h3>云端模型（OpenAI 兼容）</h3>
+            <a-alert
+              message="支持所有兼容 OpenAI 接口格式的云端模型服务（豆包/DeepSeek/Kimi/OpenAI/通义千问等）。填入服务方提供的 Base URL、API Key 与模型 ID 即可接入。"
+              type="info"
+              show-icon
+              style="margin-bottom: 16px"
+            />
+            <a-form layout="vertical" style="max-width: 600px">
+              <a-form-item label="API Key" help="服务方控制台获取的 API Key">
+                <a-input-password
+                  v-model:value="aiForm.doubao_api_key"
+                  :placeholder="sensitiveHasValue.doubao_api_key ? '已配置（不显示明文），如需修改请输入新值' : 'sk-xxxxxxxxxxxxxxxxxxxx'"
+                  allow-clear
+                />
+              </a-form-item>
+              <a-form-item label="Base URL" help="OpenAI 兼容 API 基址">
+                <a-input v-model:value="aiForm.doubao_base_url" placeholder="https://ark.cn-beijing.volces.com/api/v3" />
+              </a-form-item>
+              <a-form-item label="对话模型 ID" help="服务方提供的对话模型标识（豆包填接入点 ep-xxx，其他服务填对应模型名）">
+                <a-input v-model:value="aiForm.doubao_chat_model" placeholder="doubao-seed-2-0-mini-260428" />
+              </a-form-item>
+              <a-form-item label="图片生成模型 ID" help="图片生成模型标识，用于文章封面生成（无图片生成需求可留空）">
+                <a-input v-model:value="aiForm.doubao_image_model" placeholder="doubao-seedream-4-5-251128" />
+              </a-form-item>
+            </a-form>
+          </div>
+
+          <div class="settings-section">
+            <h3>
+              <a-switch v-model:checked="ollamaEnabledBool" size="small" style="margin-right: 8px" />
+              Ollama（本地对话模型）
+            </h3>
+            <a-alert
+              message="Ollama 提供本地对话能力，启用后优先使用本地模型，不可用时自动降级到云端模型"
+              type="info"
+              show-icon
+              style="margin-bottom: 16px"
+            />
+            <a-form layout="vertical" style="max-width: 600px" :disabled="!ollamaEnabledBool">
+              <a-form-item label="服务地址" help="Ollama API 地址">
+                <a-input v-model:value="aiForm.ollama_host" placeholder="http://localhost:11434" />
+              </a-form-item>
+              <a-form-item label="对话模型" help="本地部署的模型名称">
+                <a-input v-model:value="aiForm.ollama_chat_model" placeholder="glm4:9b" />
+              </a-form-item>
+            </a-form>
+          </div>
+
+          <div class="settings-section">
+            <a-button type="primary" :loading="saving" @click="handleSaveAI">
+              保存 AI 配置
+            </a-button>
           </div>
         </a-tab-pane>
 
@@ -641,7 +823,7 @@ onMounted(() => {
                   >
                     <a-input-password
                       v-model:value="crawlerForm.github_token"
-                      placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                      :placeholder="sensitiveHasValue.github_token ? '已配置（不显示明文），如需修改请输入新值' : 'ghp_xxxxxxxxxxxxxxxxxxxx'"
                       allow-clear
                     />
                   </a-form-item>

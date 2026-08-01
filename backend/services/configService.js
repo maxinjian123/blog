@@ -35,8 +35,37 @@ const DEFAULT_CONFIGS = [
   { config_key: 'minio_region', config_value: '', category: 'upload', description: 'MinIO Region（非空时覆盖默认 region，如 us-east-1）' },
 
   // 爬虫配置 - GitHub
-  { config_key: 'github_token', config_value: '', category: 'crawler', description: 'GitHub Personal Access Token（用于仓库搜索与内容爬取，避免 60次/小时限流）' }
+  { config_key: 'github_token', config_value: '', category: 'crawler', description: 'GitHub Personal Access Token（用于仓库搜索与内容爬取，避免 60次/小时限流）' },
+
+  // 图片抓取 - 第三方平台 API Key
+  { config_key: 'pexels_api_key', config_value: '', category: 'image_crawler', description: 'Pexels API Key（在 https://www.pexels.com/api/ 申请）' },
+  { config_key: 'pixabay_api_key', config_value: '', category: 'image_crawler', description: 'Pixabay API Key（在 https://pixabay.com/accounts/register/ 申请）' },
+  { config_key: 'unsplash_api_key', config_value: '', category: 'image_crawler', description: 'Unsplash Access Key（在 https://unsplash.com/developers 申请）' },
+
+  // AI 配置 - 豆包（火山引擎）
+  { config_key: 'doubao_api_key', config_value: '', category: 'ai', description: '豆包 API Key（火山引擎控制台获取）' },
+  { config_key: 'doubao_base_url', config_value: 'https://ark.cn-beijing.volces.com/api/v3', category: 'ai', description: '豆包 API Base URL' },
+  { config_key: 'doubao_chat_model', config_value: '', category: 'ai', description: '豆包对话模型 ID' },
+  { config_key: 'doubao_image_model', config_value: '', category: 'ai', description: '豆包图片生成模型 ID' },
+
+  // AI 配置 - Ollama（本地对话模型）
+  { config_key: 'ollama_host', config_value: 'http://localhost:11434', category: 'ai', description: 'Ollama 服务地址' },
+  { config_key: 'ollama_chat_enabled', config_value: 'true', category: 'ai', description: '是否启用 Ollama 本地对话（不可用时降级到豆包云端）' },
+  { config_key: 'ollama_chat_model', config_value: '', category: 'ai', description: 'Ollama 对话模型名称（如 glm4:9b）' }
 ];
+
+// 敏感字段集合：API Key / 密码 / Token 类配置
+// 这类字段在 getAllGrouped 返回时不返回明文，仅返回是否已配置的标志 hasValue
+// 保存时如果提交空值或掩码占位符，后端跳过更新，保留原值
+const SENSITIVE_KEYS = new Set([
+  'mail_pass',
+  'minio_secret_key',
+  'github_token',
+  'pexels_api_key',
+  'pixabay_api_key',
+  'unsplash_api_key',
+  'doubao_api_key'
+]);
 
 // 内存中的配置缓存（启动后从数据库加载，避免每次读 DB）
 const cache = {};
@@ -59,7 +88,7 @@ async function ensureTables() {
 }
 
 /**
- * 初始化默认配置：仅在数据库为空时写入
+ * 初始化默认配置：数据库为空时写入全部默认值；已存在数据时补齐后续新增的配置项
  */
 async function initDefaults() {
   try {
@@ -68,6 +97,17 @@ async function initDefaults() {
     if (count === 0) {
       await SiteConfig.bulkCreate(DEFAULT_CONFIGS);
       console.log('[Config] 已初始化默认配置');
+      return;
+    }
+    // 补齐后续版本新增的默认配置项（已存在的配置不覆盖）
+    const existingKeys = new Set(
+      (await SiteConfig.findAll({ attributes: ['config_key'], raw: true }))
+        .map(r => r.config_key)
+    );
+    const missing = DEFAULT_CONFIGS.filter(c => !existingKeys.has(c.config_key));
+    if (missing.length > 0) {
+      await SiteConfig.bulkCreate(missing);
+      console.log(`[Config] 已补齐 ${missing.length} 项新增默认配置`);
     }
   } catch (err) {
     console.error('[Config] 初始化默认配置失败:', err.message);
@@ -135,6 +175,28 @@ function applyToConfig() {
   config.crawler = {
     githubToken: cache.github_token || ''
   };
+
+  // image_crawler - 第三方图片平台 API Key
+  config.imageCrawler = {
+    pexelsApiKey: cache.pexels_api_key || '',
+    pixabayApiKey: cache.pixabay_api_key || '',
+    unsplashApiKey: cache.unsplash_api_key || ''
+  };
+
+  // AI - 豆包（火山引擎）
+  config.doubao = {
+    apiKey: cache.doubao_api_key || '',
+    baseURL: cache.doubao_base_url || 'https://ark.cn-beijing.volces.com/api/v3',
+    chatModel: cache.doubao_chat_model || '',
+    imageModel: cache.doubao_image_model || ''
+  };
+
+  // AI - Ollama（本地对话模型）
+  config.ollama = {
+    host: cache.ollama_host || 'http://localhost:11434',
+    chatEnabled: String(cache.ollama_chat_enabled) === 'true',
+    chatModel: cache.ollama_chat_model || ''
+  };
 }
 
 /**
@@ -157,6 +219,15 @@ function getConfig(key, defaultValue = null) {
  */
 async function setConfigs(items) {
   for (const item of items) {
+    // 敏感字段：提交空值或掩码占位符时跳过更新，保留原值
+    // 前端对敏感字段不返回明文，用户未修改时提交空字符串
+    if (SENSITIVE_KEYS.has(item.key)) {
+      const v = String(item.value || '').trim();
+      if (!v || v === '***' || v === '********' || v === '******') {
+        continue;
+      }
+    }
+
     const meta = KEY_META[item.key] || {};
     const category = meta.category || item.category || 'general';
     const description = meta.description || item.description || null;
@@ -193,8 +264,12 @@ async function getAllGrouped() {
   const grouped = {};
   for (const row of rows) {
     if (!grouped[row.category]) grouped[row.category] = {};
+    const isSensitive = SENSITIVE_KEYS.has(row.config_key);
     grouped[row.category][row.config_key] = {
-      value: row.config_value,
+      // 敏感字段不返回明文，仅返回是否已配置的标志
+      value: isSensitive ? '' : row.config_value,
+      hasValue: isSensitive ? !!row.config_value : undefined,
+      isSensitive: isSensitive || undefined,
       description: row.description
     };
   }
@@ -203,6 +278,7 @@ async function getAllGrouped() {
 
 module.exports = {
   DEFAULT_CONFIGS,
+  SENSITIVE_KEYS,
   initDefaults,
   loadConfigs,
   reloadConfig,
