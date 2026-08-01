@@ -22,6 +22,11 @@ api.interceptors.request.use(
 
 api.interceptors.response.use(
   (response) => {
+    // 检测后端滑动续期返回的新 token，自动更新本地存储
+    const newToken = response.headers['x-new-token']
+    if (newToken) {
+      localStorage.setItem('admin_token', newToken)
+    }
     return response.data
   },
   (error) => {

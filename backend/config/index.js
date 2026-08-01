@@ -24,7 +24,10 @@ module.exports = {
     },
     jwt: {
         secret: process.env.JWT_SECRET || 'default-secret',
-        expiresIn: process.env.JWT_EXPIRES_IN || '7d'
+        expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+        // 滑动续期阈值（秒）：token 剩余有效期少于此值时，auth 中间件自动签发新 token
+        // 通过 X-New-Token 响应头返回，前端拦截器无感更新。默认 1 天（86400 秒）
+        refreshThreshold: parseInt(process.env.JWT_REFRESH_THRESHOLD || '86400', 10)
     },
     doubao: {
         apiKey: process.env.DOUBAO_API_KEY || '',

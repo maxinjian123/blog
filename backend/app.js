@@ -26,7 +26,12 @@ app.use(helmet());
 const corsOrigins = config.cors.origin
   ? config.cors.origin.split(',').map((s) => s.trim())
   : "*";
-app.use(cors({ origin: corsOrigins, credentials: true }));
+app.use(cors({
+  origin: corsOrigins,
+  credentials: true,
+  // 暴露 X-New-Token 给前端，用于 JWT 滑动续期
+  exposedHeaders: ['X-New-Token']
+}));
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
@@ -57,6 +62,11 @@ app.get('/api-docs.json', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   res.send(swaggerSpecs);
 });
+
+// 操作日志中间件：自动记录管理端写操作（POST/PUT/DELETE）
+// 全局挂载到 /api/v1/，中间件内部通过路由模式匹配过滤只记录已知模块的写操作
+const {operationLogger} = require('./middleware/operationLog');
+app.use('/api/v1/', operationLogger());
 
 // 统一注册所有路由
 registerRoutes(app);
