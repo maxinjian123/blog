@@ -2,6 +2,7 @@
 import Footer from '@/components/layout/Footer.vue'
 import NavBar from '@/components/layout/NavBar.vue'
 import Sidebar from '@/components/layout/Sidebar.vue'
+import MusicPlayer from '@/components/music/MusicPlayer.vue'
 import { useThemeStore } from '@/stores/theme'
 import { useSiteStore } from '@/stores/site'
 import { useHead, useSeoMeta } from '@unhead/vue'
@@ -68,6 +69,7 @@ onMounted(() => {
       </div>
     </div>
     <Footer />
+    <MusicPlayer />
   </div>
 </template>
 

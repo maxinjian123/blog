@@ -1,7 +1,7 @@
 const express = require('express');
 const {auth, adminOnly} = require('../middleware/auth');
 const {success, error, paginated} = require('../utils/response');
-const {Music, MediaFile} = require('../models');
+const {Music, MediaFile, PlaylistSong} = require('../models');
 const {Op} = require('sequelize');
 const musicCrawler = require('../services/musicCrawler');
 const {uploadFile, deleteFile} = require('../services/storageService');
@@ -484,6 +484,8 @@ router.delete('/:id', auth, adminOnly, async (req, res, next) => {
     if (!music) {
       return error(res, '歌曲不存在', 404);
     }
+    // 先删除歌单关联，避免 playlist_songs 残留孤立记录
+    await PlaylistSong.destroy({where: {music_id: music.id}});
     await music.destroy();
     return success(res, null, '删除成功');
   } catch (err) {
@@ -935,6 +937,50 @@ router.post('/upload-from-media', auth, adminOnly, async (req, res, next) => {
       singer: music.singer,
       url: mediaFile.url,
       storage: mediaFile.storage
+    }, '音乐创建成功', 201);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * 通过外部播放 URL 创建音乐（不下载文件，直接引用外链）
+ * 适用场景：用户已有音频直链（如自己的 CDN、第三方托管链接），无需上传文件
+ */
+router.post('/upload-from-url', auth, adminOnly, async (req, res, next) => {
+  try {
+    const { play_url, name, singer, album, cover, lyric, duration } = req.body;
+
+    if (!play_url || !/^https?:\/\//i.test(String(play_url).trim())) {
+      return error(res, '请提供有效的音频播放 URL（http/https）', 400);
+    }
+    if (!name || !String(name).trim()) {
+      return error(res, '请填写歌曲名', 400);
+    }
+
+    const music = await Music.create({
+      song_id: `url_${Date.now()}`,
+      name: String(name).trim().slice(0, 200),
+      singer: (singer || '未知歌手').slice(0, 200),
+      album: (album || '').slice(0, 200),
+      cover: (cover || '').slice(0, 500),
+      play_url: String(play_url).trim(),
+      duration: Number(duration) || 0,
+      // external 表示外链引用，不占用本地/MinIO 存储空间
+      source: 'external',
+      origin_platform: 'upload',
+      playlist_name: '外链导入',
+      sort_order: 0,
+      is_active: true,
+      lyric: lyric || null
+    });
+
+    return success(res, {
+      id: music.id,
+      name: music.name,
+      singer: music.singer,
+      url: music.play_url,
+      storage: music.source
     }, '音乐创建成功', 201);
   } catch (err) {
     next(err);

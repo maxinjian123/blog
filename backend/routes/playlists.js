@@ -502,7 +502,7 @@ router.get('/public/:shareCode', async (req, res, next) => {
         model: Music,
         as: 'music',
         where: {is_active: true},
-        attributes: ['id', 'name', 'singer', 'album', 'cover', 'play_url', 'duration', 'origin_platform'],
+        attributes: ['id', 'name', 'singer', 'album', 'cover', 'play_url', 'duration', 'origin_platform', 'lyric'],
         required: true
       }],
       order: [['sort_order', 'ASC']]

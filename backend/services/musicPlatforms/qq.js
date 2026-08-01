@@ -61,7 +61,7 @@ module.exports = {
     const list = songData.list || [];
 
     return {
-      total: songData.total || list.length,
+      total: songData.totalnum || songData.total || list.length,
       list: list.map(song => ({
         song_mid: song.songmid,
         song_id: song.songid,

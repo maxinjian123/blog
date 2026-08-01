@@ -14,11 +14,13 @@
   "dependencies": {
     "@ant-design/icons-vue": "^7.0.1",
     "@tailwindcss/vite": "^4.3.0",
+    "@types/howler": "^2.2.13",
     "@vavt/v3-extension": "^4.0.0",
     "axios": "^1.7.9",
     "dompurify": "^3.4.12",
     "echarts": "^5.6.0",
     "echarts-wordcloud": "^2.1.0",
+    "howler": "^2.2.4",
     "marked": "^18.0.4",
     "md-editor-v3": "^6.5.0",
     "pinia": "^2.3.0",

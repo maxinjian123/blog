@@ -15,6 +15,22 @@ const router = express.Router();
 const MAX_BATCH = 20;
 
 /**
+ * 各平台的版权 / 许可说明（写入 MediaFile.license，便于后续追溯）
+ */
+const PLATFORM_LICENSES = {
+  bing: 'Bing 图片搜索结果，版权归原作者所有',
+  baidu: '百度图片搜索结果，版权归原作者所有',
+  dogetu: 'dogetu.com',
+  pexels: 'Pexels License（免费商用，无需署名）',
+  pixabay: 'Pixabay Content License（免费商用，无需署名）',
+  unsplash: 'Unsplash License（免费商用，需署名摄影师）'
+};
+
+function getPlatformLicense(platform) {
+  return PLATFORM_LICENSES[platform] || `${platform} 来源图片，版权归原作者所有`;
+}
+
+/**
  * @swagger
  * /image-crawler/platforms:
  *   get:
@@ -51,7 +67,7 @@ router.get('/platforms', auth, adminOnly, async (req, res, next) => {
  *       - in: query
  *         name: platform
  *         required: true
- *         schema: { type: string, enum: [bing, dogetu] }
+ *         schema: { type: string, enum: [bing, baidu, dogetu, pexels, pixabay, unsplash] }
  *       - in: query
  *         name: page
  *         schema: { type: integer, default: 1 }
@@ -103,7 +119,7 @@ router.get('/search', auth, adminOnly, async (req, res, next) => {
  *           schema:
  *             type: object
  *             properties:
- *               platform: { type: string, enum: [bing, dogetu] }
+ *               platform: { type: string, enum: [bing, baidu, dogetu, pexels, pixabay, unsplash] }
  *               storage: { type: string, enum: [local, minio] }
  *               item:
  *                 type: object
@@ -140,7 +156,7 @@ router.post('/download', auth, adminOnly, async (req, res, next) => {
       path: uploadResult.path,
       author: item.author || '',
       source_url: item.source_url || '',
-      license: platform === 'bing' ? 'Bing 图片搜索结果，版权归原作者所有' : 'dogetu.com',
+      license: getPlatformLicense(platform),
       source_platform: platform
     });
 
@@ -179,7 +195,7 @@ router.post('/download', auth, adminOnly, async (req, res, next) => {
  *           schema:
  *             type: object
  *             properties:
- *               platform: { type: string, enum: [bing, dogetu] }
+ *               platform: { type: string, enum: [bing, baidu, dogetu, pexels, pixabay, unsplash] }
  *               storage: { type: string, enum: [local, minio] }
  *               items:
  *                 type: array
@@ -220,7 +236,7 @@ router.post('/batch-download', auth, adminOnly, async (req, res, next) => {
           path: uploadResult.path,
           author: item.author || '',
           source_url: item.source_url || '',
-          license: platform === 'bing' ? 'Bing 图片搜索结果，版权归原作者所有' : 'dogetu.com',
+          license: getPlatformLicense(platform),
           source_platform: platform
         });
         succeeded.push({
