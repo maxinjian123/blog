@@ -3,10 +3,20 @@ const config = require('../../config');
 const chat = require('./chat');
 const {loadPrompt, replacePlaceholders} = require('../../utils');
 
-const client = new OpenAI({
-  baseURL: config.doubao.baseURL,
-  apiKey: config.doubao.apiKey,
-});
+// 图片生成 OpenAI 客户端懒加载单例：复用 chat.js 的 reset 机制
+let _imageClient = null;
+function getImageClient() {
+  if (!_imageClient) {
+    _imageClient = new OpenAI({
+      baseURL: config.doubao.baseURL,
+      apiKey: config.doubao.apiKey,
+    });
+  }
+  return _imageClient;
+}
+function resetImageClient() {
+  _imageClient = null;
+}
 
 async function generateImage(prompt, options = {}) {
   const n = options.n || 1;
@@ -17,7 +27,8 @@ async function generateImage(prompt, options = {}) {
     throw new Error('图片生成模型未配置');
   }
 
-  const response = await client.images.generate({
+  console.log(`[AI] 调用图片生成模型: ${config.doubao.imageModel} (${config.doubao.baseURL})`);
+  const response = await getImageClient().images.generate({
     model: config.doubao.imageModel,
     prompt,
     n,
@@ -145,4 +156,5 @@ module.exports = {
   generateArticleCover,
   extractCoverKeywords,
   buildChiikawaCoverPrompt,
+  resetImageClient
 };
