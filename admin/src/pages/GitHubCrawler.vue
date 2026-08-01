@@ -88,11 +88,14 @@ const searchForm = reactive({
 const repos = ref<Repo[]>([])
 const repoTotal = ref(0)
 const repoPage = reactive({ current: 1, pageSize: 10 })
+// GitHub 搜索 API 仅返回前 1000 条，maxPage 用于限制跳转页码
+const repoMaxPage = ref(Infinity)
 
 // 文章搜索结果
 const codeResults = ref<CodeResult[]>([])
 const codeTotal = ref(0)
 const codePage = reactive({ current: 1, pageSize: 20 })
+const codeMaxPage = ref(Infinity)
 const selectedCodeKeys = ref<string[]>([])
 
 // 当前选中的仓库
@@ -220,6 +223,7 @@ async function searchRepos() {
     })
     repos.value = res.data?.list || []
     repoTotal.value = res.data?.total || 0
+    repoMaxPage.value = res.data?.maxPage || Infinity
   } catch {
     // 错误已由拦截器处理
   } finally {
@@ -242,6 +246,7 @@ async function searchCode() {
     })
     codeResults.value = res.data?.list || []
     codeTotal.value = res.data?.total || 0
+    codeMaxPage.value = res.data?.maxPage || Infinity
     selectedCodeKeys.value = []
   } catch {
     // 错误已由拦截器处理
@@ -251,13 +256,15 @@ async function searchCode() {
 }
 
 function handleRepoPageChange(page: number, pageSize: number) {
-  repoPage.current = page
+  // 限制最大页码，避免超出 GitHub 前 1000 条结果上限导致接口报错
+  repoPage.current = Math.min(page, repoMaxPage.value)
   repoPage.pageSize = pageSize
   searchRepos()
 }
 
 function handleCodePageChange(page: number, pageSize: number) {
-  codePage.current = page
+  // 限制最大页码，避免超出 GitHub 前 1000 条结果上限导致接口报错
+  codePage.current = Math.min(page, codeMaxPage.value)
   codePage.pageSize = pageSize
   searchCode()
 }
@@ -410,7 +417,7 @@ onMounted(() => {
 <template>
   <div>
     <div class="page-header">
-      <h2>GitHub 文章爬虫</h2>
+      <h2>GitHub 文章抓取</h2>
       <p class="page-desc">从 GitHub 搜索并导入 Markdown 文章，自动生成摘要与标签</p>
     </div>
 
@@ -560,7 +567,7 @@ onMounted(() => {
               pageSize: codePage.pageSize,
               total: codeTotal,
               showSizeChanger: true,
-              showTotal: (t: number) => `共 ${t} 篇`,
+              showTotal: (t: number) => `共 ${t} 篇（仅可查看前 1000 条）`,
               onChange: handleCodePageChange
             }"
           >
@@ -605,7 +612,7 @@ onMounted(() => {
             pageSize: repoPage.pageSize,
             total: repoTotal,
             showSizeChanger: true,
-            showTotal: (t: number) => `共 ${t} 个仓库`,
+            showTotal: (t: number) => `共 ${t} 个仓库（仅可查看前 1000 条）`,
             onChange: handleRepoPageChange
           }"
         >

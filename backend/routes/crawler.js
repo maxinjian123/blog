@@ -125,7 +125,10 @@ router.get('/search', auth, adminOnly, async (req, res, next) => {
       pageSize: Number(pageSize),
       language: language || undefined
     });
-    return success(res, result, `共找到 ${result.total} 个仓库`);
+    const msg = result.limitReached
+      ? `已到达 GitHub 搜索结果上限（前 1000 条），请更换关键词缩小范围`
+      : `共找到 ${result.total} 个仓库`;
+    return success(res, result, msg);
   } catch (err) {
     next(err);
   }
@@ -175,7 +178,10 @@ router.get('/search-code', auth, adminOnly, async (req, res, next) => {
       repo: repo || undefined,
       user: user || undefined
     });
-    return success(res, result, `共找到 ${result.total} 篇文章`);
+    const msg = result.limitReached
+      ? `已到达 GitHub 搜索结果上限（前 1000 条），请更换关键词缩小范围`
+      : `共找到 ${result.total} 篇文章`;
+    return success(res, result, msg);
   } catch (err) {
     next(err);
   }

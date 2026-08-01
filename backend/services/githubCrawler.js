@@ -3,6 +3,9 @@ const config = require('../config');
 
 const GITHUB_API = 'https://api.github.com';
 
+// GitHub 搜索 API 硬限制：最多只能访问前 1000 条结果（page × per_page 超过 1000 会返回 422）
+const GITHUB_SEARCH_LIMIT = 1000;
+
 // 需要排除的目录（避免扫描 node_modules、.git 等无关内容）
 const EXCLUDE_DIRS = new Set([
   'node_modules', '.git', '.github', '.vscode', '.idea',
@@ -42,6 +45,9 @@ function handleGithubError(err) {
     if (status === 404) {
       throw new Error('未找到该仓库或文件（可能仓库为私有或路径不存在）');
     }
+    if (status === 422) {
+      throw new Error('GitHub 搜索仅返回前 1000 条结果，请更换关键词或缩小搜索范围');
+    }
     const msg = data?.message || `GitHub API 返回 ${status}`;
     throw new Error(msg);
   }
@@ -60,6 +66,13 @@ async function searchRepositories(keyword, options = {}) {
     return { list: [], total: 0 };
   }
 
+  // 超限保护：GitHub 最多返回前 1000 条，页码超过上限直接返回，避免 422 报错
+  const perPage = Math.min(pageSize, 100);
+  const maxPage = Math.ceil(GITHUB_SEARCH_LIMIT / perPage);
+  if (page > maxPage) {
+    return { list: [], total: 0, maxPage, limitReached: true };
+  }
+
   let q = keyword.trim();
   if (language) {
     q += ` language:${language}`;
@@ -71,7 +84,7 @@ async function searchRepositories(keyword, options = {}) {
       params: {
         q,
         page,
-        per_page: Math.min(pageSize, 100),
+        per_page: perPage,
         sort,
         order: 'desc'
       },
@@ -93,7 +106,7 @@ async function searchRepositories(keyword, options = {}) {
       updated_at: item.updated_at
     }));
 
-    return { list, total: res.data.total_count };
+    return { list, total: res.data.total_count, maxPage, limitReached: false };
   } catch (err) {
     handleGithubError(err);
   }
@@ -209,6 +222,13 @@ async function searchCode(keyword, options = {}) {
     return { list: [], total: 0 };
   }
 
+  // 超限保护：GitHub 最多返回前 1000 条，页码超过上限直接返回，避免 422 报错
+  const perPage = Math.min(pageSize, 100);
+  const maxPage = Math.ceil(GITHUB_SEARCH_LIMIT / perPage);
+  if (page > maxPage) {
+    return { list: [], total: 0, maxPage, limitReached: true };
+  }
+
   // 构建查询：关键词 + 限定 markdown 文件
   let q = `${keyword.trim()} extension:md`;
 
@@ -225,7 +245,7 @@ async function searchCode(keyword, options = {}) {
       params: {
         q,
         page,
-        per_page: Math.min(pageSize, 100),
+        per_page: perPage,
         order: 'desc'
       },
       timeout: 15000
@@ -244,7 +264,7 @@ async function searchCode(keyword, options = {}) {
       repo_description: item.repository?.description
     }));
 
-    return { list, total: res.data.total_count };
+    return { list, total: res.data.total_count, maxPage, limitReached: false };
   } catch (err) {
     handleGithubError(err);
   }
