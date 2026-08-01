@@ -10,6 +10,7 @@ import {
     MailOutlined,
     MessageOutlined,
     NotificationOutlined,
+    PictureOutlined,
     RadarChartOutlined,
     SettingOutlined,
     TagsOutlined
@@ -34,7 +35,8 @@ export default [
         label: '数据抓取',
         children: [
             {key: '/crawler', icon: h(GithubOutlined), label: 'GitHub抓取'},
-            {key: '/music', icon: h(CustomerServiceOutlined), label: '音乐抓取'}
+            {key: '/music', icon: h(CustomerServiceOutlined), label: '音乐抓取'},
+            {key: '/image-crawler', icon: h(PictureOutlined), label: '图片抓取'}
         ]
     },
     {key: '/media', icon: h(FolderOpenOutlined), label: '媒体库'},

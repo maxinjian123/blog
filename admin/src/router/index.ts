@@ -108,6 +108,12 @@ const routes: RouteRecordRaw[] = [
                 name: 'MusicCrawler',
                 component: () => import('@/pages/MusicCrawler.vue'),
                 meta: {title: '音乐抓取', requiresAuth: true}
+            },
+            {
+                path: '/image-crawler',
+                name: 'ImageCrawler',
+                component: () => import('@/pages/ImageCrawler.vue'),
+                meta: {title: '图片抓取', requiresAuth: true}
             }
         ]
     },

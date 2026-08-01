@@ -39,6 +39,26 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING(500),
       allowNull: true,
       comment: '存储路径（本地相对路径或 MinIO object key）'
+    },
+    author: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      comment: '图片来源作者（抓取自外部平台，用于版权标注）'
+    },
+    source_url: {
+      type: DataTypes.STRING(1000),
+      allowNull: true,
+      comment: '图片来源页 URL（抓取自外部平台，用于版权标注）'
+    },
+    license: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      comment: '授权信息（如 CC0、Pixabay License 等）'
+    },
+    source_platform: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      comment: '来源平台标识：bing / dogetu，留空表示用户上传'
     }
   }, {
     tableName: 'media_files',

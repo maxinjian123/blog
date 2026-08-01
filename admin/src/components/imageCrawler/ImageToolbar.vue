@@ -1,0 +1,168 @@
+<script setup lang="ts">
+import { computed } from 'vue'
+import {
+  SearchOutlined,
+  PictureOutlined,
+  SmileOutlined,
+  CloudDownloadOutlined
+} from '@ant-design/icons-vue'
+import type { ImagePlatformId } from '@/composables/useImageCrawler'
+
+const props = defineProps<{
+  currentPlatform: ImagePlatformId
+  keyword: string
+  loading: boolean
+  downloading: boolean
+  minioEnabled: boolean
+  targetStorage: 'local' | 'minio'
+  selectedCount: number
+}>()
+
+const emit = defineEmits<{
+  (e: 'update:currentPlatform', v: ImagePlatformId): void
+  (e: 'update:keyword', v: string): void
+  (e: 'update:targetStorage', v: 'local' | 'minio'): void
+  (e: 'platform-change'): void
+  (e: 'search'): void
+  (e: 'storage-change', v: 'local' | 'minio'): void
+  (e: 'batch-download'): void
+}>()
+
+const currentPlatformId = computed({
+  get: () => props.currentPlatform,
+  set: (v: ImagePlatformId) => emit('update:currentPlatform', v)
+})
+
+const keywordModel = computed({
+  get: () => props.keyword,
+  set: (v: string) => emit('update:keyword', v)
+})
+
+const storageModel = computed({
+  get: () => props.targetStorage,
+  set: (v: 'local' | 'minio') => emit('update:targetStorage', v)
+})
+
+// a-radio-group 的 change 事件参数是 RadioChangeEvent，需从 e.target.value 取值
+function onPlatformChange(e: any) {
+  const val = e?.target?.value as ImagePlatformId
+  if (val) {
+    currentPlatformId.value = val
+    emit('platform-change')
+  }
+}
+
+function onStorageChange(val: 'local' | 'minio') {
+  emit('storage-change', val)
+}
+
+const placeholderMap: Record<ImagePlatformId, string> = {
+  bing: '搜索图片，如：风景、动漫、壁纸',
+  baidu: '搜索图片，如：风景、动漫、壁纸',
+  dogetu: '搜索表情包，如：狗、害羞、加油'
+}
+</script>
+
+<template>
+  <a-card class="image-toolbar">
+    <div class="toolbar-row">
+      <!-- 平台切换（单选按钮） -->
+      <a-radio-group
+        :value="currentPlatformId"
+        @change="onPlatformChange"
+        class="platform-radio"
+      >
+        <a-radio-button value="bing">
+          <picture-outlined />
+          Bing 图片
+        </a-radio-button>
+        <a-radio-button value="baidu">
+          <picture-outlined />
+          百度图片
+        </a-radio-button>
+        <a-radio-button value="dogetu">
+          <smile-outlined />
+          dogetu 表情包
+        </a-radio-button>
+      </a-radio-group>
+    </div>
+
+    <a-alert
+      message="版权提示：图片来源网络，版权归原作者所有。请确认授权后再使用，商业用途请先联系原作者获取授权。"
+      type="warning"
+      show-icon
+      style="margin-top: 12px"
+    />
+
+    <div class="toolbar-row" style="margin-top: 12px">
+      <a-input-search
+        v-model:value="keywordModel"
+        :placeholder="placeholderMap[currentPlatform]"
+        style="max-width: 480px"
+        allow-clear
+        enter-button
+        @search="$emit('search')"
+      >
+        <template #enterButton>
+          <a-button type="primary" :loading="loading">
+            <search-outlined />
+            搜索
+          </a-button>
+        </template>
+      </a-input-search>
+
+      <div class="right-controls">
+        <span class="storage-label">下载到：</span>
+        <a-select
+          v-model:value="storageModel"
+          style="width: 140px"
+          @change="onStorageChange"
+        >
+          <a-select-option value="local">本地</a-select-option>
+          <a-select-option value="minio" :disabled="!minioEnabled">MinIO</a-select-option>
+        </a-select>
+
+        <a-button
+          type="primary"
+          :loading="downloading"
+          :disabled="selectedCount === 0"
+          @click="$emit('batch-download')"
+        >
+          <cloud-download-outlined />
+          批量下载 {{ selectedCount > 0 ? `(${selectedCount})` : '' }}
+        </a-button>
+      </div>
+    </div>
+  </a-card>
+</template>
+
+<style scoped>
+.image-toolbar {
+  margin-bottom: 16px;
+}
+
+.toolbar-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.platform-radio :deep(.ant-radio-button-wrapper) {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.right-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.storage-label {
+  white-space: nowrap;
+  color: rgba(0, 0, 0, 0.65);
+}
+</style>
