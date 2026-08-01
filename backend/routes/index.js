@@ -21,6 +21,7 @@ const crawlerRoutes = require('./crawler');
 const imageCrawlerRoutes = require('./imageCrawler');
 const musicRoutes = require('./music');
 const playlistRoutes = require('./playlists');
+const operationLogRoutes = require('./operationLogs');
 
 // 加载 Swagger 文档声明（不注册为实际路由）
 require('./swagger-docs');
@@ -52,6 +53,7 @@ const routes = [
   { path: '/api/v1/image-crawler', router: imageCrawlerRoutes },
   { path: '/api/v1/music', router: musicRoutes },
   { path: '/api/v1/playlists', router: playlistRoutes },
+  { path: '/api/v1/operation-logs', router: operationLogRoutes },
   { path: '/', router: sitemapRoutes }
 ];
 

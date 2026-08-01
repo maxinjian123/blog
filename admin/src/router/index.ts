@@ -63,6 +63,12 @@ const routes: RouteRecordRaw[] = [
         meta: {title: '邮件订阅', requiresAuth: true}
     },
     {
+        path: '/operation-logs',
+        name: 'OperationLogs',
+        component: () => import('@/pages/OperationLogs.vue'),
+        meta: {title: '操作日志', requiresAuth: true}
+    },
+    {
         path: '/settings',
         name: 'Settings',
         component: () => import('@/pages/Settings.vue'),

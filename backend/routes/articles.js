@@ -551,6 +551,7 @@ router.post('/', auth, adminOnly, async (req, res, next) => {
         })
         clearHotCaches()
 
+        res.locals.logMeta = {target_id: article.id, target_name: article.title}
         return success(res, result, '文章创建成功', 201)
     } catch (err) {
         next(err)
@@ -643,6 +644,7 @@ router.put('/:id', auth, adminOnly, async (req, res, next) => {
         })
         clearHotCaches()
 
+        res.locals.logMeta = {target_id: article.id, target_name: result.title}
         return success(res, result, '文章更新成功')
     } catch (err) {
         next(err)
@@ -661,6 +663,7 @@ router.delete('/:id', auth, adminOnly, async (req, res, next) => {
         await article.destroy()
         clearHotCaches()
 
+        res.locals.logMeta = {target_id: req.params.id, target_name: article.title}
         return success(res, null, '文章删除成功')
     } catch (err) {
         next(err)

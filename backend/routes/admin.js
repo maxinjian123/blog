@@ -317,7 +317,10 @@ router.put('/settings', auth, adminOnly, async (req, res, next) => {
       'upload_dir', 'upload_max_size', 'upload_default_storage',
       'minio_enabled', 'minio_endpoint', 'minio_port', 'minio_use_ssl',
       'minio_access_key', 'minio_secret_key', 'minio_bucket', 'minio_public_base_url', 'minio_region',
-      'github_token'
+      'github_token',
+      'pexels_api_key', 'pixabay_api_key', 'unsplash_api_key',
+      'doubao_api_key', 'doubao_base_url', 'doubao_chat_model', 'doubao_image_model',
+      'ollama_host', 'ollama_chat_enabled', 'ollama_chat_model'
     ]);
 
     const items = configs
@@ -334,9 +337,14 @@ router.put('/settings', auth, adminOnly, async (req, res, next) => {
     mailService.resetTransporter();
     storageService.resetMinioClient();
 
+    // AI 配置变更后重置豆包客户端，使新配置立即生效
+    require('../services/ai/chat').resetDoubaoClient();
+    require('../services/ai/image').resetImageClient();
+
     // 异步验证邮件配置，不阻塞响应
     mailService.verifyMailer().catch(() => {});
 
+    res.locals.logMeta = {target_name: `系统配置（${items.length} 项）`};
     return success(res, null, '配置已保存');
   } catch (err) {
     next(err);

@@ -11,6 +11,7 @@ import {
     MessageOutlined,
     NotificationOutlined,
     PictureOutlined,
+    HistoryOutlined,
     RadarChartOutlined,
     SettingOutlined,
     TagsOutlined
@@ -45,5 +46,6 @@ export default [
     {key: '/announcements', icon: h(NotificationOutlined), label: '公告管理'},
     {key: '/links', icon: h(LinkOutlined), label: '友链管理'},
     {key: '/subscribers', icon: h(MailOutlined), label: '邮件订阅'},
+    {key: '/operation-logs', icon: h(HistoryOutlined), label: '操作日志'},
     {key: '/settings', icon: h(SettingOutlined), label: '系统设置'}
 ]
