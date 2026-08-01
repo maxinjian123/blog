@@ -24,8 +24,8 @@ import {MdEditor, MdPreview} from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
 import 'md-editor-v3/lib/preview.css'
 import {message, Modal} from 'ant-design-vue'
-import {computed, onMounted, ref} from 'vue'
-import {useRoute, useRouter} from 'vue-router'
+import {computed, onBeforeUnmount, onMounted, ref} from 'vue'
+import {onBeforeRouteLeave, useRoute, useRouter} from 'vue-router'
 
 const router = useRouter()
 const route = useRoute()
@@ -103,6 +103,12 @@ onMounted(async () => {
   if (isEdit.value) {
     await loadArticle()
   }
+  updateBaseline()
+  window.addEventListener('beforeunload', handleBeforeUnload)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('beforeunload', handleBeforeUnload)
 })
 
 async function loadCategories() {
@@ -273,9 +279,11 @@ async function handleSave(draft: boolean = true) {
     if (isEdit.value) {
       await articleStore.updateArticle(route.params.id as string, payload)
       message.success(draft ? '草稿已保存' : '文章已发布')
+      updateBaseline()
     } else {
       const res: any = await articleStore.createArticle(payload)
       message.success(draft ? '草稿已保存' : '文章已发布')
+      updateBaseline()
       if (res?.id) {
         await router.replace(`/articles/${res.id}/edit`)
       }
@@ -399,6 +407,7 @@ async function restoreVersion(versionId: string) {
     showVersionDrawer.value = false
     versionPreview.value = null
     showVersionPreviewModal.value = false
+    updateBaseline()
     await fetchVersions()
   } catch {
     message.error('恢复版本失败')
@@ -408,6 +417,56 @@ async function restoreVersion(versionId: string) {
 const filterOption = (input: string, option: { value: string, name: string, key: string }) => {
   return option.name.toLowerCase().indexOf(input.toLowerCase()) >= 0
 }
+
+// ===== 未保存离开提示 =====
+// 通过对比 form 序列化快照判断是否有未保存的修改
+const baselineSnapshot = ref('')
+
+// 只提取用户可编辑字段，剔除 catalog（编辑器自动生成）、UI 状态等非编辑字段
+function getComparableSnapshot(): string {
+  return JSON.stringify({
+    title: title.value,
+    content: content.value,
+    summary: summary.value,
+    cover: cover.value,
+    categoryId: categoryId.value,
+    tagIds: tagIds.value,
+    status: status.value,
+    scheduledAt: scheduledAt.value
+  })
+}
+
+// 数据加载完成 / 保存成功后重置基线，避免误报
+function updateBaseline() {
+  baselineSnapshot.value = getComparableSnapshot()
+}
+
+function isDirty(): boolean {
+  return getComparableSnapshot() !== baselineSnapshot.value
+}
+
+// 浏览器刷新/关闭：触发原生离开提示
+function handleBeforeUnload(e: BeforeUnloadEvent) {
+  if (isDirty()) {
+    e.preventDefault()
+    e.returnValue = ''
+  }
+}
+
+// 路由跳转：使用 Modal.confirm 异步确认
+onBeforeRouteLeave(() => {
+  if (!isDirty()) return
+  return new Promise<boolean>((resolve) => {
+    Modal.confirm({
+      title: '离开页面？',
+      content: '当前文章有未保存的修改，确定要离开吗？',
+      okText: '离开',
+      cancelText: '继续编辑',
+      onOk: () => resolve(true),
+      onCancel: () => resolve(false)
+    })
+  })
+})
 </script>
 
 <template>
