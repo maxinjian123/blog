@@ -4,6 +4,8 @@ import { resolve } from 'path'
 
 export default defineConfig({
   plugins: [vue()],
+  // Electron 加载本地 file:// 文件，必须用相对路径
+  base: './',
   define:{'process.env': {}},
   resolve: {
     alias: {

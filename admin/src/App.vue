@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import {useAuthStore} from '@/stores/auth'
 import MusicPlayer from '@/components/MusicPlayer.vue'
+import ApiConfigModal from '@/components/ApiConfigModal.vue'
 import {LogoutOutlined, MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined} from '@ant-design/icons-vue'
 import menuItems from '@/nav'
 import zhCN from 'ant-design-vue/es/locale/zh_CN'
 import dayjs from 'dayjs'
 import 'dayjs/locale/zh-cn'
 import {computed, onMounted, ref, watch} from 'vue'
-import api from '@/utils/api'
+import api, {loadApiBaseUrlFromElectron, isElectron} from '@/utils/api'
 
 import {useRoute, useRouter} from 'vue-router'
 
@@ -30,6 +31,10 @@ const authStore = useAuthStore()
 const collapsed = ref(false)
 const selectedKeys = ref<string[]>([])
 
+// 桌面端首次启动配置弹窗
+const configModalVisible = ref(false)
+const appReady = ref(!isElectron)  // Web 端直接就绪
+
 // 站点信息（从后台动态加载 logo 与名称，不再硬编码）
 const siteInfo = ref<{ site_name: string; site_logo: string }>({site_name: '', site_logo: ''})
 
@@ -39,7 +44,7 @@ async function fetchSiteInfo() {
     const data = res.data || res
     siteInfo.value = {
       site_name: data?.site_name || '',
-      site_logo: data?.site_logo || '/logo.svg'
+      site_logo: data?.site_logo || './logo.svg'
     }
     // 同步浏览器标题与 favicon
     if (data?.site_name) document.title = `${data.site_name} 管理后台`
@@ -59,9 +64,31 @@ function updateFavicon(href: string) {
   link.href = href
 }
 
-onMounted(() => {
+onMounted(async () => {
+  // 桌面端：从主进程加载后端地址，若未配置则弹窗
+  if (isElectron) {
+    const url = await loadApiBaseUrlFromElectron()
+    if (!url) {
+      configModalVisible.value = true
+      return  // 未配置前不加载站点信息
+    }
+  }
+  appReady.value = true
   fetchSiteInfo()
 })
+
+// 配置完成后重新加载
+function handleConfigured() {
+  appReady.value = true
+  fetchSiteInfo()
+}
+
+// 退出应用
+function handleExitApp() {
+  if (isElectron) {
+    window.close()
+  }
+}
 
 // 切换到设置页时刷新站点信息（保存 logo/名称后回到 App 可即时反映）
 watch(() => route.path, (p) => {
@@ -117,13 +144,22 @@ const isLoginPage = computed(() => route.path === '/login')
 
 <template>
   <a-config-provider :locale="locale" :theme="antdTheme">
+    <!-- 桌面端首次启动配置弹窗 -->
+    <ApiConfigModal
+      :open="configModalVisible"
+      @configured="handleConfigured"
+      @exit="handleExitApp"
+    />
+    <!-- 桌面端未就绪时显示加载占位 -->
+    <div v-if="!appReady" class="app-loading-placeholder"></div>
+    <template v-else>
     <div v-if="isLoginPage" class="login-layout">
       <router-view/>
     </div>
     <a-layout v-else class="admin-layout">
       <a-layout-sider v-model:collapsed="collapsed" :trigger="null" collapsible class="admin-sider">
         <div class="logo">
-          <img :src="siteInfo.site_logo || '/logo.svg'" alt="logo" class="logo-img"/>
+          <img :src="siteInfo.site_logo || './logo.svg'" alt="logo" class="logo-img"/>
           <span v-show="!collapsed" class="logo-text">{{ siteInfo.site_name || '管理后台' }}</span>
         </div>
         <a-menu v-model:selectedKeys="selectedKeys" theme="dark" mode="inline" :items="menuItems"
@@ -138,7 +174,7 @@ const isLoginPage = computed(() => route.path === '/login')
           <div class="header-right">
             <a-dropdown>
               <a-space class="user-info">
-                <a-avatar size="default" :src="authStore.user?.avatar || '/avatar.svg'">
+                <a-avatar size="default" :src="authStore.user?.avatar || ''">
                   <template #icon>
                     <UserOutlined/>
                   </template>
@@ -167,6 +203,7 @@ const isLoginPage = computed(() => route.path === '/login')
     </a-layout>
     <!-- 全局音乐播放器（底部播放条 + 最小化悬浮球） -->
     <MusicPlayer/>
+    </template>
   </a-config-provider>
 </template>
 
@@ -246,5 +283,10 @@ const isLoginPage = computed(() => route.path === '/login')
 
 .login-layout {
   min-height: 100vh;
+}
+
+.app-loading-placeholder {
+  min-height: 100vh;
+  background: #f5f5f5;
 }
 </style>

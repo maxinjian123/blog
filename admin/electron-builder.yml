@@ -1,0 +1,34 @@
+appId: com.linzy.blog.admin
+productName: Blog管理后台
+copyright: Copyright © 2026 Blog管理后台
+
+directories:
+  output: release
+  buildResources: build
+
+# 打包文件：dist 前端产物 + electron 主进程
+files:
+  - dist/**/*
+  - electron/**/*
+  - package.json
+
+# Windows 配置（图标使用 build/icon.ico）
+win:
+  icon: build/icon.ico
+  target:
+    - target: nsis
+      arch:
+        - x64
+
+# NSIS 安装包配置
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Blog管理后台
+
+# 便携版配置（可选）
+portable:
+  artifactName: ${productName}-${version}-portable.exe

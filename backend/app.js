@@ -51,7 +51,12 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-app.use('/uploads', express.static(path.join(__dirname, '.', config.upload.dir)));
+// 静态资源：允许跨源加载（Electron 桌面端 file:// 页面、跨域前端访问图片/音频/视频）
+// helmet 默认设置 Cross-Origin-Resource-Policy: same-origin 会阻止 no-cors 跨源加载（ERR_BLOCKED_BY_RESPONSE）
+app.use('/uploads', (req, res, next) => {
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+}, express.static(path.join(__dirname, '.', config.upload.dir)));
 
 // Swagger API 文档（开发环境无需鉴权，便于调试）
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs, {

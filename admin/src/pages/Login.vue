@@ -16,7 +16,7 @@ const formState = reactive({
 })
 
 // 站点信息（动态从后端读取 logo 与名称）
-const siteInfo = ref<{ site_name: string; site_logo: string }>({ site_name: '', site_logo: '/logo.svg' })
+const siteInfo = ref<{ site_name: string; site_logo: string }>({ site_name: '', site_logo: './logo.svg' })
 
 async function fetchSiteInfo() {
   try {
@@ -24,7 +24,7 @@ async function fetchSiteInfo() {
     const data = res.data || res
     siteInfo.value = {
       site_name: data?.site_name || '管理后台',
-      site_logo: data?.site_logo || '/logo.svg'
+      site_logo: data?.site_logo || './logo.svg'
     }
   } catch {
     // 静默失败

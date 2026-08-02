@@ -1,5 +1,8 @@
 import type {RouteRecordRaw} from 'vue-router'
-import {createRouter, createWebHistory} from 'vue-router'
+import {createRouter, createWebHistory, createWebHashHistory} from 'vue-router'
+
+// 桌面端用 hash 路由（file:// 协议不支持 history 模式），Web 端用 history 模式
+const isElectron = typeof window !== 'undefined' && !!(window as any).electronAPI
 
 const routes: RouteRecordRaw[] = [
     {
@@ -127,7 +130,7 @@ const routes: RouteRecordRaw[] = [
 ]
 
 const router = createRouter({
-    history: createWebHistory(),
+    history: isElectron ? createWebHashHistory() : createWebHistory(),
     routes
 })
 

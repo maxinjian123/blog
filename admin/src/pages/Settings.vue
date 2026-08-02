@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from 'vue'
-import api from '@/utils/api'
+import api, { isElectron, applyApiBaseUrl } from '@/utils/api'
 import { useAuthStore } from '@/stores/auth'
 import { message, Modal } from 'ant-design-vue'
 import {
@@ -10,11 +10,12 @@ import {
   KeyOutlined,
   UploadOutlined,
   PictureOutlined,
-  RobotOutlined
+  RobotOutlined,
+  DesktopOutlined
 } from '@ant-design/icons-vue'
 
 const authStore = useAuthStore()
-const activeTab = ref<'site' | 'mail' | 'upload' | 'image_crawler' | 'ai'>('site')
+const activeTab = ref<'site' | 'mail' | 'upload' | 'image_crawler' | 'ai' | 'desktop'>('site')
 
 const loading = ref(false)
 const saving = ref(false)
@@ -116,7 +117,7 @@ function isImage(mime: string): boolean {
 }
 
 // 配置数据（从后端加载的分组结构）
-const grouped = ref<Record<string, Record<string, { value: string; description: string }>>>({})
+const grouped = ref<Record<string, Record<string, { value: string; description: string; hasValue?: boolean }>>>({})
 
 // 站点信息表单
 const siteForm = reactive({
@@ -218,7 +219,7 @@ function applyGroupedToForms() {
   siteForm.site_name = site.site_name?.value || ''
   siteForm.site_description = site.site_description?.value || ''
   siteForm.site_url = site.site_url?.value || ''
-  siteForm.site_logo = site.site_logo?.value || '/logo.svg'
+  siteForm.site_logo = site.site_logo?.value || './logo.svg'
   siteForm.admin_email = site.admin_email?.value || authStore.user?.email || ''
 
   const mail = grouped.value.mail || {}
@@ -446,8 +447,43 @@ async function handleExportData() {
   }
 }
 
+// 桌面端后端服务地址配置（仅 Electron 环境使用）
+const desktopForm = reactive({
+  apiBaseUrl: ''
+})
+const desktopSaving = ref(false)
+
+async function loadDesktopConfig() {
+  if (!isElectron) return
+  try {
+    const url = await (window as any).electronAPI.getApiBaseUrl?.()
+    desktopForm.apiBaseUrl = url || localStorage.getItem('admin_api_base_url') || ''
+  } catch {
+    desktopForm.apiBaseUrl = localStorage.getItem('admin_api_base_url') || ''
+  }
+}
+
+async function handleSaveDesktop() {
+  const url = desktopForm.apiBaseUrl.trim()
+  if (!url) {
+    message.warning('请输入后端服务地址')
+    return
+  }
+  desktopSaving.value = true
+  try {
+    await (window as any).electronAPI.setApiBaseUrl(url)
+    await applyApiBaseUrl(url)
+    message.success('后端服务地址已保存，已立即生效')
+  } catch {
+    message.error('保存失败')
+  } finally {
+    desktopSaving.value = false
+  }
+}
+
 onMounted(() => {
   fetchSettings()
+  loadDesktopConfig()
 })
 </script>
 
@@ -494,7 +530,7 @@ onMounted(() => {
                         从媒体库选择
                       </a-button>
                     </a-space>
-                    <a-input v-model:value="siteForm.site_logo" placeholder="/logo.svg 或完整 URL" style="margin-top: 8px" />
+                    <a-input v-model:value="siteForm.site_logo" placeholder="./logo.svg 或完整 URL" style="margin-top: 8px" />
                     <div class="upload-tip">支持 JPG/PNG/WEBP/SVG，建议尺寸 128x128，最大 2MB</div>
                   </div>
                 </div>
@@ -836,6 +872,32 @@ onMounted(() => {
               </div>
             </a-col>
           </a-row>
+        </a-tab-pane>
+
+        <!-- 桌面端配置（仅 Electron 环境显示） -->
+        <a-tab-pane v-if="isElectron" key="desktop">
+          <template #tab>
+            <span><desktop-outlined /> 桌面端配置</span>
+          </template>
+          <div class="settings-section">
+            <h3>后端服务地址配置</h3>
+            <a-alert
+              message="此地址为桌面端连接后端服务的 API 地址，修改后立即生效"
+              type="info"
+              show-icon
+              style="margin-bottom: 16px"
+            />
+            <a-form layout="vertical" style="max-width: 600px">
+              <a-form-item label="后端服务地址" help="形如 http://192.168.1.100:3000 或 https://api.example.com">
+                <a-input v-model:value="desktopForm.apiBaseUrl" placeholder="http://127.0.0.1:3000" allow-clear />
+              </a-form-item>
+              <a-form-item>
+                <a-button type="primary" :loading="desktopSaving" @click="handleSaveDesktop">
+                  保存地址
+                </a-button>
+              </a-form-item>
+            </a-form>
+          </div>
         </a-tab-pane>
       </a-tabs>
     </a-spin>

@@ -1,5 +1,8 @@
 import dayjs from 'dayjs'
 
+// 是否为 Electron 桌面端环境
+const isElectron = typeof window !== 'undefined' && !!(window as any).electronAPI
+
 /**
  * 媒体库共享工具函数（纯函数，无副作用）
  */
@@ -93,6 +96,12 @@ export function formatDateTime(time: string, withSeconds = false): string {
 // 格式化本地 URL（本地存储的相对 URL 拼上 origin）
 export function resolveUrl(url: string, storage: 'local' | 'minio'): string {
   if (storage === 'local' && url.startsWith('/uploads/')) {
+    // Electron 桌面端：file:// 协议下 window.location.origin 无意义，
+    // 直接用用户配置的后端地址拼接
+    if (isElectron) {
+      const base = localStorage.getItem('admin_api_base_url') || ''
+      return base ? `${base}${url}` : url
+    }
     return `${window.location.origin}${url}`
   }
   return url

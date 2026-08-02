@@ -261,7 +261,14 @@ export function useMediaLibrary() {
   async function handleCopyUrl(item: MediaItem) {
     let url = item.url
     if (item.storage === 'local' && url.startsWith('/uploads/')) {
-      url = `${window.location.origin}${url}`
+      // Electron 桌面端：用后端地址拼接，Web 端用 origin
+      const isElectron = typeof window !== 'undefined' && !!(window as any).electronAPI
+      if (isElectron) {
+        const base = localStorage.getItem('admin_api_base_url') || ''
+        url = base ? `${base}${url}` : url
+      } else {
+        url = `${window.location.origin}${url}`
+      }
     }
     try {
       await navigator.clipboard.writeText(url)
