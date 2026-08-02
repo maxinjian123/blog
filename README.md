@@ -107,6 +107,39 @@ npm run dev-admin
 
 默认运行在 `http://localhost:5174`，首次访问需登录（默认管理员账号 `admin` / `admin123`，可通过种子脚本或数据库初始化）。
 
+### 5. 管理端桌面应用（Electron）
+
+管理后台支持打包为 Windows 桌面应用（NSIS 安装包 / 便携版）：
+
+```bash
+cd admin
+npm install
+npm run electron:build             # 生成 NSIS 安装包
+npm run electron:build:portable    # 生成便携版 exe
+```
+
+打包产物输出到 `admin/release/`。打包时 `admin/.env.production` 会随应用一起打进 asar 包内作为**只读模板**，首次启动时 Electron 主进程会将其复制到用户数据目录（`%APPDATA%/Blog管理后台/.env.production`）作为**可写副本**，之后所有配置读写均针对该副本。
+
+#### 双地址配置
+
+桌面端需要两个独立的服务地址，统一存储在 `.env.production` 中，可在「系统设置 → 桌面端配置」中动态修改：
+
+| 字段 | 用途 | 示例 |
+|------|------|------|
+| `VUE_APP_API_URL` | 客户端访问地址（站点根，用于生成文章链接） | `http://111.228.9.147` |
+| `VUE_APP_BACKEND_URL` | 后端 API 地址（桌面端连接后端服务） | `http://192.168.48.1:3000` |
+
+> 生产部署中后端 API 与客户端通常同域（Nginx 网关 `/api` 反代到 backend:3000），因此 Web 端无需配置客户端地址，直接使用页面 origin；桌面端通过 file:// 加载，必须显式配置两个地址。
+
+#### 首次启动与配置流程
+
+1. **首次启动**：检测到未配置后端地址时，弹出 `ApiConfigModal` 弹窗引导用户填写后端服务地址（客户端地址可使用模板默认值）。
+2. **运行时修改**：进入「系统设置 → 桌面端配置」，同时编辑后端服务地址与客户端访问地址，保存后立即生效并写入 `.env.production` 副本。
+3. **旧版迁移**：检测到旧版 `config.json` 时，自动将其中的 `apiBaseUrl` 迁移到 `VUE_APP_BACKEND_URL` 并删除旧文件。
+4. **污染修复**：从旧版本升级时（副本缺少 `VUE_APP_BACKEND_URL` 字段），自动将 `VUE_APP_API_URL` 的污染值迁移到 `VUE_APP_BACKEND_URL`，并从模板恢复 `VUE_APP_API_URL` 为正确的客户端地址。
+
+> 注意：`.env.production` 已被 `.gitignore` 忽略，需要按 `admin/.env.production.example` 在本地创建；新环境构建前请确认该文件存在。详细使用说明见 [docs/USAGE.md](docs/USAGE.md)。
+
 ## 环境变量配置
 
 ### 后端（backend/.env.development）
@@ -127,6 +160,19 @@ npm run dev-admin
 ### 前端
 
 前端通过 Vite 代理将 `/api` 和 `/uploads` 请求转发到后端（`http://localhost:3000`），无需额外环境变量。
+
+### 管理端（admin/.env.production / .env.development）
+
+| 变量 | 说明 | 生产默认值 |
+|------|------|-----------|
+| `NODE_ENV` | 环境标识 | `production` |
+| `VUE_APP_API_URL` | 客户端访问地址（站点根，桌面端生成文章链接用） | `http://111.228.9.147` |
+| `VUE_APP_BACKEND_URL` | 后端 API 地址（桌面端连接后端用） | `http://192.168.48.1:3000` |
+| `VUE_APP_DEBUG` | 调试模式开关 | `false` |
+| `VUE_APP_MOCK` | Mock 数据开关 | `false` |
+| `VITE_CLIENT_BASE_URL` | 客户端访问地址（仅 dev 模式构建期注入，Web 端用） | - |
+
+> Web 端管理后台通过 Vite 代理走 `/api/v1` 相对路径，无需配置 `VUE_APP_BACKEND_URL`；桌面端（Electron）通过 file:// 加载，必须显式配置两个地址，且支持运行时在「系统设置 → 桌面端配置」中修改，修改会写入用户数据目录的 `.env.production` 副本。
 
 ## Docker 部署
 
