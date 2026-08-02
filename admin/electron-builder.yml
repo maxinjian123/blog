@@ -6,11 +6,12 @@ directories:
   output: release
   buildResources: build
 
-# 打包文件：dist 前端产物 + electron 主进程
+# 打包文件：dist 前端产物 + electron 主进程 + 环境配置模板
 files:
   - dist/**/*
   - electron/**/*
   - package.json
+  - .env.production
 
 # Windows 配置（图标使用 build/icon.ico）
 win:
