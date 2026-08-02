@@ -246,7 +246,7 @@ function handleGoToArticle(record: Comment) {
     message.info('该评论无对应文章链接')
     return
   }
-  window.open(`${CLIENT_BASE_URL}/article/${record.article_id}?c=${record.id}`, '_blank')
+  window.open(`${CLIENT_BASE_URL.value}/article/${record.article_id}?c=${record.id}`, '_blank')
 }
 
 // 下拉菜单操作分发

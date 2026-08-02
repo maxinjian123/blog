@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from 'vue'
 import api, { isElectron, applyApiBaseUrl } from '@/utils/api'
+import { CLIENT_BASE_URL } from '@/config/config'
 import { useAuthStore } from '@/stores/auth'
 import { message, Modal } from 'ant-design-vue'
 import {
@@ -144,13 +145,13 @@ const uploadForm = reactive({
   upload_max_size: '10mb',
   upload_default_storage: 'local',
   minio_enabled: 'false',
-  minio_endpoint: 'http://111.228.9.147:9000',
+  minio_endpoint: 'http://127.0.0.1:9000',
   minio_port: '9000',
   minio_use_ssl: 'false',
   minio_access_key: 'admin',
-  minio_secret_key: 'admin123',
+  minio_secret_key: '',
   minio_bucket: 'blog',
-  minio_public_base_url: 'http://111.228.9.147:9000',
+  minio_public_base_url: 'http://127.0.0.1:9000',
   minio_region: ''
 })
 
@@ -237,13 +238,13 @@ function applyGroupedToForms() {
   uploadForm.upload_max_size = upload.upload_max_size?.value || '10mb'
   uploadForm.upload_default_storage = upload.upload_default_storage?.value || 'local'
   uploadForm.minio_enabled = upload.minio_enabled?.value || 'false'
-  uploadForm.minio_endpoint = upload.minio_endpoint?.value || 'http://111.228.9.147:9000'
+  uploadForm.minio_endpoint = upload.minio_endpoint?.value || 'http://127.0.0.1:9000'
   uploadForm.minio_port = upload.minio_port?.value || '9000'
   uploadForm.minio_use_ssl = upload.minio_use_ssl?.value || 'false'
   uploadForm.minio_access_key = upload.minio_access_key?.value || 'admin'
   uploadForm.minio_secret_key = upload.minio_secret_key?.value || ''
   uploadForm.minio_bucket = upload.minio_bucket?.value || 'blog'
-  uploadForm.minio_public_base_url = upload.minio_public_base_url?.value || 'http://111.228.9.147:9000'
+  uploadForm.minio_public_base_url = upload.minio_public_base_url?.value || 'http://127.0.0.1:9000'
   uploadForm.minio_region = upload.minio_region?.value || ''
   sensitiveHasValue.minio_secret_key = !!upload.minio_secret_key?.hasValue
 
@@ -447,33 +448,46 @@ async function handleExportData() {
   }
 }
 
-// 桌面端后端服务地址配置（仅 Electron 环境使用）
+// 桌面端服务端与客户端地址配置（仅 Electron 环境使用）
 const desktopForm = reactive({
-  apiBaseUrl: ''
+  apiBaseUrl: '',   // 后端 API 地址（VUE_APP_BACKEND_URL）
+  clientUrl: ''     // 客户端访问地址（VUE_APP_API_URL）
 })
 const desktopSaving = ref(false)
 
 async function loadDesktopConfig() {
   if (!isElectron) return
   try {
-    const url = await (window as any).electronAPI.getApiBaseUrl?.()
-    desktopForm.apiBaseUrl = url || localStorage.getItem('admin_api_base_url') || ''
+    const [apiUrl, clientUrl] = await Promise.all([
+      (window as any).electronAPI.getApiBaseUrl?.(),
+      (window as any).electronAPI.getClientUrl?.()
+    ])
+    desktopForm.apiBaseUrl = apiUrl || localStorage.getItem('admin_api_base_url') || ''
+    desktopForm.clientUrl = clientUrl || ''
   } catch {
     desktopForm.apiBaseUrl = localStorage.getItem('admin_api_base_url') || ''
   }
 }
 
 async function handleSaveDesktop() {
-  const url = desktopForm.apiBaseUrl.trim()
-  if (!url) {
+  const apiUrl = desktopForm.apiBaseUrl.trim()
+  const clientUrl = desktopForm.clientUrl.trim()
+  if (!apiUrl) {
     message.warning('请输入后端服务地址')
+    return
+  }
+  if (!clientUrl) {
+    message.warning('请输入客户端访问地址')
     return
   }
   desktopSaving.value = true
   try {
-    await (window as any).electronAPI.setApiBaseUrl(url)
-    await applyApiBaseUrl(url)
-    message.success('后端服务地址已保存，已立即生效')
+    await (window as any).electronAPI.setApiBaseUrl(apiUrl)
+    await (window as any).electronAPI.setClientUrl(clientUrl)
+    await applyApiBaseUrl(apiUrl)
+    // 同步更新运行时客户端访问地址（ArticleList/CommentManage 立即生效）
+    CLIENT_BASE_URL.value = clientUrl.replace(/\/+$/, '')
+    message.success('配置已保存，已立即生效')
   } catch {
     message.error('保存失败')
   } finally {
@@ -653,7 +667,7 @@ onMounted(() => {
               <a-row :gutter="16">
                 <a-col :span="14">
                   <a-form-item label="服务地址">
-                    <a-input v-model:value="uploadForm.minio_endpoint" placeholder="http://111.228.9.147:9000" />
+                    <a-input v-model:value="uploadForm.minio_endpoint" placeholder="http://127.0.0.1:9000" />
                   </a-form-item>
                 </a-col>
                 <a-col :span="10">
@@ -880,20 +894,23 @@ onMounted(() => {
             <span><desktop-outlined /> 桌面端配置</span>
           </template>
           <div class="settings-section">
-            <h3>后端服务地址配置</h3>
+            <h3>服务端与客户端地址配置</h3>
             <a-alert
-              message="此地址为桌面端连接后端服务的 API 地址，修改后立即生效"
+              message="后端服务地址用于桌面端连接 API；客户端访问地址用于生成文章链接。修改后写入 .env.production 文件并立即生效"
               type="info"
               show-icon
               style="margin-bottom: 16px"
             />
             <a-form layout="vertical" style="max-width: 600px">
-              <a-form-item label="后端服务地址" help="形如 http://192.168.1.100:3000 或 https://api.example.com">
-                <a-input v-model:value="desktopForm.apiBaseUrl" placeholder="http://127.0.0.1:3000" allow-clear />
+              <a-form-item label="后端服务地址" help="后端 API 地址，形如 http://192.168.48.1:3000 或 https://api.example.com，无需加 /api/v1 后缀">
+                <a-input v-model:value="desktopForm.apiBaseUrl" placeholder="http://192.168.48.1:3000" allow-clear />
+              </a-form-item>
+              <a-form-item label="客户端访问地址" help="客户端站点根地址，形如 http://ip 或 https://blog.example.com">
+                <a-input v-model:value="desktopForm.clientUrl" placeholder="http://ip" allow-clear />
               </a-form-item>
               <a-form-item>
                 <a-button type="primary" :loading="desktopSaving" @click="handleSaveDesktop">
-                  保存地址
+                  保存配置
                 </a-button>
               </a-form-item>
             </a-form>

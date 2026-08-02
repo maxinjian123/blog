@@ -1,7 +1,7 @@
 // Electron 主进程
 const { app, BrowserWindow, ipcMain, shell, session } = require('electron');
 const path = require('path');
-const { getApiBaseUrl, setApiBaseUrl, loadConfig } = require('./config.cjs');
+const { getApiBaseUrl, setApiBaseUrl, getClientUrl, setClientUrl, loadConfig, ensureEnvCopy } = require('./config.cjs');
 
 // 开发环境判断：未打包且未强制加载 dist（用于本地验证打包产物）
 const isDev = !app.isPackaged && !process.env.ELECTRON_LOAD_DIST;
@@ -101,12 +101,26 @@ ipcMain.handle('config:setApiBaseUrl', (event, url) => {
   return ok;
 });
 
+// IPC 处理：读取客户端访问地址
+ipcMain.handle('config:getClientUrl', () => {
+  return getClientUrl();
+});
+
+// IPC 处理：保存客户端访问地址
+ipcMain.handle('config:setClientUrl', (event, url) => {
+  const ok = setClientUrl(url);
+  return ok;
+});
+
 // IPC 处理：读取完整配置
 ipcMain.handle('config:getAll', () => {
   return loadConfig();
 });
 
 app.whenReady().then(() => {
+  // 首先确保 .env.production 可写副本存在（从 asar 模板复制 + 旧 config.json 迁移）
+  ensureEnvCopy();
+
   // 注册静态资源反向代理（拦截 file:// 下的 /uploads/、/minio/api/ 请求）
   setupAssetProxy();
 

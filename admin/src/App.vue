@@ -9,6 +9,7 @@ import dayjs from 'dayjs'
 import 'dayjs/locale/zh-cn'
 import {computed, onMounted, ref, watch} from 'vue'
 import api, {loadApiBaseUrlFromElectron, isElectron} from '@/utils/api'
+import {initClientBaseUrl} from '@/config/config'
 
 import {useRoute, useRouter} from 'vue-router'
 
@@ -65,10 +66,13 @@ function updateFavicon(href: string) {
 }
 
 onMounted(async () => {
-  // 桌面端：从主进程加载后端地址，若未配置则弹窗
+  // 桌面端：并行加载客户端访问地址与后端 API 地址
   if (isElectron) {
-    const url = await loadApiBaseUrlFromElectron()
-    if (!url) {
+    const [, backendUrl] = await Promise.all([
+      initClientBaseUrl(),
+      loadApiBaseUrlFromElectron()
+    ])
+    if (!backendUrl) {
       configModalVisible.value = true
       return  // 未配置前不加载站点信息
     }

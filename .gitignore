@@ -41,6 +41,7 @@ build/Release
 # Dependency directories
 node_modules/
 dist/
+release/
 uploads/
 backups/
 logs/
