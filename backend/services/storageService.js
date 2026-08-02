@@ -101,7 +101,7 @@ async function uploadToMinio(buffer, originalname, mimetype) {
   });
 
   // 拼接公开访问 URL
-  // 统一重写为 http://111.228.9.147/minio/api/<bucket>/<objectKey>
+  // 统一重写为 http://ip/minio/api/<bucket>/<objectKey>
   const base = (config.upload.minio.publicBaseUrl || config.upload.minio.endpoint || '').replace(/\/$/, '');
   const baseWithoutPort = base.replace(/:\d+$/, '');
   const url = `${baseWithoutPort}/minio/api/${bucket}/${objectKey}`;
