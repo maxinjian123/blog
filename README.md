@@ -126,8 +126,8 @@ npm run electron:build:portable    # 生成便携版 exe
 
 | 字段 | 用途 | 示例 |
 |------|------|------|
-| `VUE_APP_API_URL` | 客户端访问地址（站点根，用于生成文章链接） | `http://111.228.9.147` |
-| `VUE_APP_BACKEND_URL` | 后端 API 地址（桌面端连接后端服务） | `http://192.168.48.1:3000` |
+| `VUE_APP_API_URL` | 客户端访问地址（站点根，用于生成文章链接） | `http://your-domain.com` |
+| `VUE_APP_BACKEND_URL` | 后端 API 地址（桌面端连接后端服务） | `http://your-domain.com:3000` |
 
 > 生产部署中后端 API 与客户端通常同域（Nginx 网关 `/api` 反代到 backend:3000），因此 Web 端无需配置客户端地址，直接使用页面 origin；桌面端通过 file:// 加载，必须显式配置两个地址。
 
@@ -166,8 +166,8 @@ npm run electron:build:portable    # 生成便携版 exe
 | 变量 | 说明 | 生产默认值 |
 |------|------|-----------|
 | `NODE_ENV` | 环境标识 | `production` |
-| `VUE_APP_API_URL` | 客户端访问地址（站点根，桌面端生成文章链接用） | `http://111.228.9.147` |
-| `VUE_APP_BACKEND_URL` | 后端 API 地址（桌面端连接后端用） | `http://192.168.48.1:3000` |
+| `VUE_APP_API_URL` | 客户端访问地址（站点根，桌面端生成文章链接用） | `http://your-domain.com` |
+| `VUE_APP_BACKEND_URL` | 后端 API 地址（桌面端连接后端用） | `http://your-domain.com:3000` |
 | `VUE_APP_DEBUG` | 调试模式开关 | `false` |
 | `VUE_APP_MOCK` | Mock 数据开关 | `false` |
 | `VITE_CLIENT_BASE_URL` | 客户端访问地址（仅 dev 模式构建期注入，Web 端用） | - |
@@ -198,11 +198,15 @@ docker-compose up -d
 | MySQL | 3306 | 127.0.0.1:3306 | 数据库 |
 | Redis | 6379 | 127.0.0.1:6379 | 缓存 |
 
-Nginx 网关路由规则（见 [nginx/gateway.conf](nginx/gateway.conf)）：
+Nginx 管理端网关路由规则（见 [./nginx/*.conf](./nginx/admin.conf)）：
 - `/api/*` → 后端 API
 - `/uploads/*` → 后端静态文件
-- `/admin` → 管理后台
+- `/` → 管理后台
+Nginx 前端博客网关路由规则（见 [./nginx/*.conf](./nginx/client.conf)）：
+- `/api/*` → 后端 API
+- `/uploads/*` → 后端静态文件
 - `/` → 前台博客
+
 
 ## API 概览
 

@@ -61,7 +61,7 @@ app.use('/uploads', (req, res, next) => {
 // Swagger API 文档（开发环境无需鉴权，便于调试）
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs, {
   explorer: true,
-  customSiteTitle: '3D Blog API Docs'
+  customSiteTitle: 'Blog API Docs'
 }));
 app.get('/api-docs.json', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
