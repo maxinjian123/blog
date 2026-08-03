@@ -212,6 +212,15 @@ onMounted(() => {
   --ic-accent-soft: #E6F4FF;
 }
 
+[data-theme='dark'] .image-crawler-page {
+  --ic-ink: rgba(255, 255, 255, 0.85);
+  --ic-muted: rgba(255, 255, 255, 0.45);
+  --ic-rule: rgba(255, 255, 255, 0.12);
+  --ic-mist: #262626;
+  --ic-accent: #1677ff;
+  --ic-accent-soft: #111a2c;
+}
+
 /* ============ 页面标题 ============ */
 .page-head {
   display: flex;
@@ -297,10 +306,10 @@ onMounted(() => {
   gap: 6px;
   padding: 6px 14px;
   border: 1px solid var(--ic-rule);
-  background: #fff;
+  background: var(--color-bg-container);
   border-radius: 999px;
   font-size: 13px;
-  color: #334155;
+  color: var(--color-text);
   cursor: pointer;
   transition: all 0.15s ease;
   font-family: inherit;

@@ -237,7 +237,7 @@ function onMenuClick(key: string, item: MediaItem) {
 
 <style scoped>
 .media-table-wrapper {
-  background: #fff;
+  background: var(--color-bg-elevated);
   border-radius: 4px;
 }
 
@@ -246,8 +246,8 @@ function onMenuClick(key: string, item: MediaItem) {
   justify-content: space-between;
   align-items: center;
   padding: 10px 16px;
-  background: #e6f4ff;
-  border: 1px solid #91caff;
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   margin-bottom: 12px;
 }
@@ -279,7 +279,7 @@ function onMenuClick(key: string, item: MediaItem) {
   height: 36px;
   border-radius: 4px;
   overflow: hidden;
-  background: #f5f5f5;
+  background: var(--color-bg-fill);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -307,12 +307,12 @@ function onMenuClick(key: string, item: MediaItem) {
 
 .file-ext-text {
   font-size: 11px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--color-text-tertiary);
 }
 
 .mime-detail {
   font-size: 11px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--color-text-tertiary);
   margin-top: 2px;
 }
 </style>

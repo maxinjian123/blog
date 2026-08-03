@@ -162,7 +162,7 @@ const columns = [
   height: 56px;
   border-radius: 6px;
   overflow: hidden;
-  background: #f5f5f5;
+  background: var(--color-bg-fill);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -182,11 +182,11 @@ const columns = [
 
 .cover-fallback {
   font-size: 24px;
-  color: #d9d9d9;
+  color: var(--color-text-disabled);
 }
 
 .desc-text {
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--color-text-tertiary);
   font-size: 13px;
 }
 

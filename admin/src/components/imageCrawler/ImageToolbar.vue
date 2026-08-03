@@ -181,6 +181,6 @@ const currentNeedsApiKey = computed(() => {
 
 .storage-label {
   white-space: nowrap;
-  color: rgba(0, 0, 0, 0.65);
+  color: var(--color-text-secondary);
 }
 </style>

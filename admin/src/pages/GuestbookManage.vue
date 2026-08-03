@@ -525,7 +525,7 @@ onMounted(() => {
 .thread-item {
   margin-bottom: 16px;
   padding: 12px;
-  background: #fafafa;
+  background: var(--color-bg-subtle);
   border-radius: 3px;
 }
 
@@ -544,27 +544,27 @@ onMounted(() => {
 
 .thread-reply-to {
   font-size: 12px;
-  color: #666;
+  color: var(--color-text-secondary);
 }
 
 .thread-time {
   font-size: 12px;
-  color: #999;
+  color: var(--color-text-tertiary);
 }
 
 .thread-item-content {
   font-size: 14px;
   line-height: 1.6;
-  color: #333;
+  color: var(--color-text);
   word-break: break-word;
 }
 
 .thread-item-content :deep(strong) {
-  color: #222;
+  color: var(--color-text);
 }
 
 .thread-item-content :deep(em) {
-  color: #555;
+  color: var(--color-text-secondary);
 }
 
 .thread-item-content :deep(p) {
@@ -576,7 +576,7 @@ onMounted(() => {
 }
 
 .thread-item-content :deep(code) {
-  background-color: #f0f0f0;
+  background-color: var(--color-bg-fill);
   padding: 0.1em 0.35em;
   border-radius: 3px;
   font-size: 0.9em;
@@ -586,8 +586,8 @@ onMounted(() => {
 .thread-item-content :deep(pre) {
   margin: 0.5em 0;
   padding: 0.75em 1em;
-  background-color: #f5f5f5;
-  border: 1px solid #e8e8e8;
+  background-color: var(--color-bg-fill);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   overflow-x: auto;
 }
@@ -595,7 +595,7 @@ onMounted(() => {
 .thread-item-content :deep(pre code) {
   background: none;
   padding: 0;
-  color: #333;
+  color: var(--color-text);
 }
 
 .thread-item-content :deep(a) {
@@ -607,9 +607,9 @@ onMounted(() => {
   margin: 0.5em 0;
   padding: 0.5em 0.75em;
   border-left: 3px solid #1677ff;
-  background-color: #f0f5ff;
+  background-color: var(--color-bg-subtle);
   border-radius: 0 4px 4px 0;
-  color: #555;
+  color: var(--color-text-secondary);
 }
 
 .thread-item-content :deep(ul),
@@ -626,19 +626,19 @@ onMounted(() => {
 .thread-empty {
   text-align: center;
   padding: 40px;
-  color: #999;
+  color: var(--color-text-tertiary);
 }
 
 .reply-preview {
   padding: 12px;
-  background: #f5f5f5;
+  background: var(--color-bg-fill);
   border-radius: 3px;
   border-left: 3px solid #1677ff;
 }
 
 .reply-preview-label {
   font-size: 12px;
-  color: #999;
+  color: var(--color-text-tertiary);
   margin-bottom: 4px;
 }
 
@@ -649,7 +649,7 @@ onMounted(() => {
 
 .reply-preview-content {
   font-size: 13px;
-  color: #666;
+  color: var(--color-text-secondary);
   line-height: 1.5;
   word-break: break-word;
 }

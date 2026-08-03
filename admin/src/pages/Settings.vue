@@ -5,6 +5,7 @@ import { CLIENT_BASE_URL } from '@/config/config'
 import { useAuthStore } from '@/stores/auth'
 import { message, Modal } from 'ant-design-vue'
 import {
+  ApiOutlined,
   MailOutlined,
   CloudUploadOutlined,
   InfoCircleOutlined,
@@ -21,6 +22,8 @@ const activeTab = ref<'site' | 'mail' | 'upload' | 'image_crawler' | 'ai' | 'des
 const loading = ref(false)
 const saving = ref(false)
 const testingMail = ref(false)
+const testingCloud = ref(false)
+const testingLocal = ref(false)
 
 // 站点 Logo 上传
 const logoUploading = ref(false)
@@ -322,6 +325,34 @@ function handleSaveImageCrawler() {
 
 function handleSaveAI() {
   return saveConfigs({ ...aiForm }, 'AI 配置已保存')
+}
+
+// 测试云端模型连接：先保存当前配置，再发送真实请求验证
+async function handleTestCloud() {
+  await handleSaveAI()
+  testingCloud.value = true
+  try {
+    const res: any = await api.post('/ai/test-connection', { target: 'cloud' })
+    message.success(res?.message || '云端模型连接成功')
+  } catch (err: any) {
+    message.error(err?.response?.data?.message || '云端模型连接失败')
+  } finally {
+    testingCloud.value = false
+  }
+}
+
+// 测试本地 Ollama 模型连接
+async function handleTestLocal() {
+  await handleSaveAI()
+  testingLocal.value = true
+  try {
+    const res: any = await api.post('/ai/test-connection', { target: 'local' })
+    message.success(res?.message || '本地模型连接成功')
+  } catch (err: any) {
+    message.error(err?.response?.data?.message || '本地模型连接失败')
+  } finally {
+    testingLocal.value = false
+  }
 }
 
 // 测试邮件发送
@@ -790,6 +821,13 @@ onMounted(() => {
                 <a-input v-model:value="aiForm.doubao_image_model" placeholder="doubao-seedream-4-5-251128" />
               </a-form-item>
             </a-form>
+            <div class="ai-test-row">
+              <a-button :loading="testingCloud" @click="handleTestCloud">
+                <template #icon><ApiOutlined/></template>
+                测试连接
+              </a-button>
+              <span class="ai-test-hint">点击后将先保存当前 AI 配置，再向云端模型发送真实请求验证连通性</span>
+            </div>
           </div>
 
           <div class="settings-section">
@@ -811,6 +849,17 @@ onMounted(() => {
                 <a-input v-model:value="aiForm.ollama_chat_model" placeholder="glm4:9b" />
               </a-form-item>
             </a-form>
+            <div class="ai-test-row">
+              <a-button
+                  :loading="testingLocal"
+                  :disabled="!ollamaEnabledBool"
+                  @click="handleTestLocal"
+              >
+                <template #icon><ApiOutlined/></template>
+                测试连接
+              </a-button>
+              <span class="ai-test-hint">点击后将先保存当前 AI 配置，再向 Ollama 服务发送真实请求验证连通性</span>
+            </div>
           </div>
 
           <div class="settings-section">
@@ -980,8 +1029,8 @@ onMounted(() => {
 <style scoped>
 .settings-section {
   padding: 20px 24px;
-  background: #fafafa;
-  border: 1px solid #f0f0f0;
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   margin-bottom: 16px;
 }
@@ -990,7 +1039,7 @@ onMounted(() => {
   font-size: 15px;
   font-weight: 600;
   margin-bottom: 16px;
-  color: #333;
+  color: var(--color-text);
 }
 
 .logo-setting {
@@ -1003,13 +1052,13 @@ onMounted(() => {
   width: 96px;
   height: 96px;
   flex-shrink: 0;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #fafafa;
+  background: var(--color-bg-subtle);
 }
 
 .logo-preview img {
@@ -1020,7 +1069,7 @@ onMounted(() => {
 }
 
 .logo-placeholder {
-  color: #999;
+  color: var(--color-text-tertiary);
 }
 
 .logo-actions {
@@ -1029,7 +1078,7 @@ onMounted(() => {
 
 .upload-tip {
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--color-text-tertiary);
   margin-top: 4px;
 }
 
@@ -1054,7 +1103,21 @@ onMounted(() => {
   border-radius: 6px;
   overflow: hidden;
   transition: border-color 0.2s;
-  background: #fafafa;
+  background: var(--color-bg-subtle);
+}
+
+.ai-test-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  max-width: 600px;
+}
+
+.ai-test-hint {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--color-text-tertiary);
 }
 
 .media-item:hover {
@@ -1073,12 +1136,12 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f5f5f5;
+  background: var(--color-bg-fill);
 }
 
 .media-name {
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.65);
+  color: var(--color-text-secondary);
   padding: 4px 6px;
   overflow: hidden;
   text-overflow: ellipsis;

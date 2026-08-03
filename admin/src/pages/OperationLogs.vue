@@ -326,7 +326,7 @@ function handleCleanup() {
     title: '清理操作日志',
     icon: h(ExclamationCircleOutlined),
     content: () => h('div', {style: 'margin-top: 16px'}, [
-      h('p', {style: 'margin-bottom: 12px; color: #666'},
+      h('p', {style: 'margin-bottom: 12px; color: var(--color-text-secondary)'},
           '将清理以下日期之前的所有操作日志，此操作不可恢复：'),
       h(DatePicker, {
         value: cleanupDate.value,
@@ -753,7 +753,7 @@ onUnmounted(() => {
 
 .filter-label {
   white-space: nowrap;
-  color: rgba(0, 0, 0, 0.65);
+  color: var(--color-text-secondary);
   font-size: 14px;
 }
 
@@ -771,12 +771,12 @@ onUnmounted(() => {
 
 .empty-tip {
   text-align: center;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--color-text-tertiary);
   padding: 24px 0;
 }
 
 .json-pre {
-  background: #f5f5f5;
+  background: var(--color-bg-fill);
   border: 1px solid #e8e8e8;
   border-radius: 4px;
   padding: 12px;
@@ -790,7 +790,7 @@ onUnmounted(() => {
 }
 
 .top-user-count {
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--color-text-tertiary);
   font-size: 13px;
 }
 </style>

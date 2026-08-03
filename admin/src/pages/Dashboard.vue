@@ -16,8 +16,20 @@ import {useDashboardStore} from '@/stores/dashboard'
 import api from '@/utils/api'
 import CountUp from '@/components/CountUp.vue'
 import dayjs from 'dayjs'
+import {useDarkMode} from '@/composables/useDarkMode'
 
 const dashboardStore = useDashboardStore()
+const {isDark} = useDarkMode()
+
+// 图表的暗色适配：透明背景跟随卡片，白色分割线随主题切换
+const chartTheme = computed(() => ({
+  backgroundColor: 'transparent',
+  // 饼图分割线颜色需与卡片背景一致（暗色 antd Card 为 #141414），否则切片与背景产生色差重叠
+  pieBorderColor: isDark.value ? '#141414' : '#ffffff',
+  axisColor: isDark.value ? 'rgba(255,255,255,0.45)' : '#666',
+  splitColor: isDark.value ? 'rgba(255,255,255,0.12)' : '#f0f0f0',
+  textColor: isDark.value ? 'rgba(255,255,255,0.65)' : '#666'
+}))
 
 // 图表数据
 const sourceStats = ref({search: 0, social: 0, direct: 0, other: 0})
@@ -208,11 +220,16 @@ const initWeeklyChart = () => {
     xAxis: {
       type: 'category',
       data: weeklyDays.value,
-      axisLabel: {fontSize: 12}
+      axisLabel: {fontSize: 12, color: chartTheme.value.textColor},
+      axisLine: {lineStyle: {color: chartTheme.value.axisColor}},
+      axisTick: {lineStyle: {color: chartTheme.value.axisColor}}
     },
     yAxis: {
       type: 'value',
-      minInterval: 1
+      minInterval: 1,
+      axisLabel: {color: chartTheme.value.textColor},
+      axisLine: {show: false},
+      splitLine: {lineStyle: {color: chartTheme.value.splitColor}}
     },
     series: [
       {
@@ -241,7 +258,7 @@ const initWeeklyChart = () => {
           show: true,
           position: 'top',
           fontSize: 12,
-          color: '#666',
+          color: chartTheme.value.textColor,
           formatter: '{c}'
         }
       }
@@ -319,9 +336,17 @@ const initMapChart = async () => {
       xAxis: {
         type: 'category',
         data: provinces.map(p => p.name),
-        axisLabel: {rotate: 45}
+        axisLabel: {rotate: 45, color: chartTheme.value.textColor},
+        axisLine: {lineStyle: {color: chartTheme.value.axisColor}},
+        axisTick: {lineStyle: {color: chartTheme.value.axisColor}}
       },
-      yAxis: {type: 'value', minInterval: 1},
+      yAxis: {
+        type: 'value',
+        minInterval: 1,
+        axisLabel: {color: chartTheme.value.textColor},
+        axisLine: {show: false},
+        splitLine: {lineStyle: {color: chartTheme.value.splitColor}}
+      },
       series: [
         {
           name: '访问量',
@@ -343,7 +368,12 @@ const initSourceChart = () => {
 
   sourceChart.setOption({
     tooltip: {trigger: 'item', formatter: '{b}: {c} ({d}%)'},
-    legend: {orient: 'vertical', left: 'left', top: 'center'},
+    legend: {
+      orient: 'vertical',
+      left: 'left',
+      top: 'center',
+      textStyle: {color: chartTheme.value.textColor}
+    },
     series: [
       {
         name: '访客来源',
@@ -351,7 +381,7 @@ const initSourceChart = () => {
         radius: ['40%', '70%'],
         center: ['65%', '50%'],
         avoidLabelOverlap: false,
-        itemStyle: {borderRadius: 10, borderColor: '#fff', borderWidth: 2},
+        itemStyle: {borderRadius: 10, borderColor: chartTheme.value.pieBorderColor, borderWidth: 2},
         label: {show: false, position: 'center'},
         emphasis: {label: {show: true, fontSize: 16, fontWeight: 'bold'}},
         labelLine: {show: false},
@@ -374,7 +404,12 @@ const initDeviceChart = () => {
 
   deviceChart.setOption({
     tooltip: {trigger: 'item', formatter: '{b}: {c} ({d}%)'},
-    legend: {orient: 'vertical', left: 'left', top: 'center'},
+    legend: {
+      orient: 'vertical',
+      left: 'left',
+      top: 'center',
+      textStyle: {color: chartTheme.value.textColor}
+    },
     series: [
       {
         name: '设备类型',
@@ -382,7 +417,7 @@ const initDeviceChart = () => {
         radius: ['40%', '70%'],
         center: ['65%', '50%'],
         avoidLabelOverlap: false,
-        itemStyle: {borderRadius: 10, borderColor: '#fff', borderWidth: 2},
+        itemStyle: {borderRadius: 10, borderColor: chartTheme.value.pieBorderColor, borderWidth: 2},
         label: {show: false, position: 'center'},
         emphasis: {label: {show: true, fontSize: 16, fontWeight: 'bold'}},
         labelLine: {show: false},
@@ -410,9 +445,17 @@ const initHourlyChart = () => {
     xAxis: {
       type: 'category',
       data: hours,
-      axisLabel: {interval: 2, rotate: 45}
+      axisLabel: {interval: 2, rotate: 45, color: chartTheme.value.textColor},
+      axisLine: {lineStyle: {color: chartTheme.value.axisColor}},
+      axisTick: {lineStyle: {color: chartTheme.value.axisColor}}
     },
-    yAxis: {type: 'value', minInterval: 1},
+    yAxis: {
+      type: 'value',
+      minInterval: 1,
+      axisLabel: {color: chartTheme.value.textColor},
+      axisLine: {show: false},
+      splitLine: {lineStyle: {color: chartTheme.value.splitColor}}
+    },
     series: [
       {
         name: '访问量',
@@ -615,7 +658,7 @@ onUnmounted(() => {
                     </Button>
                   </Space>
                   <template #extra>
-                    <span style="color: rgba(0, 0, 0, 0.45); font-size: 13px">
+                    <span class="stat-muted-text" style="font-size: 13px">
                       <EyeOutlined/> {{ item.view_count }}
                     </span>
                   </template>
@@ -665,12 +708,12 @@ onUnmounted(() => {
                     <span>{{ item.province }} · {{ item.city }}</span>
                   </Space>
                   <template #extra>
-                    <span style="color: rgba(0, 0, 0, 0.45); font-size: 13px">{{ item.value }} 次</span>
+                    <span class="stat-muted-text" style="font-size: 13px">{{ item.value }} 次</span>
                   </template>
                 </ListItem>
               </template>
             </List>
-            <div v-if="topCities.length === 0" style="text-align: center; color: rgba(0, 0, 0, 0.45); padding: 24px 0">
+            <div v-if="topCities.length === 0" class="stat-muted-text" style="text-align: center; padding: 24px 0">
               暂无数据
             </div>
           </Card>
@@ -715,7 +758,7 @@ onUnmounted(() => {
                     <template #title>
                       <Space>
                         <strong>{{ item.username }}</strong>
-                        <span style="color: rgba(0, 0, 0, 0.45)">评论了</span>
+                        <span class="stat-muted-text">评论了</span>
                         <Tag color="blue">{{ item.article_title }}</Tag>
                       </Space>
                     </template>
@@ -765,8 +808,12 @@ onUnmounted(() => {
 
 .stat-title {
   font-size: 13px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--color-text-tertiary);
   margin-bottom: 4px;
+}
+
+.stat-muted-text {
+  color: var(--color-text-tertiary);
 }
 
 .stat-value {

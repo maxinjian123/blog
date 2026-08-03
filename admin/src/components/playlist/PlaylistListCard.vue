@@ -153,11 +153,11 @@ function onMenuClick(key: string, item: Playlist) {
 }
 
 .playlist-card {
-  background: #fff;
+  background: var(--color-bg-container);
   border-radius: 8px;
   overflow: hidden;
   cursor: pointer;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--color-border);
   transition: all 0.3s;
   display: flex;
   flex-direction: column;
@@ -173,7 +173,7 @@ function onMenuClick(key: string, item: Playlist) {
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 10;
-  background: #f5f5f5;
+  background: var(--color-bg-fill);
   overflow: hidden;
 }
 
@@ -190,12 +190,12 @@ function onMenuClick(key: string, item: Playlist) {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #f0f2f5 0%, #e6e6e6 100%);
+  background: linear-gradient(135deg, var(--color-bg-layout) 0%, var(--color-bg-fill) 100%);
 }
 
 .placeholder-icon {
   font-size: 48px;
-  color: #d9d9d9;
+  color: var(--color-text-disabled);
 }
 
 .cover-badge {
@@ -232,13 +232,13 @@ function onMenuClick(key: string, item: Playlist) {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #333;
+  color: var(--color-text);
 }
 
 .card-desc {
   margin: 0 0 10px 0;
   font-size: 12px;
-  color: #999;
+  color: var(--color-text-tertiary);
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -252,7 +252,7 @@ function onMenuClick(key: string, item: Playlist) {
   gap: 16px;
   margin-bottom: 10px;
   font-size: 12px;
-  color: #666;
+  color: var(--color-text-secondary);
 }
 
 .stat-item {
@@ -267,11 +267,11 @@ function onMenuClick(key: string, item: Playlist) {
   align-items: center;
   margin-top: auto;
   padding-top: 8px;
-  border-top: 1px solid #f5f5f5;
+  border-top: 1px solid var(--color-border);
 }
 
 .card-time {
   font-size: 12px;
-  color: #bbb;
+  color: var(--color-text-tertiary);
 }
 </style>

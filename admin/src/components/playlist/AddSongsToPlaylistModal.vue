@@ -129,6 +129,6 @@ function isExisting(musicId: string): boolean {
 
 .add-songs-tip {
   font-size: 13px;
-  color: #666;
+  color: var(--color-text-secondary);
 }
 </style>

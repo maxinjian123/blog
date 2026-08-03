@@ -89,7 +89,7 @@ function close() {
   min-width: 0;
   max-height: 70vh;
   overflow: auto;
-  background: #fafafa;
+  background: var(--color-bg-subtle);
   border-radius: 6px;
   display: flex;
   justify-content: center;

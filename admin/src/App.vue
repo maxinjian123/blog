@@ -2,9 +2,17 @@
 import {useAuthStore} from '@/stores/auth'
 import MusicPlayer from '@/components/MusicPlayer.vue'
 import ApiConfigModal from '@/components/ApiConfigModal.vue'
-import {LogoutOutlined, MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined} from '@ant-design/icons-vue'
+import {
+  LogoutOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+  BulbFilled,
+  BulbOutlined,
+  UserOutlined
+} from '@ant-design/icons-vue'
 import menuItems from '@/nav'
 import zhCN from 'ant-design-vue/es/locale/zh_CN'
+import {theme} from 'ant-design-vue'
 import dayjs from 'dayjs'
 import 'dayjs/locale/zh-cn'
 import {computed, onMounted, ref, watch} from 'vue'
@@ -12,22 +20,30 @@ import api, {loadApiBaseUrlFromElectron, isElectron} from '@/utils/api'
 import {initClientBaseUrl} from '@/config/config'
 
 import {useRoute, useRouter} from 'vue-router'
+import TabsNav from '@/components/admin/TabsNav.vue'
+import {useTabsStore} from '@/stores/tabs'
+import {useDarkMode} from '@/composables/useDarkMode'
 
 dayjs.locale('zh-cn')
 
 const locale = ref(zhCN)
 
 // 企业级中后台视觉规范：收敛圆角，保持专业简洁
-const antdTheme = {
+// 暗黑模式：依据 antdv 官方 custom-theme 方案，通过 ConfigProvider 的 theme.algorithm 切换
+const {isDark, toggleDarkMode} = useDarkMode()
+
+const antdTheme = computed(() => ({
+  algorithm: isDark.value ? theme.darkAlgorithm : theme.defaultAlgorithm,
   token: {
     borderRadius: 4,
     colorPrimary: '#1677ff'
   }
-}
+}))
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
+const tabsStore = useTabsStore()
 
 const collapsed = ref(false)
 const selectedKeys = ref<string[]>([])
@@ -103,36 +119,14 @@ watch(() => route.path, (p) => {
 function updateSelectedKeys() {
   const path = route.path
   selectedKeys.value = [path]
-  // if (path === '/') {
-  //   selectedKeys.value = ['/']
-  // } else if (path.startsWith('/articles')) {
-  //   selectedKeys.value = ['/articles']
-  // } else if (path.startsWith('/categories')) {
-  //   selectedKeys.value = ['/categories']
-  // } else if (path.startsWith('/tags')) {
-  //   selectedKeys.value = ['/tags']
-  // } else if (path.startsWith('/comments')) {
-  //   selectedKeys.value = ['/comments']
-  // } else if (path.startsWith('/guestbook')) {
-  //   selectedKeys.value = ['/guestbook']
-  // } else if (path.startsWith('/announcements')) {
-  //   selectedKeys.value = ['/announcements']
-  // } else if (path.startsWith('/links')) {
-  //   selectedKeys.value = ['/links']
-  // } else if (path.startsWith('/media')) {
-  //   selectedKeys.value = ['/media']
-  // } else if (path.startsWith('/crawler')) {
-  //   selectedKeys.value = ['/crawler']
-  // } else if (path.startsWith('/music')) {
-  //   selectedKeys.value = ['/music']
-  // } else if (path.startsWith('/subscribers')) {
-  //   selectedKeys.value = ['/subscribers']
-  // } else if (path.startsWith('/settings')) {
-  //   selectedKeys.value = ['/settings']
-  // }
 }
 
 watch(() => route.path, updateSelectedKeys, {immediate: true})
+
+// 路由完成确认后登记标签页（覆盖首屏导航与后续所有切换）
+router.afterEach((to) => {
+  tabsStore.addTab(to)
+})
 
 function handleMenuClick({key}: { key: string }) {
   router.push(key)
@@ -140,10 +134,12 @@ function handleMenuClick({key}: { key: string }) {
 
 async function handleLogout() {
   authStore.logout()
+  tabsStore.reset()
   await router.push('/login')
 }
 
 const isLoginPage = computed(() => route.path === '/login')
+const isEditorPage = computed(() => route.name === 'ArticleCreate' || route.name === 'ArticleEdit')
 </script>
 
 <template>
@@ -176,6 +172,19 @@ const isLoginPage = computed(() => route.path === '/login')
                        @click="collapsed = !collapsed"/>
           </div>
           <div class="header-right">
+            <a-tooltip :title="isDark ? '切换为亮色' : '切换为暗色'">
+              <a-button
+                  type="text"
+                  class="theme-toggle-btn"
+                  :aria-label="isDark ? '切换为亮色' : '切换为暗色'"
+                  @click="toggleDarkMode"
+              >
+                <template #icon>
+                  <BulbFilled v-if="isDark"/>
+                  <BulbOutlined v-else/>
+                </template>
+              </a-button>
+            </a-tooltip>
             <a-dropdown>
               <a-space class="user-info">
                 <a-avatar size="default" :src="authStore.user?.avatar || ''">
@@ -200,8 +209,13 @@ const isLoginPage = computed(() => route.path === '/login')
             </a-dropdown>
           </div>
         </a-layout-header>
-        <a-layout-content class="admin-content">
-          <router-view/>
+        <TabsNav/>
+        <a-layout-content class="admin-content" :class="{'admin-content--flush': isEditorPage}">
+          <router-view v-if="!tabsStore.reloadFlag" v-slot="{ Component, route: routeView }">
+            <keep-alive :include="tabsStore.cachedViews">
+              <component :is="Component" :key="routeView.fullPath"/>
+            </keep-alive>
+          </router-view>
         </a-layout-content>
       </a-layout>
     </a-layout>
@@ -213,12 +227,26 @@ const isLoginPage = computed(() => route.path === '/login')
 
 <style scoped>
 .admin-layout {
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .admin-sider {
   box-shadow: 1px 0 0 rgba(0, 0, 0, 0.06);
   z-index: 10;
+  overflow: hidden;
+}
+
+.admin-sider :deep(.ant-layout-sider-children) {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.admin-sider :deep(.ant-menu) {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .logo {
@@ -246,13 +274,13 @@ const isLoginPage = computed(() => route.path === '/login')
 }
 
 .admin-header {
-  background: #fff;
+  background: var(--color-bg-container);
   padding: 0 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #f0f0f0;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  border-bottom: 1px solid var(--color-border);
+  box-shadow: var(--shadow-header);
   z-index: 9;
 }
 
@@ -269,6 +297,12 @@ const isLoginPage = computed(() => route.path === '/login')
 .header-right {
   display: flex;
   align-items: center;
+  gap: 8px;
+}
+
+.theme-toggle-btn {
+  font-size: 16px;
+  color: var(--color-text);
 }
 
 .user-info {
@@ -276,13 +310,23 @@ const isLoginPage = computed(() => route.path === '/login')
 }
 
 .admin-content {
-  margin: 20px;
-  padding: 24px;
-  background: #fff;
-  border: 1px solid #f0f0f0;
+  margin: 12px;
+  padding: 14px;
+  background: var(--color-bg-container);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   overflow: auto;
-  height: calc(100vh - 104px);
+  flex: 1;
+  min-height: 0;
+}
+
+.admin-content--flush {
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  overflow: hidden;
 }
 
 .login-layout {
@@ -291,6 +335,6 @@ const isLoginPage = computed(() => route.path === '/login')
 
 .app-loading-placeholder {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: var(--color-bg-layout);
 }
 </style>

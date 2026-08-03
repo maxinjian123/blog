@@ -4,6 +4,17 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      // 暗黑模式首帧防闪：挂载前根据 localStorage 先设置 <html data-theme>
+      (function () {
+        try {
+          document.documentElement.dataset.theme =
+            localStorage.getItem('admin_theme_dark') === '1' ? 'dark' : 'light'
+        } catch (e) {
+          document.documentElement.dataset.theme = 'light'
+        }
+      })()
+    </script>
     <title>3D Blog Admin</title>
   </head>
   <body>

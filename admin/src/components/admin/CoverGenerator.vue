@@ -1,16 +1,18 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import {computed, ref} from 'vue'
 import api from '@/utils/api'
-import { message } from 'ant-design-vue'
+import {message} from 'ant-design-vue'
 import {
-  PictureOutlined,
-  UploadOutlined,
+  DeleteOutlined,
   ThunderboltOutlined,
-  DeleteOutlined
+  UploadOutlined
 } from '@ant-design/icons-vue'
 
 const props = defineProps<{
   currentCover: string
+  articleTitle?: string
+  articleContent?: string
+  articleSummary?: string
 }>()
 
 const emit = defineEmits<{
@@ -18,22 +20,35 @@ const emit = defineEmits<{
   cancel: []
 }>()
 
-const prompt = ref('')
 const generatedImage = ref('')
 const generating = ref(false)
 const uploading = ref(false)
 const uploadPreview = ref('')
 
+const hasContext = computed(() =>
+    !!(props.articleTitle?.trim() || props.articleSummary?.trim() || props.articleContent?.trim())
+)
+
+const contentPreview = computed(() => {
+  const text = props.articleContent?.trim() || ''
+  if (!text) return '未填写'
+  return text.length > 48 ? `${text.slice(0, 48)}…` : text
+})
+
 async function handleGenerate() {
-  if (!prompt.value.trim()) {
-    message.warning('请输入封面描述')
+  if (!hasContext.value) {
+    message.warning('请先填写文章标题或正文内容，再生成封面')
     return
   }
+
   generating.value = true
+  const payload: Record<string, string> = {}
+  if (props.articleTitle?.trim()) payload.title = props.articleTitle.trim()
+  if (props.articleSummary?.trim()) payload.summary = props.articleSummary.trim()
+  if (props.articleContent?.trim()) payload.content = props.articleContent.trim()
+
   try {
-    const res: any = await api.post('/ai/cover', {
-      prompt: prompt.value
-    })
+    const res: any = await api.post('/ai/cover', payload)
     const outer = res.data || res
     const data = outer.data || outer
     generatedImage.value = data.url || data.imageUrl || data
@@ -58,7 +73,7 @@ async function handleUpload(e: Event) {
 
   try {
     const res: any = await api.post('/upload', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
+      headers: {'Content-Type': 'multipart/form-data'}
     })
     const outer = res.data || res
     const data = outer.data || outer
@@ -95,45 +110,45 @@ function triggerUpload() {
       <a-tab-pane key="upload" tab="上传封面">
         <div style="padding: 16px 0">
           <div
-            class="cover-upload"
-            style="width: 100%; height: 200px; margin-bottom: 16px"
-            @click="triggerUpload"
+              class="cover-upload"
+              style="width: 100%; height: 200px; margin-bottom: 16px"
+              @click="triggerUpload"
           >
             <img
-              v-if="uploadPreview || props.currentCover"
-              :src="uploadPreview || props.currentCover"
-              alt="cover"
-              class="cover-upload-img"
+                v-if="uploadPreview || props.currentCover"
+                :src="uploadPreview || props.currentCover"
+                alt="cover"
+                class="cover-upload-img"
             />
             <div v-else class="cover-upload-placeholder">
-              <UploadOutlined style="font-size: 32px" />
+              <UploadOutlined style="font-size: 32px"/>
               <span>点击上传封面</span>
             </div>
           </div>
           <input
-            id="cover-upload-input"
-            type="file"
-            accept="image/*"
-            style="display: none"
-            @change="handleUpload"
+              id="cover-upload-input"
+              type="file"
+              accept="image/*"
+              style="display: none"
+              @change="handleUpload"
           />
 
           <div style="display: flex; gap: 8px">
             <a-button
-              v-if="uploadPreview"
-              type="primary"
-              block
-              @click="handleSelectImage(uploadPreview)"
+                v-if="uploadPreview"
+                type="primary"
+                block
+                @click="handleSelectImage(uploadPreview)"
             >
               使用此图片
             </a-button>
             <a-button
-              v-if="props.currentCover"
-              block
-              danger
-              @click="handleRemoveCover"
+                v-if="props.currentCover"
+                block
+                danger
+                @click="handleRemoveCover"
             >
-              <template #icon><DeleteOutlined /></template>
+              <template #icon><DeleteOutlined/></template>
               移除封面
             </a-button>
           </div>
@@ -142,50 +157,54 @@ function triggerUpload() {
 
       <a-tab-pane key="ai" tab="AI 生成封面">
         <div style="padding: 16px 0">
-          <a-textarea
-            v-model:value="prompt"
-            placeholder="描述你想要的封面画面，例如：赛博朋克风格的城市夜景，霓虹灯蓝色和紫色...
-            或选择预设风格："
-            :rows="3"
-            style="margin-bottom: 12px"
+          <a-alert
+              type="info"
+              show-icon
+              style="margin-bottom: 12px"
+              message="提取文章内容生成封面"
+              description="无需手动描述，系统将根据文章标题、摘要和正文自动提取主题关键词生成封面。"
           />
 
-          <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px">
-            <a-tag
-              v-for="preset in ['赛博朋克', '极简科技', '自然风光', '抽象艺术', '暗黑风格', '渐变光影']"
-              :key="preset"
-              style="cursor: pointer"
-              @click="prompt = preset + (prompt ? ' ' + prompt : '')"
-            >
-              {{ preset }}
-            </a-tag>
+          <div class="context-card">
+            <div class="context-item" :class="{muted: !props.articleTitle}">
+              <span class="context-label">标题</span>
+              <span class="context-value">{{ props.articleTitle || '未填写' }}</span>
+            </div>
+            <div class="context-item" :class="{muted: !props.articleSummary}">
+              <span class="context-label">摘要</span>
+              <span class="context-value">{{ props.articleSummary || '未填写' }}</span>
+            </div>
+            <div class="context-item" :class="{muted: !props.articleContent}">
+              <span class="context-label">正文</span>
+              <span class="context-value">{{ contentPreview }}</span>
+            </div>
           </div>
 
           <a-button
-            type="primary"
-            block
-            :loading="generating"
-            @click="handleGenerate"
+              type="primary"
+              block
+              :loading="generating"
+              @click="handleGenerate"
           >
-            <template #icon><ThunderboltOutlined /></template>
+            <template #icon><ThunderboltOutlined/></template>
             AI 生成封面
           </a-button>
 
           <div
-            v-if="generating"
-            style="text-align: center; padding: 32px 0"
+              v-if="generating"
+              style="text-align: center; padding: 32px 0"
           >
-            <a-spin />
-            <div style="margin-top: 12px; color: rgba(0,0,0,0.45)">
-              AI 正在生成封面，请稍候...
+            <a-spin/>
+            <div style="margin-top: 12px; color: rgba(0, 0, 0, 0.45)">
+              AI 正在根据文章内容生成封面，请稍候…
             </div>
           </div>
 
           <div v-if="generatedImage && !generating" style="margin-top: 16px">
             <img
-              :src="generatedImage"
-              alt="AI生成封面"
-              style="width: 100%; border-radius: 8px; margin-bottom: 12px"
+                :src="generatedImage"
+                alt="AI生成封面"
+                style="width: 100%; border-radius: 8px; margin-bottom: 12px"
             />
             <a-button type="primary" block @click="handleSelectImage(generatedImage)">
               设为封面
@@ -202,5 +221,39 @@ function triggerUpload() {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.context-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.context-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.context-item.muted {
+  opacity: 0.55;
+}
+
+.context-label {
+  flex: none;
+  width: 32px;
+  color: var(--color-text-secondary);
+}
+
+.context-value {
+  min-width: 0;
+  color: var(--color-text);
+  word-break: break-all;
 }
 </style>

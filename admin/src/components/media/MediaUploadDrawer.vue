@@ -182,12 +182,12 @@ function handleClose() {
 .upload-source-select .hint {
   margin-top: 8px;
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--color-text-tertiary);
 }
 
 .upload-tip .info {
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--color-text-tertiary);
   margin: 4px 0 0;
 }
 
@@ -195,6 +195,6 @@ function handleClose() {
   display: flex;
   justify-content: flex-end;
   padding-top: 12px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--color-border);
 }
 </style>

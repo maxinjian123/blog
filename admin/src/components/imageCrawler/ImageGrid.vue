@@ -156,17 +156,17 @@ function onScroll() {
   align-items: center;
   gap: 16px;
   padding: 8px 0 12px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--color-border);
   margin-bottom: 16px;
 }
 
 .selected-count {
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--color-text-tertiary);
   font-size: 13px;
 }
 
 .hint {
-  color: rgba(0, 0, 0, 0.25);
+  color: var(--color-text-disabled);
   font-size: 12px;
 }
 
@@ -201,7 +201,7 @@ function onScroll() {
   justify-content: center;
   gap: 8px;
   padding: 16px 0 8px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--color-text-tertiary);
   font-size: 13px;
 }
 

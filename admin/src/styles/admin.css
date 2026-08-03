@@ -4,11 +4,46 @@
   box-sizing: border-box;
 }
 
+:root,
+:root[data-theme='light'] {
+  --color-bg-layout: #f0f2f5;
+  --color-bg-container: #ffffff;
+  --color-bg-elevated: #ffffff;
+  --color-bg-fill: #f5f5f5;
+  --color-bg-subtle: #fafafa;
+  --color-text: rgba(0, 0, 0, 0.88);
+  --color-text-secondary: rgba(0, 0, 0, 0.65);
+  --color-text-tertiary: rgba(0, 0, 0, 0.45);
+  --color-text-disabled: rgba(0, 0, 0, 0.25);
+  --color-border: #f0f0f0;
+  --color-border-strong: #d9d9d9;
+  --color-primary: #1677ff;
+  --color-primary-bg: #e6f4ff;
+  --shadow-header: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+:root[data-theme='dark'] {
+  --color-bg-layout: #141414;
+  --color-bg-container: #1f1f1f;
+  --color-bg-elevated: #1f1f1f;
+  --color-bg-fill: #262626;
+  --color-bg-subtle: #262626;
+  --color-text: rgba(255, 255, 255, 0.85);
+  --color-text-secondary: rgba(255, 255, 255, 0.65);
+  --color-text-tertiary: rgba(255, 255, 255, 0.45);
+  --color-text-disabled: rgba(255, 255, 255, 0.25);
+  --color-border: rgba(255, 255, 255, 0.12);
+  --color-border-strong: #424242;
+  --color-primary: #1677ff;
+  --color-primary-bg: #111a2c;
+  --shadow-header: 0 1px 4px rgba(0, 0, 0, 0.45);
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
     'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
-  background: #f0f2f5;
-  color: rgba(0, 0, 0, 0.88);
+  background: var(--color-bg-layout, #f0f2f5);
+  color: var(--color-text, rgba(0, 0, 0, 0.88));
   -webkit-font-smoothing: antialiased;
 }
 
@@ -19,7 +54,7 @@ body {
 .page-header {
   margin-bottom: 20px;
   padding-bottom: 16px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--color-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -30,7 +65,7 @@ body {
 .page-header h2 {
   font-size: 20px;
   font-weight: 600;
-  color: rgba(0, 0, 0, 0.88);
+  color: var(--color-text);
   position: relative;
   padding-left: 12px;
 }
@@ -65,8 +100,8 @@ body {
 
 .ai-sidebar {
   width: 360px;
-  background: #fafafa;
-  border-left: 1px solid #f0f0f0;
+  background: var(--color-bg-subtle);
+  border-left: 1px solid var(--color-border);
   padding: 16px;
   overflow-y: auto;
 }
@@ -75,7 +110,7 @@ body {
   margin-bottom: 12px;
   font-size: 16px;
   font-weight: 600;
-  color: rgba(0, 0, 0, 0.85);
+  color: var(--color-text);
 }
 
 .ai-btn-group {
@@ -86,8 +121,8 @@ body {
 }
 
 .ai-result {
-  background: #fff;
-  border: 1px solid #d9d9d9;
+  background: var(--color-bg-container);
+  border: 1px solid var(--color-border-strong);
   border-radius: 6px;
   padding: 12px;
   min-height: 120px;
@@ -96,14 +131,14 @@ body {
   white-space: pre-wrap;
   font-size: 14px;
   line-height: 1.6;
-  color: rgba(0, 0, 0, 0.75);
+  color: var(--color-text-secondary);
 }
 
 .markdown-preview {
   padding: 24px;
   line-height: 1.8;
   font-size: 15px;
-  color: rgba(0, 0, 0, 0.85);
+  color: var(--color-text);
 }
 
 .markdown-preview h1,
@@ -124,7 +159,7 @@ body {
 }
 
 .markdown-preview code {
-  background: rgba(0, 0, 0, 0.06);
+  background: rgba(128, 128, 128, 0.16);
   padding: 2px 6px;
   border-radius: 4px;
   font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
@@ -148,24 +183,24 @@ body {
 .markdown-preview blockquote {
   border-left: 4px solid #1677ff;
   padding-left: 16px;
-  color: rgba(0, 0, 0, 0.55);
+  color: var(--color-text-tertiary);
   margin-bottom: 12px;
 }
 
 .editor-container {
-  border: 1px solid #d9d9d9;
+  border: 1px solid var(--color-border-strong);
   border-radius: 6px;
   overflow: hidden;
 }
 
 .editor-container .w-e-toolbar {
-  border-bottom: 1px solid #d9d9d9;
+  border-bottom: 1px solid var(--color-border-strong);
 }
 
 .cover-upload {
   width: 240px;
   height: 160px;
-  border: 1px dashed #d9d9d9;
+  border: 1px dashed var(--color-border-strong);
   border-radius: 4px;
   display: flex;
   align-items: center;
@@ -191,12 +226,11 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--color-text-tertiary);
 }
 
 .chart-container {
-  background: #fff;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   padding: 20px;
   margin-bottom: 16px;
@@ -225,7 +259,7 @@ body {
   left: 50%;
   transform: translateX(-50%);
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.55);
+  color: var(--color-text-tertiary);
   white-space: nowrap;
 }
 
@@ -235,7 +269,7 @@ body {
   left: 50%;
   transform: translateX(-50%);
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.65);
+  color: var(--color-text-secondary);
 }
 
 .settings-section {
@@ -247,5 +281,61 @@ body {
   font-weight: 600;
   margin-bottom: 16px;
   padding-bottom: 8px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* ============ 暗黑模式全局兜底 ============ */
+[data-theme='dark'] body {
+  background: #141414;
+}
+
+[data-theme='dark'] .app-loading-placeholder {
+  background: #141414;
+}
+
+[data-theme='dark'] .admin-content::-webkit-scrollbar,
+[data-theme='dark'] .admin-content ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+[data-theme='dark'] .admin-content::-webkit-scrollbar-thumb,
+[data-theme='dark'] .admin-content ::-webkit-scrollbar-thumb {
+  background: #424242;
+  border-radius: 4px;
+}
+
+[data-theme='dark'] .admin-content::-webkit-scrollbar-track,
+[data-theme='dark'] .admin-content ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+[data-theme='dark'] .markdown-body {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+[data-theme='dark'] .markdown-body h1,
+[data-theme='dark'] .markdown-body h2,
+[data-theme='dark'] .markdown-body h3,
+[data-theme='dark'] .markdown-body h4,
+[data-theme='dark'] .markdown-body h5 {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+[data-theme='dark'] .markdown-body blockquote {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+[data-theme='dark'] .markdown-body code {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+[data-theme='dark'] .markdown-body pre {
+  background: #161b22;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+[data-theme='dark'] .markdown-body pre code {
+  background: none;
+  color: #abb2bf;
 }

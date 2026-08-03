@@ -3,11 +3,13 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { message } from 'ant-design-vue'
-import { UserOutlined, LockOutlined } from '@ant-design/icons-vue'
+import { UserOutlined, LockOutlined, BulbFilled, BulbOutlined } from '@ant-design/icons-vue'
 import api from '@/utils/api'
+import { useDarkMode } from '@/composables/useDarkMode'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const { isDark, toggleDarkMode } = useDarkMode()
 
 const loading = ref(false)
 const formState = reactive({
@@ -56,6 +58,17 @@ onMounted(() => {
 
 <template>
   <div class="login-page">
+    <a-button
+        type="text"
+        class="theme-toggle-btn"
+        :aria-label="isDark ? '切换为亮色' : '切换为暗色'"
+        @click="toggleDarkMode"
+    >
+      <template #icon>
+        <BulbFilled v-if="isDark"/>
+        <BulbOutlined v-else/>
+      </template>
+    </a-button>
     <div class="login-card">
       <div class="login-header">
         <img :src="siteInfo.site_logo" alt="logo" class="login-logo" />
@@ -117,10 +130,24 @@ onMounted(() => {
   background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 50%, #0d1b2a 100%);
 }
 
+.theme-toggle-btn {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 18px;
+}
+
+.theme-toggle-btn:hover {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
 .login-card {
   width: 400px;
   padding: 40px;
-  background: #fff;
+  background: var(--color-bg-container, #fff);
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
@@ -139,12 +166,12 @@ onMounted(() => {
 .login-header h2 {
   font-size: 22px;
   font-weight: 700;
-  color: rgba(0, 0, 0, 0.85);
+  color: var(--color-text, rgba(0, 0, 0, 0.85));
   margin-bottom: 8px;
 }
 
 .login-header p {
   font-size: 14px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--color-text-tertiary, rgba(0, 0, 0, 0.45));
 }
 </style>

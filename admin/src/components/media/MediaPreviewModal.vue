@@ -111,6 +111,6 @@ const emit = defineEmits<{
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--color-text-tertiary);
 }
 </style>

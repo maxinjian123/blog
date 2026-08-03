@@ -196,8 +196,8 @@ function onMimeChange(v: string) {
   align-items: center;
   gap: 8px;
   padding: 10px 18px;
-  background: #fafafa;
-  border: 1px solid #f0f0f0;
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
@@ -209,7 +209,7 @@ function onMimeChange(v: string) {
 }
 
 .storage-tab.active {
-  background: #e6f4ff;
+  background: var(--color-primary-bg);
   border-color: #1677ff;
   color: #1677ff;
 }

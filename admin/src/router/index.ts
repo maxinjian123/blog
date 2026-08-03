@@ -27,13 +27,13 @@ const routes: RouteRecordRaw[] = [
         path: '/articles/create',
         name: 'ArticleCreate',
         component: () => import('@/pages/ArticleEditor.vue'),
-        meta: {title: '创建文章', requiresAuth: true}
+        meta: {title: '创建文章', requiresAuth: true, cacheName: 'ArticleEditor'}
     },
     {
         path: '/articles/:id/edit',
         name: 'ArticleEdit',
         component: () => import('@/pages/ArticleEditor.vue'),
-        meta: {title: '编辑文章', requiresAuth: true}
+        meta: {title: '编辑文章', requiresAuth: true, cacheName: 'ArticleEditor'}
     },
     {
         path: '/categories',

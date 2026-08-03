@@ -242,10 +242,10 @@ const songColumns = [
 .detail-info {
   display: flex;
   gap: 24px;
-  background: #fff;
+  background: var(--color-bg-container);
   padding: 20px;
   border-radius: 8px;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--color-border);
 }
 
 .detail-cover {
@@ -254,7 +254,7 @@ const songColumns = [
   height: 160px;
   border-radius: 8px;
   overflow: hidden;
-  background: #f5f5f5;
+  background: var(--color-bg-fill);
 }
 
 .detail-cover-img {
@@ -271,8 +271,8 @@ const songColumns = [
   align-items: center;
   justify-content: center;
   font-size: 56px;
-  color: #d9d9d9;
-  background: linear-gradient(135deg, #f0f2f5 0%, #e6e6e6 100%);
+  color: var(--color-text-disabled);
+  background: linear-gradient(135deg, var(--color-bg-layout) 0%, var(--color-bg-fill) 100%);
 }
 
 .detail-meta {
@@ -293,12 +293,12 @@ const songColumns = [
   margin: 0;
   font-size: 22px;
   font-weight: 600;
-  color: #333;
+  color: var(--color-text);
 }
 
 .detail-desc {
   margin: 0 0 16px 0;
-  color: #666;
+  color: var(--color-text-secondary);
   font-size: 14px;
   line-height: 1.6;
 }
@@ -317,13 +317,13 @@ const songColumns = [
 
 .detail-time-label {
   font-size: 14px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--color-text-tertiary);
   margin-bottom: 4px;
 }
 
 .detail-time-value {
   font-size: 14px;
-  color: rgba(0, 0, 0, 0.85);
+  color: var(--color-text);
   font-weight: 500;
 }
 

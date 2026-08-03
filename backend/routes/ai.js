@@ -2,7 +2,9 @@ const express = require('express');
 const {auth, optionalAuth, adminOnly} = require('../middleware/auth');
 const {success, error} = require('../utils/response');
 const ai = require('../services/ai');
+const config = require('../config');
 const {loadPrompt, replacePlaceholders} = require("../utils");
+const {testCloudConnection, testOllamaConnection} = require('../services/ai/connection');
 
 const router = express.Router();
 
@@ -77,7 +79,7 @@ router.post('/chat/stream', optionalAuth, async (req, res, next) => {
 // AI创作文章
 router.post('/write', auth, adminOnly, async (req, res, next) => {
     try {
-        const {prompt, style = '专业博客文章', length = '中等', content_type = 'html'} = req.body;
+        const {prompt, style = '专业博客文章', length = '500', content_type = 'html', language = '中文'} = req.body;
         if (!prompt) {
             return error(res, '提示词不能为空', 400);
         }
@@ -85,7 +87,7 @@ router.post('/write', auth, adminOnly, async (req, res, next) => {
         const promptFile = content_type === 'markdown' ? 'md-prompt.txt' : 'html-prompt.txt';
         const text = await loadPrompt(promptFile)
         // 替换占位符{{}}
-        const systemPrompt = replacePlaceholders(text, {prompt, length})
+        const systemPrompt = replacePlaceholders(text, {prompt, length, style, language});
 
         const content = await ai.chat.chatSimple(prompt, systemPrompt);
         const summary = await ai.summary.summarize(stripHtml(content));
@@ -126,7 +128,7 @@ router.post('/continue', auth, adminOnly, async (req, res, next) => {
         // 根据文章类型加载不同的prompt文件
         const promptFile = content_type === 'markdown' ? 'md-continue-prompt.txt' : 'html-continue-prompt.txt';
         const text = await loadPrompt(promptFile)
-        const systemPrompt =  replacePlaceholders(text, {direction});
+        const systemPrompt = replacePlaceholders(text, {direction});
 
         const continuation = await ai.chat.chatSimple(content, systemPrompt);
 
@@ -202,6 +204,28 @@ router.post('/cover', auth, adminOnly, async (req, res, next) => {
         return success(res, result);
     } catch (err) {
         next(err);
+    }
+});
+
+// 真实测试 AI 模型连接（云端 OpenAI 兼容 / 本地 Ollama）
+router.post('/test-connection', auth, adminOnly, async (req, res, next) => {
+    try {
+        const {target = 'cloud'} = req.body;
+        const isLocal = target === 'local';
+
+        if (isLocal && !config.ollama.chatEnabled) {
+            return error(res, 'Ollama 本地模型未启用，请先在系统设置中开启', 400);
+        }
+
+        const result = isLocal ? await testOllamaConnection() : await testCloudConnection();
+        const label = isLocal ? '本地模型' : '云端模型';
+        return success(
+            res,
+            result,
+            `${label}连接成功（延迟 ${result.latencyMs}ms）`
+        );
+    } catch (err) {
+        return error(res, err.message || '连接测试失败', 400);
     }
 });
 

@@ -148,8 +148,8 @@ function onMenuClick(key: string, item: MediaItem) {
 }
 
 .media-card {
-  background: #fff;
-  border: 1px solid #f0f0f0;
+  background: var(--color-bg-container);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   overflow: hidden;
   transition: all 0.2s;
@@ -164,7 +164,7 @@ function onMenuClick(key: string, item: MediaItem) {
   position: relative;
   width: 100%;
   height: 160px;
-  background: #f5f5f5;
+  background: var(--color-bg-fill);
   cursor: pointer;
   overflow: hidden;
   display: flex;
@@ -187,7 +187,7 @@ function onMenuClick(key: string, item: MediaItem) {
 
 .file-ext {
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--color-text-tertiary);
   font-weight: 600;
 }
 
@@ -231,18 +231,18 @@ function onMenuClick(key: string, item: MediaItem) {
 
 .media-size {
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--color-text-tertiary);
 }
 
 .media-date {
   font-size: 11px;
-  color: rgba(0, 0, 0, 0.35);
+  color: var(--color-text-disabled);
 }
 
 .media-actions {
   display: flex;
   justify-content: space-around;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--color-border);
   padding: 4px 0;
 }
 </style>

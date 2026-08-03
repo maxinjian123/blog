@@ -459,8 +459,8 @@ onMounted(() => {
 
 <style scoped>
 .profile-section {
-  background: #fff;
-  border: 1px solid #f0f0f0;
+  background: var(--color-bg-container);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   padding: 20px 24px;
   margin-bottom: 16px;
@@ -470,7 +470,7 @@ onMounted(() => {
   font-size: 15px;
   font-weight: 600;
   margin-bottom: 20px;
-  color: #333;
+  color: var(--color-text);
 }
 
 .avatar-wrapper {
@@ -487,7 +487,7 @@ onMounted(() => {
 
 .upload-tip {
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--color-text-tertiary);
 }
 
 .media-grid {
@@ -505,7 +505,7 @@ onMounted(() => {
   border-radius: 6px;
   overflow: hidden;
   transition: border-color 0.2s;
-  background: #fafafa;
+  background: var(--color-bg-subtle);
 }
 
 .media-item:hover {
@@ -524,12 +524,12 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f5f5f5;
+  background: var(--color-bg-fill);
 }
 
 .media-name {
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.65);
+  color: var(--color-text-secondary);
   padding: 4px 6px;
   overflow: hidden;
   text-overflow: ellipsis;

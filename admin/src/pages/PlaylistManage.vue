@@ -220,7 +220,7 @@ onMounted(() => {
 
 .page-subtitle {
   font-size: 13px;
-  color: #999;
+  color: var(--color-text-tertiary);
   font-weight: normal;
   margin-left: 4px;
 }

@@ -83,10 +83,10 @@ const emit = defineEmits<{
 <style scoped>
 .image-card {
   position: relative;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   overflow: hidden;
-  background: #fff;
+  background: var(--color-bg-container);
   transition: all 0.2s;
   cursor: pointer;
   break-inside: avoid;
@@ -107,7 +107,7 @@ const emit = defineEmits<{
   position: relative;
   width: 100%;
   overflow: hidden;
-  background: #fafafa;
+  background: var(--color-bg-subtle);
 }
 
 .card-cover img {
@@ -124,7 +124,7 @@ const emit = defineEmits<{
   top: 8px;
   left: 8px;
   z-index: 2;
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--color-bg-container);
   border-radius: 4px;
   padding: 2px 6px;
 }
@@ -150,7 +150,7 @@ const emit = defineEmits<{
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--color-bg-container);
   color: #1677ff;
   font-size: 14px;
 }
@@ -170,7 +170,7 @@ const emit = defineEmits<{
   align-items: center;
   gap: 4px;
   font-size: 11px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--color-text-tertiary);
 }
 
 .card-source :deep(.ant-tag) {
@@ -181,6 +181,6 @@ const emit = defineEmits<{
 }
 
 .dim {
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--color-text-tertiary);
 }
 </style>

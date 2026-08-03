@@ -830,7 +830,7 @@ onMounted(() => {
 }
 
 .text-muted {
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--color-text-tertiary);
 }
 
 .list-toolbar {
@@ -843,14 +843,14 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: #fafafa;
+  background: var(--color-bg-subtle);
   padding: 12px 16px;
   border-radius: 6px;
 }
 
 .config-label {
   font-weight: 500;
-  color: rgba(0, 0, 0, 0.65);
+  color: var(--color-text-secondary);
   white-space: nowrap;
 }
 
@@ -881,12 +881,12 @@ onMounted(() => {
 .markdown-preview :deep(code) {
   font-family: 'Consolas', 'Monaco', monospace;
   font-size: 0.9em;
-  background: #f6f8fa;
+  background: var(--color-bg-fill);
   padding: 0.2em 0.4em;
   border-radius: 3px;
 }
 .markdown-preview :deep(pre) {
-  background: #f6f8fa;
+  background: var(--color-bg-fill);
   padding: 12px 16px;
   border-radius: 6px;
   overflow: auto;
@@ -900,8 +900,8 @@ onMounted(() => {
 .markdown-preview :deep(blockquote) {
   margin: 0.8em 0;
   padding: 0 1em;
-  color: #6a737d;
-  border-left: 4px solid #dfe2e5;
+  color: var(--color-text-secondary);
+  border-left: 4px solid var(--color-border-strong);
 }
 .markdown-preview :deep(ul),
 .markdown-preview :deep(ol) { padding-left: 2em; margin: 0.6em 0; }
@@ -913,10 +913,10 @@ onMounted(() => {
 }
 .markdown-preview :deep(th),
 .markdown-preview :deep(td) {
-  border: 1px solid #dfe2e5;
+  border: 1px solid var(--color-border-strong);
   padding: 6px 13px;
 }
-.markdown-preview :deep(th) { background: #f6f8fa; font-weight: 600; }
+.markdown-preview :deep(th) { background: var(--color-bg-fill); font-weight: 600; }
 .markdown-preview :deep(img) { max-width: 100%; }
 .markdown-preview :deep(hr) { border: 0; border-top: 1px solid #eaecef; margin: 1.2em 0; }
 </style>

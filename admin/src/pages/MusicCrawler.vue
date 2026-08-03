@@ -2198,4 +2198,36 @@ onMounted(() => {
   margin-top: 4px;
   line-height: 1.5;
 }
+
+/* ============ 暗黑模式 ============ */
+[data-theme='dark'] .select-all-bar {
+  background: var(--color-bg-subtle);
+}
+
+[data-theme='dark'] :deep(.row-selected) {
+  background-color: rgba(22, 119, 255, 0.18) !important;
+}
+
+[data-theme='dark'] .preview-modal :deep(.ant-modal-header) {
+  border-bottom-color: var(--color-border);
+}
+
+[data-theme='dark'] .media-select-name {
+  color: var(--color-text);
+}
+
+[data-theme='dark'] .media-select-meta,
+[data-theme='dark'] .form-tip {
+  color: var(--color-text-tertiary);
+}
+
+[data-theme='dark'] .upload-col-left {
+  border-right-color: var(--color-border);
+}
+
+@media (max-width: 720px) {
+  [data-theme='dark'] .upload-col-left {
+    border-bottom-color: var(--color-border);
+  }
+}
 </style>
