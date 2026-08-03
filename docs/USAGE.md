@@ -72,6 +72,13 @@ TechMind Blog 是一个全栈博客系统，包含三个独立应用：
 | MinIO | 对象存储（媒体库双存储之一） |
 | Ollama | 本地 AI 对话模型 |
 
+Minio官方文档：[MinIO 官方文档](https://min-io.cn/docs/minio/windows/index.html)
+Minio部署：[MinIO 部署](./Minio部署.md)
+
+Ollama部署官方文档：[Ollama 官方文档](https://ollama.com)
+
+
+
 ### 克隆项目
 
 ```bash
@@ -333,8 +340,8 @@ npm run build            # 产物在 dist/，用 nginx 托管
 | 变量 | 类型 | 说明 | 生产默认值 |
 |------|------|------|-----------|
 | `NODE_ENV` | 通用 | 环境标识 | `production` |
-| `VUE_APP_API_URL` | 运行期 | 客户端访问地址（站点根，生成文章链接用） | `http://111.228.9.147` |
-| `VUE_APP_BACKEND_URL` | 运行期 | 后端 API 地址（桌面端连接后端用） | `http://192.168.48.1:3000` |
+| `VUE_APP_API_URL` | 运行期 | 客户端访问地址（站点根，生成文章链接用） | `http://your-server-ip` |
+| `VUE_APP_BACKEND_URL` | 运行期 | 后端 API 地址（桌面端连接后端用） | `http://your-server-ip:3000` |
 | `VUE_APP_DEBUG` | 通用 | 调试模式开关 | `false` |
 | `VUE_APP_MOCK` | 通用 | Mock 数据开关 | `false` |
 | `VITE_CLIENT_BASE_URL` | 构建期 | 客户端访问地址（仅 dev 模式注入，Web 端用） | - |
