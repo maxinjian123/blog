@@ -16,6 +16,7 @@ dist/
 .settings
 .springBeans
 .sts4-cache
+.bak
 
 ### IntelliJ IDEA ###
 .idea
