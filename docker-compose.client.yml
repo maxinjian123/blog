@@ -14,11 +14,14 @@ services:
       - mysql_data:/var/lib/mysql
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD:-root123}"]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD:-root123}" ]
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 30s
+    networks:
+      - blog-network  # 加入自定义网络
+
 
   redis:
     image: redis:7-alpine
@@ -28,12 +31,18 @@ services:
       - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
-    command: redis-server --appendonly yes ${REDIS_PASSWORD:+--requirepass ${REDIS_PASSWORD}}
+    # 无密码
+    command: redis-server --appendonly yes
+    # 有密码
+    # command: redis-server --appendonly yes --requirepass $REDIS_PASSWORD
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - blog-network  # 加入自定义网络
+
 
   backend:
     build: ./backend
@@ -63,6 +72,9 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    networks:
+      - blog-network  # 加入自定义网络
+
 
   client:
     image: nginx:alpine
@@ -75,8 +87,16 @@ services:
       - ./nginx/client.conf:/etc/nginx/conf.d/default.conf
     depends_on:
       - backend
+    networks:
+      - blog-network  # 加入自定义网络
+
 
 volumes:
   mysql_data:
   redis_data:
   uploads_data:
+
+networks:
+  blog-network:
+    driver: bridge
+    name: blog-network  # 指定网络名称，便于外部容器接入

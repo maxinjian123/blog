@@ -6,7 +6,6 @@ module.exports = (sequelize) => {
     id: {
       type: DataTypes.STRING(36),
       primaryKey: true,
-      autoIncrement: true,
       defaultValue: () => getPureUUID()
     },
     article_id: {

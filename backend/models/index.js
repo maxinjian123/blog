@@ -100,7 +100,7 @@ async function syncDatabase() {
         // 迁移：为 media_files 表补充新增字段（sync 不修改已存在表结构）
         await migrateMediaFileFields();
     } catch (err) {
-        console.error('[MySQL] 连接失败:', err.message);
+        console.error('[MySQL] 数据库同步失败:', err.message);
     }
 }
 
