@@ -134,6 +134,18 @@ export const useTabsStore = defineStore('tabs', () => {
         return next?.fullPath ?? '/'
     }
 
+    /**
+     * 计算关闭指定标签后应跳转的路径（仅计算，不删除标签）
+     */
+    function getNextAfterClose(fullPath: string): string {
+        const index = visitedTabs.value.findIndex((tab) => tab.fullPath === fullPath)
+        if (index === -1) return ''
+        // 仅剩当前标签时（或关闭后无相邻标签），返回首页
+        if (visitedTabs.value.length <= 1) return '/'
+        const next = visitedTabs.value[index + 1] ?? visitedTabs.value[index - 1] ?? visitedTabs.value[0]
+        return next?.fullPath ?? '/'
+    }
+
     function closeOthers(fullPath: string) {
         visitedTabs.value = visitedTabs.value.filter(
             (tab) => tab.affix || tab.fullPath === fullPath
@@ -178,6 +190,7 @@ export const useTabsStore = defineStore('tabs', () => {
         reloadFlag,
         addTab,
         removeTab,
+        getNextAfterClose,
         closeOthers,
         closeAll,
         refreshTab,

@@ -23,8 +23,11 @@ import {
   TagsOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons-vue'
-import {Emoji} from '@vavt/v3-extension'
-import '@vavt/v3-extension/lib/asset/Emoji.css'
+import {ExportPDF, Mark, OriginalImg} from '@vavt/v3-extension'
+import '@vavt/v3-extension/lib/asset/ExportPDF.css'
+import '@vavt/v3-extension/lib/asset/Mark.css'
+import '@vavt/v3-extension/lib/asset/OriginalImg.css'
+import EmojiToolbar from '@/components/admin/EmojiToolbar.vue'
 import {MdEditor, MdPreview} from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
 import 'md-editor-v3/lib/preview.css'
@@ -32,6 +35,7 @@ import {message, Modal} from 'ant-design-vue'
 import {computed, onBeforeUnmount, onMounted, reactive, ref} from 'vue'
 import {onBeforeRouteLeave, useRoute, useRouter} from 'vue-router'
 import {useDarkMode} from '@/composables/useDarkMode'
+import {useTabsStore} from '@/stores/tabs'
 
 interface CategoryOption {
   id: string
@@ -62,6 +66,7 @@ interface VersionItem {
 const router = useRouter()
 const route = useRoute()
 const {isDark} = useDarkMode()
+const tabsStore = useTabsStore()
 const articleStore = useArticleStore()
 
 const isEdit = computed(() => !!route.params.id)
@@ -127,6 +132,9 @@ const mdToolbars: any[] = [
   'next',
   '-',
   0,
+  1,
+  2,
+  3,
   '-',
   '=',
   'prettier',
@@ -545,11 +553,23 @@ const filterOption = (input: string, option: { value?: string; name?: string; ke
   return (option.name || '').toLowerCase().includes(input.toLowerCase())
 }
 
-function goBack() {
-  if (window.history.length > 1) {
-    router.back()
-  } else {
-    router.push('/articles')
+async function goBack() {
+  // 先计算返回目标（相邻标签优先），导航由路由守卫统一处理脏表单确认
+  const currentFullPath = route.fullPath
+  const next = tabsStore.getNextAfterClose(route.fullPath)
+  try {
+    if (next) {
+      await router.push(next)
+    } else if (window.history.length > 1) {
+      await router.back()
+      return
+    } else {
+      await router.push('/articles')
+    }
+    // 导航成功后再关闭当前标签（含 KeepAlive 缓存清理），取消确认时标签保留
+    tabsStore.removeTab(currentFullPath)
+  } catch {
+    // 用户取消离开确认，标签保留
   }
 }
 
@@ -706,7 +726,19 @@ onBeforeRouteLeave(() => {
                 class="md-editor"
             >
               <template #defToolbars>
-                <Emoji title="表情"/>
+                <EmojiToolbar title="表情"/>
+                <Mark title="标记"/>
+                <OriginalImg title="查看原图"/>
+                <ExportPDF
+                    :model-value="form.content"
+                    language="zh-CN"
+                    :theme="isDark ? 'dark' : 'light'"
+                    preview-theme="vuepress"
+                    code-theme="github"
+                    title="导出为PDF"
+                    modal-title="导出为PDF"
+                    export-btn-text="导出"
+                />
               </template>
             </MdEditor>
           </div>

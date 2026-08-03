@@ -5,8 +5,7 @@ import {message, Modal} from 'ant-design-vue'
 import {Marked} from 'marked'
 import {escapeHtml, sanitizeHtml, textToSafeHtml} from '@/utils/sanitize'
 import {MdEditor} from 'md-editor-v3'
-import {Emoji} from '@vavt/v3-extension'
-import '@vavt/v3-extension/lib/asset/Emoji.css'
+import EmojiToolbar from '@/components/admin/EmojiToolbar.vue'
 import 'md-editor-v3/lib/style.css'
 import {
   CheckOutlined,
@@ -508,7 +507,7 @@ onMounted(() => {
             style="height: 300px"
         >
           <template #defToolbars>
-            <Emoji title="表情"/>
+            <EmojiToolbar title="表情"/>
           </template>
         </MdEditor>
       </div>
