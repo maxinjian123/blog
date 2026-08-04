@@ -27,11 +27,27 @@ async function checkScheduledArticles() {
   }
 }
 
+// 定时数据备份：每分钟检查一次，到时间自动执行
+async function checkScheduledBackup() {
+  try {
+    const { ran } = await require('../services/backupService').checkScheduledBackup();
+    if (ran) {
+      console.log('[Scheduler] 定时备份已执行完成');
+    }
+  } catch (err) {
+    console.error('[Scheduler] 定时备份执行失败:', err.message);
+  }
+}
+
 function startScheduler() {
   if (schedulerInterval) return;
   // 立即检查一次，然后每 60 秒检查
   checkScheduledArticles();
-  schedulerInterval = setInterval(checkScheduledArticles, 60 * 1000);
+  checkScheduledBackup();
+  schedulerInterval = setInterval(() => {
+    checkScheduledArticles();
+    checkScheduledBackup();
+  }, 60 * 1000);
   console.log('[Scheduler] 定时发布调度器已启动（每 60 秒检查一次）');
 }
 

@@ -60,6 +60,12 @@ function sanitizeDeep(obj) {
  * 同时匹配 /admin/xxx 和 /api/v1/xxx 两种路径风格
  */
 const ROUTE_MODULE_MAP = [
+  {pattern: /\/(admin\/)?emojis/i, module: 'emoji', label: '表情'},
+  {pattern: /\/(admin\/)?backups\/restore-upload/i, module: 'backup', label: '数据备份', action: 'restore'},
+  {pattern: /\/(admin\/)?backups\/[^/]+\/restore/i, module: 'backup', label: '数据备份', action: 'restore'},
+  {pattern: /\/(admin\/)?backups\/[^/]+\/download/i, module: 'backup', label: '数据备份', action: 'download'},
+  {pattern: /\/(admin\/)?backups\/upload/i, module: 'backup', label: '数据备份', action: 'upload'},
+  {pattern: /\/(admin\/)?backups/i, module: 'backup', label: '数据备份'},
   {pattern: /\/(admin\/)?articles/i, module: 'article', label: '文章'},
   {pattern: /\/(admin\/)?categories/i, module: 'category', label: '分类'},
   {pattern: /\/(admin\/)?tags/i, module: 'tag', label: '标签'},

@@ -5,6 +5,7 @@ const { Comment, Article, User } = require('../models');
 const ai = require('../services/ai');
 const { loadPrompt, replacePlaceholders } = require('../utils');
 const { Op } = require('sequelize');
+const { sendReplyNotification } = require('../services/mail');
 
 const router = express.Router();
 
@@ -22,9 +23,43 @@ async function getAllChildIds(parentId) {
   return ids;
 }
 
+/**
+ * 发送评论回复通知邮件，并返回发送状态供接口反馈给前端
+ * @returns {Promise<{mailSent: boolean|null, mailReason: string}>}
+ *  - mailSent: true 已发送 / false 发送失败或被跳过 / null 无收件人
+ */
+async function notifyCommentAuthor({ comment, replyComment, articleTitle, replyAuthor, replyContent, req }) {
+  if (!comment.author_email) {
+    return { mailSent: null, mailReason: '被回复评论没有作者邮箱' };
+  }
+  if (comment.author_email === req.user.email) {
+    return { mailSent: false, mailReason: '回复对象是管理员自己，已跳过发送' };
+  }
+  try {
+    const sent = await sendReplyNotification({
+      to: comment.author_email,
+      articleTitle: articleTitle || '未知文章',
+      replyContent: String(replyContent || '').substring(0, 200),
+      replyAuthor,
+      articleId: comment.article_id,
+      commentId: replyComment.id,
+      fallbackHost: `${req.protocol}://${req.get('host')}`
+    });
+    if (sent) {
+      console.log(`[Comments] 回复通知邮件已发送给 ${comment.author_email}`);
+      return { mailSent: true, mailReason: '' };
+    }
+    console.error(`[Comments] 回复通知邮件发送失败（收件人 ${comment.author_email}），请检查 SMTP 配置`);
+    return { mailSent: false, mailReason: '邮件发送失败，请检查 SMTP 配置' };
+  } catch (err) {
+    console.error(`[Comments] 回复通知邮件发送异常（收件人 ${comment.author_email}）:`, err.message);
+    return { mailSent: false, mailReason: `邮件发送异常: ${err.message}` };
+  }
+}
+
 router.get('/', auth, adminOnly, async (req, res, next) => {
   try {
-    const { page = 1, pageSize = 20, approved, keyword } = req.query;
+    const { page = 1, pageSize = 20, approved, keyword, author } = req.query;
 
     const where = {};
     if (approved !== undefined) {
@@ -32,6 +67,14 @@ router.get('/', auth, adminOnly, async (req, res, next) => {
     }
     if (keyword) {
       where.content = { [Op.like]: `%${keyword}%` };
+    }
+    if (author) {
+      // 按评论用户搜索：昵称 / 邮箱 / 关联账号用户名
+      where[Op.or] = [
+        { author_name: { [Op.like]: `%${author}%` } },
+        { author_email: { [Op.like]: `%${author}%` } },
+        { '$user.username$': { [Op.like]: `%${author}%` } }
+      ];
     }
 
     const { count, rows } = await Comment.findAndCountAll({
@@ -104,7 +147,20 @@ router.post('/:id/ai-reply', auth, adminOnly, async (req, res, next) => {
       is_approved: true
     });
 
-    return success(res, replyComment, 'AI回复已生成');
+    const { mailSent, mailReason } = await notifyCommentAuthor({
+      comment,
+      replyComment,
+      articleTitle: comment.article?.title,
+      replyAuthor: 'AI回复',
+      replyContent: reply,
+      req
+    });
+
+    return success(res, {
+      ...replyComment.toJSON(),
+      mail_sent: mailSent,
+      mail_reason: mailReason
+    }, 'AI回复已生成');
   } catch (err) {
     next(err);
   }
@@ -155,6 +211,10 @@ router.post('/:id/reply', auth, adminOnly, async (req, res, next) => {
       return error(res, '回复内容不能为空', 400);
     }
 
+    const article = await Article.findByPk(comment.article_id, {
+      attributes: ['id', 'title']
+    });
+
     const replyComment = await Comment.create({
       article_id: comment.article_id,
       user_id: req.user.id,
@@ -167,13 +227,27 @@ router.post('/:id/reply', auth, adminOnly, async (req, res, next) => {
       is_approved: true
     });
 
+    // 回复通知邮件：通知被回复评论的作者，并把发送结果返回给前端提示
+    const { mailSent, mailReason } = await notifyCommentAuthor({
+      comment,
+      replyComment,
+      articleTitle: article?.title,
+      replyAuthor: req.user.username,
+      replyContent: content,
+      req
+    });
+
     const result = await Comment.findByPk(replyComment.id, {
       include: [
         { model: User, as: 'user', attributes: ['id', 'username', 'avatar', 'role'] }
       ]
     });
 
-    return success(res, result, '回复成功');
+    return success(res, {
+      ...result.toJSON(),
+      mail_sent: mailSent,
+      mail_reason: mailReason
+    }, '回复成功');
   } catch (err) {
     next(err);
   }

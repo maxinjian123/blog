@@ -22,6 +22,9 @@ const imageCrawlerRoutes = require('./imageCrawler');
 const musicRoutes = require('./music');
 const playlistRoutes = require('./playlists');
 const operationLogRoutes = require('./operationLogs');
+const backupRoutes = require('./backups');
+const emojiRoutes = require('./emojis');
+const emojiPackRoutes = require('./emojiPacks');
 
 // 加载 Swagger 文档声明（不注册为实际路由）
 require('./swagger-docs');
@@ -54,6 +57,9 @@ const routes = [
     {path: '/api/v1/music', router: musicRoutes},
     {path: '/api/v1/playlists', router: playlistRoutes},
     {path: '/api/v1/operation-logs', router: operationLogRoutes},
+    {path: '/api/v1/backups', router: backupRoutes},
+    {path: '/api/v1/emojis', router: emojiRoutes},
+    {path: '/api/v1/emoji-packs', router: emojiPackRoutes},
     {path: '/', router: sitemapRoutes}
 ];
 

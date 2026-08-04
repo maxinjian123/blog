@@ -13,8 +13,8 @@ RUN npm install
 # 复制其他源代码
 COPY . .
 
-# 创建 uploads 目录
-RUN mkdir -p uploads
+# 创建 uploads / bakup 目录
+RUN mkdir -p uploads bakup
 
 # 暴露端口
 EXPOSE 3000

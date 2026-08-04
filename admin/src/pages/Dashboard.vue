@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {computed, onMounted, onUnmounted, reactive, ref} from 'vue'
+import {computed, onActivated, onMounted, onUnmounted, reactive, ref} from 'vue'
 import * as echarts from 'echarts'
 import {Button, Card, Col, List, ListItem, ListItemMeta, Row, Space, Spin, Statistic, Tag, Table} from 'ant-design-vue'
 import {
@@ -280,9 +280,9 @@ const initMapChart = async () => {
 
   try {
     if (chinaGeoNames.length === 0) {
-      const resp = await fetch('https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json')
-      if (!resp.ok) throw new Error(`地图数据加载失败: ${resp.status}`)
-      const geoJson = await resp.json()
+      // 内置中国地图 GeoJSON，避免依赖外部服务导致地图不显示
+      const geoModule = await import('@/assets/china-geo.json')
+      const geoJson: any = geoModule.default
       echarts.registerMap('china', geoJson)
       chinaGeoNames = (geoJson.features || []).map((f: any) => f.properties?.name).filter(Boolean)
     }
@@ -524,6 +524,11 @@ onUnmounted(() => {
   deviceChart?.dispose()
   hourlyChart?.dispose()
   mapChart?.dispose()
+})
+
+// 从其他 Tab 切回仪表盘时重新调整图表尺寸，避免地图/图表空白
+onActivated(() => {
+  handleResize()
 })
 </script>
 

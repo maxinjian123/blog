@@ -179,7 +179,6 @@ cp .env.example .env
 | `ADMIN_PORT` | 管理端 Nginx 端口 | `81` |
 | `REDIS_PASSWORD` | Redis 密码 | 空 |
 | `CORS_ORIGIN` | 跨域来源 | 空（允许所有） |
-| `COMMENT_REPLY_URL_PREFIX` | 评论邮件跳转前缀 | 空 |
 
 > 如果宿主机 80 端口已被占用，可修改 `CLIENT_PORT` 为其他端口（如 `8080`）。
 
@@ -329,7 +328,6 @@ npm run build            # 产物在 dist/，用 nginx 托管
 | `DOUBAO_API_KEY` / `DOUBAO_BASE_URL` / `DOUBAO_CHAT_MODEL` / `DOUBAO_IMAGE_MODEL` | 豆包 AI 配置 | - |
 | `OLLAMA_HOST` / `OLLAMA_CHAT_ENABLED` / `OLLAMA_CHAT_MODEL` | Ollama 本地模型 | - |
 | `CORS_ORIGIN` | 允许的跨域来源（逗号分隔） | `*` |
-| `COMMENT_REPLY_URL_PREFIX` | 评论回复邮件跳转前缀 | - |
 
 > 生产环境建议将 `CORS_ORIGIN` 限制为具体域名，如 `https://your-domain.com,http://localhost:5174`。
 
@@ -358,7 +356,7 @@ npm run build            # 产物在 dist/，用 nginx 托管
 邮件、上传（MinIO）、站点名称、站点 Logo、AI 服务、爬虫 Token 等运行时配置通过管理后台「系统设置」管理，存储在数据库 `site_configs` 表，**无需重启即可生效**。
 
 进入「系统设置」可配置以下分类：
-- **站点信息**：站点名称、Logo、备案号
+- **站点信息**：站点名称、站点地址（site_url，用于邮件链接/sitemap）、Logo、备案号
 - **邮件配置**：SMTP 服务器、发件人、邮件模板
 - **上传配置**：本地/MinIO 存储切换、文件大小限制
 - **AI 配置**：豆包/Ollama 模型选择、API Key

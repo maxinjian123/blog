@@ -44,6 +44,8 @@ dist/
 release/
 uploads/
 backups/
+bakup/
+backend/bakup/
 logs/
 jspm_packages/
 

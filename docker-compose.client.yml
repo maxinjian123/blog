@@ -64,7 +64,6 @@ services:
       JWT_SECRET: ${JWT_SECRET:-change-me-to-a-random-string}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
       CORS_ORIGIN: ${CORS_ORIGIN:-}
-      COMMENT_REPLY_URL_PREFIX: ${COMMENT_REPLY_URL_PREFIX:-}
     volumes:
       - uploads_data:/blog-app/uploads
     depends_on:

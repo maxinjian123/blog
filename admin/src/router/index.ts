@@ -48,6 +48,12 @@ const routes: RouteRecordRaw[] = [
         meta: {title: '标签管理', requiresAuth: true}
     },
     {
+        path: '/emojis',
+        name: 'EmojiManage',
+        component: () => import('@/pages/EmojiManage.vue'),
+        meta: {title: '表情管理', requiresAuth: true}
+    },
+    {
         path: '/comments',
         name: 'CommentManage',
         component: () => import('@/pages/CommentManage.vue'),
@@ -70,6 +76,12 @@ const routes: RouteRecordRaw[] = [
         name: 'OperationLogs',
         component: () => import('@/pages/OperationLogs.vue'),
         meta: {title: '操作日志', requiresAuth: true}
+    },
+    {
+        path: '/backups',
+        name: 'BackupManage',
+        component: () => import('@/pages/BackupManage.vue'),
+        meta: {title: '数据备份', requiresAuth: true}
     },
     {
         path: '/settings',

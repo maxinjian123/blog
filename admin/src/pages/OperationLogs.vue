@@ -48,7 +48,9 @@ const moduleLabels: Record<string, string> = {
   image_crawler: '图片抓取',
   crawler: '爬虫',
   guestbook: '留言板',
-  operation_log: '操作日志'
+  operation_log: '操作日志',
+  backup: '数据备份',
+  emoji: '表情'
 }
 
 // 模块 a-tag 颜色（antd 预设色）
@@ -66,7 +68,9 @@ const moduleColors: Record<string, string> = {
   image_crawler: 'lime',
   crawler: 'volcano',
   guestbook: 'yellow',
-  operation_log: 'default'
+  operation_log: 'default',
+  backup: 'cyan',
+  emoji: 'lime'
 }
 
 // 模块进度条颜色（真实 CSS 色值）
@@ -84,7 +88,9 @@ const moduleHex: Record<string, string> = {
   image_crawler: '#a0d911',
   crawler: '#fa541c',
   guestbook: '#fadb14',
-  operation_log: '#8c8c8c'
+  operation_log: '#8c8c8c',
+  backup: '#13c2c2',
+  emoji: '#a0d911'
 }
 
 // 操作类型中文标签
@@ -99,7 +105,8 @@ const actionLabels: Record<string, string> = {
   download: '下载',
   cleanup: '清理',
   upload: '上传',
-  import: '导入'
+  import: '导入',
+  restore: '恢复'
 }
 
 // 操作类型 a-tag 颜色
@@ -114,7 +121,8 @@ const actionColors: Record<string, string> = {
   download: 'purple',
   cleanup: 'volcano',
   upload: 'magenta',
-  import: 'gold'
+  import: 'gold',
+  restore: 'red'
 }
 
 // 操作类型进度条颜色
@@ -129,7 +137,8 @@ const actionHex: Record<string, string> = {
   download: '#722ed1',
   cleanup: '#fa541c',
   upload: '#eb2f96',
-  import: '#faad14'
+  import: '#faad14',
+  restore: '#f5222d'
 }
 
 const moduleOptions = Object.keys(moduleLabels).map(k => ({value: k, label: moduleLabels[k]}))

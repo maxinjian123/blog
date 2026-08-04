@@ -3,21 +3,18 @@ import {h, onMounted, reactive, ref} from 'vue'
 import api from '@/utils/api'
 import {message, Modal} from 'ant-design-vue'
 import {Marked} from 'marked'
-import {sanitizeHtml, escapeHtml, textToSafeHtml} from '@/utils/sanitize'
-import {MdEditor} from 'md-editor-v3'
-import EmojiToolbar from '@/components/admin/EmojiToolbar.vue'
-import 'md-editor-v3/lib/style.css'
+import {escapeHtml, sanitizeHtml, textToSafeHtml} from '@/utils/sanitize'
+import {MdEditor} from '@/components/editor'
 import {
-  ExclamationCircleOutlined,
-  SearchOutlined,
-  ThunderboltOutlined,
-  MoreOutlined,
-  MessageOutlined,
-  DeleteOutlined,
-  LinkOutlined,
-  CommentOutlined,
   CheckOutlined,
-  StopOutlined
+  CommentOutlined,
+  DeleteOutlined,
+  ExclamationCircleOutlined,
+  LinkOutlined,
+  MessageOutlined,
+  SearchOutlined,
+  StopOutlined,
+  ThunderboltOutlined
 } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
 import {CLIENT_BASE_URL} from "@/config/config.ts";
@@ -84,7 +81,8 @@ const query = reactive({
   page: 1,
   pageSize: 10,
   is_approved: undefined as boolean | undefined,
-  keyword: ''
+  keyword: '',
+  author: ''
 })
 
 const total = ref(0)
@@ -140,6 +138,7 @@ async function loadData() {
     const params: any = {page: query.page, pageSize: query.pageSize}
     if (query.is_approved !== undefined) params.approved = query.is_approved
     if (query.keyword) params.keyword = query.keyword
+    if (query.author) params.author = query.author
     const res: any = await api.get('/comments', {params})
     const list = res.data?.list || res.data?.rows || res.data || []
     comments.value = list.map((item: any) => ({
@@ -273,8 +272,13 @@ function handleMenuAction(key: string, record: Comment) {
 async function handleAiReply(record: Comment) {
   aiReplyLoading.value[record.id] = true
   try {
-    await api.post(`/comments/${record.id}/ai-reply`)
-    message.success('AI 自动回复已发送')
+    const res: any = await api.post(`/comments/${record.id}/ai-reply`)
+    const data = res?.data || res
+    if (data && data.mail_sent === false) {
+      message.warning(`AI 回复已生成，但通知邮件未发送：${data.mail_reason || '未知原因'}`)
+    } else {
+      message.success('AI 自动回复已发送')
+    }
     await loadData()
   } catch {
     message.error('AI 回复失败')
@@ -320,11 +324,18 @@ async function handleSubmitReply() {
 
   replySubmitting.value = true
   try {
-    await api.post(`/comments/${currentReplyComment.value.id}/reply`, {
+    const res: any = await api.post(`/comments/${currentReplyComment.value.id}/reply`, {
       content: replyContent.value.trim(),
       content_type: 'markdown'
     })
-    message.success('回复成功')
+    const data = res?.data || res
+    if (data && data.mail_sent === false) {
+      message.warning(`回复成功，但通知邮件未发送：${data.mail_reason || '未知原因'}`)
+    } else if (data && data.mail_sent === true) {
+      message.success('回复成功，通知邮件已发送给评论作者')
+    } else {
+      message.success('回复成功')
+    }
     replyVisible.value = false
     replyContent.value = ''
     currentReplyComment.value = null
@@ -451,6 +462,17 @@ onMounted(() => {
             <SearchOutlined/>
           </template>
         </a-input-search>
+        <a-input-search
+            v-model:value="query.author"
+            placeholder="搜索评论用户..."
+            style="width: 200px"
+            allow-clear
+            @search="() => { query.page = 1; loadData() }"
+        >
+          <template #enterButton>
+            <SearchOutlined/>
+          </template>
+        </a-input-search>
         <a-select
             v-model:value="query.is_approved"
             placeholder="审核状态"
@@ -499,15 +521,21 @@ onMounted(() => {
             <template #overlay>
               <a-menu @click="(info: any) => { info.domEvent?.stopPropagation(); handleMenuAction(info.key, record) }">
                 <a-menu-item key="thread">
-                  <template #icon><MessageOutlined/></template>
+                  <template #icon>
+                    <MessageOutlined/>
+                  </template>
                   对话内容
                 </a-menu-item>
                 <a-menu-item key="reply" v-if="canReply(record)">
-                  <template #icon><CommentOutlined/></template>
+                  <template #icon>
+                    <CommentOutlined/>
+                  </template>
                   回复
                 </a-menu-item>
                 <a-menu-item key="goto">
-                  <template #icon><LinkOutlined style="color: #E6A23C"/></template>
+                  <template #icon>
+                    <LinkOutlined style="color: #E6A23C"/>
+                  </template>
                   跳转文章
                 </a-menu-item>
                 <a-menu-item key="approve">
@@ -519,7 +547,9 @@ onMounted(() => {
                 </a-menu-item>
                 <a-menu-divider/>
                 <a-menu-item key="delete" danger>
-                  <template #icon><DeleteOutlined/></template>
+                  <template #icon>
+                    <DeleteOutlined/>
+                  </template>
                   删除
                 </a-menu-item>
               </a-menu>
@@ -588,9 +618,9 @@ onMounted(() => {
             管理员
           </a-tag>
         </div>
-        <div class="reply-preview-content">{{
-            currentReplyComment.content?.substring(0, 150)
-          }}{{ currentReplyComment.content?.length > 150 ? '...' : '' }}
+        <div
+            class="reply-preview-content thread-item-content markdown-body"
+            v-html="renderThreadContent(currentReplyComment.content || '', currentReplyComment.content_type)">
         </div>
       </div>
       <div style="margin-top: 16px; margin-bottom: 12px">
@@ -608,19 +638,14 @@ onMounted(() => {
       <div style="margin-top: 16px">
         <MdEditor
             v-model="replyContent"
-            language="zh-CN"
             :preview="false"
             :toolbars="replyToolbars"
             :show-code-row-number="false"
             placeholder="输入回复内容（支持 Markdown）..."
             :footers="[]"
             :on-upload-img="handleReplyUploadImg"
-            style="height: 300px"
-        >
-          <template #defToolbars>
-            <EmojiToolbar title="表情"/>
-          </template>
-        </MdEditor>
+            style="height: 400px"
+        />
       </div>
     </a-modal>
 
@@ -786,6 +811,8 @@ onMounted(() => {
   color: var(--color-text-secondary);
   line-height: 1.5;
   word-break: break-word;
+  max-height: 260px;
+  overflow-y: auto;
 }
 
 .article-preview-content {

@@ -13,6 +13,7 @@ const { registerRoutes } = require('./routes');
 const { startScheduler } = require('./utils/scheduler');
 const { verifyMailer } = require('./services/mail');
 const { initDefaults, loadConfigs } = require('./services/configService');
+const { initDefaultEmojis } = require('./services/emojiService');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpecs = require('./config/swagger');
 
@@ -95,6 +96,7 @@ app.listen(PORT, async () => {
   try {
     await syncDatabase();
     await initDefaults();
+    await initDefaultEmojis();
     await loadConfigs();
     // 配置加载完成后，验证邮件服务（按最新配置）
     await verifyMailer();

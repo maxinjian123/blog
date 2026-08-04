@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import {ref, watch} from 'vue'
 import {MdEditor, type ToolbarNames} from 'md-editor-v3'
-import {Emoji} from '@vavt/v3-extension'
-import '@vavt/v3-extension/lib/asset/Emoji.css';
+import EmojiToolbar from './EmojiToolbar.vue'
 import 'md-editor-v3/lib/style.css'
 
 const props = defineProps<{
@@ -54,10 +53,10 @@ const toolbars: ToolbarNames[] = [
         :show-code-row-number="false"
         :placeholder="placeholder || '支持 Markdown 语法，尝试 **加粗**、*斜体*、`代码` 等'"
         :footers="[]"
-        style="height: 320px"
+        style="height: 420px"
     >
       <template #defToolbars>
-        <Emoji title="表情" />
+        <EmojiToolbar title="表情" />
       </template>
     </MdEditor>
   </div>

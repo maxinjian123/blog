@@ -364,6 +364,17 @@
  *       - in: query
  *         name: pageSize
  *         schema: { type: integer }
+ *       - in: query
+ *         name: approved
+ *         schema: { type: boolean }
+ *       - in: query
+ *         name: keyword
+ *         description: 按评论内容模糊搜索
+ *         schema: { type: string }
+ *       - in: query
+ *         name: author
+ *         description: 按评论用户（昵称/邮箱/账号名）模糊搜索
+ *         schema: { type: string }
  *     responses:
  *       200:
  *         description: 成功

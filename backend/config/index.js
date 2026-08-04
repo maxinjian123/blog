@@ -44,10 +44,6 @@ module.exports = {
         origin: process.env.CORS_ORIGIN || ''
     },
 
-    // 评论回复邮件中"查看详情"按钮的跳转链接前缀
-    // 留空时 mail.js 会回退到 request host
-    commentReplyUrlPrefix: process.env.COMMENT_REPLY_URL_PREFIX || '',
-
     // 以下配置由 configService.applyToConfig() 在运行时从数据库填充
     // 这里仅保留默认结构，便于启动前/数据库未就绪时引用
     site: {

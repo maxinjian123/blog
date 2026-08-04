@@ -4,9 +4,7 @@ import api from '@/utils/api'
 import {message, Modal} from 'ant-design-vue'
 import {Marked} from 'marked'
 import {escapeHtml, sanitizeHtml, textToSafeHtml} from '@/utils/sanitize'
-import {MdEditor} from 'md-editor-v3'
-import EmojiToolbar from '@/components/admin/EmojiToolbar.vue'
-import 'md-editor-v3/lib/style.css'
+import {MdEditor} from '@/components/editor'
 import {
   CheckOutlined,
   CommentOutlined,
@@ -497,19 +495,14 @@ onMounted(() => {
       <div style="margin-top: 16px">
         <MdEditor
             v-model="replyContent"
-            language="zh-CN"
             :preview="false"
             :toolbars="replyToolbars"
             :show-code-row-number="false"
             placeholder="输入回复内容（支持 Markdown）..."
             :footers="[]"
             :on-upload-img="handleReplyUploadImg"
-            style="height: 300px"
-        >
-          <template #defToolbars>
-            <EmojiToolbar title="表情"/>
-          </template>
-        </MdEditor>
+            style="height: 400px"
+        />
       </div>
     </a-modal>
   </div>

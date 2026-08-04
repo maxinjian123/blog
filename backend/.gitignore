@@ -7,6 +7,7 @@ target/
 ### CUSTOM ###
 node_modules/
 dist/
+bakup/
 
 ### STS ###
 .apt_generated

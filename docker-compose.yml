@@ -61,7 +61,6 @@ services:
       JWT_SECRET: ${JWT_SECRET:-change-me-to-a-random-string}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
       CORS_ORIGIN: ${CORS_ORIGIN:-}
-      COMMENT_REPLY_URL_PREFIX: ${COMMENT_REPLY_URL_PREFIX:-}
       DOUBAO_API_KEY: ${DOUBAO_API_KEY:-}
       DOUBAO_BASE_URL: ${DOUBAO_BASE_URL:-}
       DOUBAO_CHAT_MODEL: ${DOUBAO_CHAT_MODEL:-}
@@ -71,6 +70,7 @@ services:
       OLLAMA_CHAT_MODEL: ${OLLAMA_CHAT_MODEL:-}
     volumes:
       - uploads_data:/blog-app/uploads
+      - bakup_data:/blog-app/bakup
     depends_on:
       mysql:
         condition: service_healthy
@@ -111,6 +111,7 @@ volumes:
   mysql_data:
   redis_data:
   uploads_data:
+  bakup_data:
 
 networks:
   blog-network:

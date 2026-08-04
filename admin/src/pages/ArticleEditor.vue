@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import AiAssistant from '@/components/admin/AiAssistant.vue'
-import CoverGenerator from '@/components/admin/CoverGenerator.vue'
+import {AiAssistant, CoverGenerator, MdEditor, MdPreview} from '@/components/editor'
 import {useArticleStore} from '@/stores/article'
 import api from '@/utils/api'
 import {
@@ -23,14 +22,6 @@ import {
   TagsOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons-vue'
-import {ExportPDF, Mark, OriginalImg} from '@vavt/v3-extension'
-import '@vavt/v3-extension/lib/asset/ExportPDF.css'
-import '@vavt/v3-extension/lib/asset/Mark.css'
-import '@vavt/v3-extension/lib/asset/OriginalImg.css'
-import EmojiToolbar from '@/components/admin/EmojiToolbar.vue'
-import {MdEditor, MdPreview} from 'md-editor-v3'
-import 'md-editor-v3/lib/style.css'
-import 'md-editor-v3/lib/preview.css'
 import {message, Modal} from 'ant-design-vue'
 import {computed, onBeforeUnmount, onMounted, reactive, ref} from 'vue'
 import {onBeforeRouteLeave, useRoute, useRouter} from 'vue-router'
@@ -104,47 +95,6 @@ const versionPreview = ref<VersionItem | null>(null)
 const versionPreviewLoading = ref(false)
 const sidebarOpen = ref(false)
 const importMdInput = ref<HTMLInputElement | null>(null)
-
-// 工具栏：完整默认工具集，仅移除左侧“保存”与右侧“源码地址(GitHub)”两项
-const mdToolbars: any[] = [
-  'bold',
-  'underline',
-  'italic',
-  'strikeThrough',
-  '-',
-  'title',
-  'sub',
-  'sup',
-  'quote',
-  'unorderedList',
-  'orderedList',
-  'task',
-  '-',
-  'codeRow',
-  'code',
-  'link',
-  'image',
-  'table',
-  'mermaid',
-  'katex',
-  '-',
-  'revoke',
-  'next',
-  '-',
-  0,
-  1,
-  2,
-  3,
-  '-',
-  '=',
-  'prettier',
-  'fullscreen',
-  'pageFullscreen',
-  'preview',
-  'previewOnly',
-  'htmlPreview',
-  'catalog',
-]
 
 const wordCount = computed(() => {
   const text = form.content || ''
@@ -397,6 +347,18 @@ async function handleSave(draft = true) {
     } else {
       const created = await articleStore.createArticle(payload)
       if (created?.id) {
+        // 新建文章直接发布：返回文章管理页面并刷新数据，同时关闭当前编辑 Tab
+        if (!draft) {
+          const currentFullPath = route.fullPath
+          // 先更新脏状态基线，避免触发“未保存的修改”离开确认
+          updateBaseline()
+          tabsStore.removeTab(currentFullPath)
+          await router.replace('/articles')
+          await tabsStore.refreshTab(router.resolve('/articles') as any)
+          return
+        }
+        // 保存草稿后跳转编辑页前同样先更新基线，避免触发离开确认
+        updateBaseline()
         await router.replace(`/articles/${created.id}/edit`)
       }
     }
@@ -611,7 +573,8 @@ function handleBeforeUnload(e: BeforeUnloadEvent) {
 }
 
 onBeforeRouteLeave(() => {
-  if (!isDirty()) return
+  // 保存/发布进行中的程序化跳转不弹“未保存的修改”确认
+  if (saveLoading.value || !isDirty()) return
   return new Promise<boolean>((resolve) => {
     Modal.confirm({
       title: '离开页面？',
@@ -713,34 +676,14 @@ onBeforeRouteLeave(() => {
             </div>
             <MdEditor
                 v-model="form.content"
-                language="zh-CN"
-                :theme="isDark ? 'dark' : 'light'"
-                :preview="true"
-                preview-theme="vuepress"
-                code-theme="github"
-                :show-code-row-number="true"
-                :footers="['markdownTotal']"
-                :toolbars="mdToolbars"
                 :on-upload-img="handleMdUploadImg"
+                show-emoji
+                show-mark
+                show-original-img
+                show-export-pdf
                 @onGetCatalog="onGetCatalog"
                 class="md-editor"
-            >
-              <template #defToolbars>
-                <EmojiToolbar title="表情"/>
-                <Mark title="标记"/>
-                <OriginalImg title="查看原图"/>
-                <ExportPDF
-                    :model-value="form.content"
-                    language="zh-CN"
-                    :theme="isDark ? 'dark' : 'light'"
-                    preview-theme="vuepress"
-                    code-theme="github"
-                    title="导出为PDF"
-                    modal-title="导出为PDF"
-                    export-btn-text="导出"
-                />
-              </template>
-            </MdEditor>
+            />
           </div>
         </main>
 

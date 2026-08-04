@@ -80,7 +80,7 @@ async function sendTemplatedMail(to, templateKey, vars) {
  * 拼接评论回复邮件中的"查看详情"链接
  * 优先级：
  *   1. 显式传入的 articleUrl
- *   2. config.commentReplyUrlPrefix（来自 .env.development.development 的 COMMENT_REPLY_URL_PREFIX）+ /article/<id>
+ *   2. config.site.url（来自数据库 site_configs 表的 site_url）+ /article/<id>
  *   3. fallbackHost（请求 host，例如开发环境的 localhost:3000）+ /article/<id>
  * @param {{ articleUrl?: string, articleId?: string | number, commentId?: string | number, fallbackHost?: string }} opts
  */
@@ -98,7 +98,7 @@ function buildArticleUrl({ articleUrl, articleId, commentId, fallbackHost }) {
   if (articleId === undefined || articleId === null || articleId === '') {
     return ''
   }
-  const prefix = (config.commentReplyUrlPrefix || '').replace(/\/+$/, '')
+  const prefix = (config.site?.url || '').replace(/\/+$/, '')
   if (prefix) {
     return `${prefix}/article/${articleId}${querySuffix}`
   }
@@ -122,7 +122,7 @@ function buildArticleUrl({ articleUrl, articleId, commentId, fallbackHost }) {
  * @param {string} [params.articleUrl] - 显式指定的查看详情 URL（可选，优先级最高）
  * @param {string|number} [params.articleId] - 文章 ID（用于拼接 URL）
  * @param {string|number} [params.commentId] - 新评论 ID（用于在 URL 末尾追加 ?c=commentId 定位锚点）
- * @param {string} [params.fallbackHost] - 当未配置 COMMENT_REPLY_URL_PREFIX 时使用的回退 host（开发环境用）
+ * @param {string} [params.fallbackHost] - 当未配置站点地址（site_url）时使用的回退 host（开发环境用）
  */
 async function sendReplyNotification({ to, articleTitle, replyContent, replyAuthor, articleUrl, articleId, commentId, fallbackHost }) {
   const finalUrl = buildArticleUrl({ articleUrl, articleId, commentId, fallbackHost })

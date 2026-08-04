@@ -36,6 +36,8 @@ const Music = require('./Music')(sequelize);
 const Playlist = require('./Playlist')(sequelize);
 const PlaylistSong = require('./PlaylistSong')(sequelize);
 const OperationLog = require('./OperationLog')(sequelize);
+const Emoji = require('./Emoji')(sequelize);
+const EmojiPack = require('./EmojiPack')(sequelize);
 
 User.hasMany(Article, {foreignKey: 'author_id', as: 'articles'});
 Article.belongsTo(User, {foreignKey: 'author_id', as: 'author'});
@@ -153,5 +155,7 @@ module.exports = {
     Music,
     Playlist,
     PlaylistSong,
-    OperationLog
+    OperationLog,
+    Emoji,
+    EmojiPack
 };
