@@ -14,6 +14,7 @@ export interface Article {
   author_id?: number
   view_count?: number
   like_count?: number
+  featured?: boolean
   created_at?: string
   updated_at?: string
   category?: { id: string; name: string; slug: string }
@@ -26,6 +27,7 @@ export interface ArticleQuery {
   status?: string
   category_id?: string
   tag_id?: string
+  featured?: string
   sort?: string
 }
 

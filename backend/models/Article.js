@@ -53,6 +53,11 @@ module.exports = (sequelize) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false
     },
+    featured: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      comment: '是否精选（首页精选展示）'
+    },
     published_at: {
       type: DataTypes.DATE,
       allowNull: true

@@ -98,6 +98,7 @@ router.get('/', optionalAuth, async (req, res, next) => {
             category_id,
             tag_id,
             keyword,
+            featured,
             sort = 'created_at',
             order = 'DESC'
         } = req.query
@@ -110,6 +111,10 @@ router.get('/', optionalAuth, async (req, res, next) => {
             where.status = 'published'
         } else if (status) {
             where.status = status
+        }
+
+        if (featured !== undefined) {
+            where.featured = featured === 'true' || featured === true
         }
 
         if (category_id) where.category_id = category_id
@@ -506,7 +511,7 @@ router.get('/:id/neighbors', async (req, res, next) => {
 
 router.post('/', auth, adminOnly, async (req, res, next) => {
     try {
-        const {title, slug, content, summary, cover, status, category_id, tags, content_type, catalog} = req.body
+        const {title, slug, content, summary, cover, status, category_id, tags, content_type, catalog, featured} = req.body
         if (!title || !content) {
             return error(res, '标题和内容不能为空', 400)
         }
@@ -525,6 +530,7 @@ router.post('/', auth, adminOnly, async (req, res, next) => {
             author_id: req.user.id,
             published_at: status === 'published' ? new Date() : null,
             category_id,
+            featured: !!featured,
             content_type: ['html', 'markdown'].includes(content_type) ? content_type : 'html',
             catalog: catalog || (content_type === 'markdown' ? extractCatalog(content) : null)
         })
@@ -565,7 +571,7 @@ router.put('/:id', auth, adminOnly, async (req, res, next) => {
             return error(res, '文章不存在', 404)
         }
 
-        const {title, slug, content, summary, cover, status, category_id, tags, content_type, catalog, scheduled_at} = req.body
+        const {title, slug, content, summary, cover, status, category_id, tags, content_type, catalog, scheduled_at, featured} = req.body
 
         // P4-1: 保存版本历史（仅当内容或标题变更时）
         const titleChanged = title && title !== article.title
@@ -618,6 +624,7 @@ router.put('/:id', auth, adminOnly, async (req, res, next) => {
             published_at: finalPublishedAt,
             scheduled_at: finalScheduledAt,
             category_id: category_id !== undefined ? category_id : article.category_id,
+            featured: featured !== undefined ? !!featured : article.featured,
             content_type: content_type !== undefined ? (['html', 'markdown'].includes(content_type) ? content_type : article.content_type) : article.content_type,
             catalog: catalog !== undefined ? catalog : (content && (content_type === 'markdown' || (content_type === undefined && article.content_type === 'markdown')) ? extractCatalog(content) : article.catalog)
         })

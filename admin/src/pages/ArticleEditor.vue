@@ -19,6 +19,7 @@ import {
   RobotOutlined,
   SaveOutlined,
   SendOutlined,
+  StarOutlined,
   TagsOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons-vue'
@@ -71,6 +72,7 @@ const form = reactive({
   cover: '',
   status: 'draft' as 'draft' | 'published',
   scheduledAt: null as string | null,
+  featured: false,
 })
 
 const categories = ref<CategoryOption[]>([])
@@ -212,6 +214,7 @@ async function loadArticle() {
     form.categoryId = article.category_id || null
     form.tagIds = (article.tags || []).map((t: TagOption) => t.id)
     form.status = article.status === 'published' ? 'published' : 'draft'
+    form.featured = !!article.featured
     catalog.value = article.catalog || []
     form.content = article.content || ''
     if (article.scheduled_at) {
@@ -336,6 +339,7 @@ async function handleSave(draft = true) {
         .map((id) => tags.value.find((t) => t.id === id)?.name || '')
         .filter(Boolean),
     status: draft ? 'draft' : 'published',
+    featured: form.featured,
     content_type: 'markdown',
     catalog: catalog.value,
     scheduled_at: form.scheduledAt ? new Date(form.scheduledAt).toISOString() : null,
@@ -554,6 +558,7 @@ function getComparableSnapshot(): string {
     tagIds: form.tagIds,
     status: form.status,
     scheduledAt: form.scheduledAt,
+    featured: form.featured,
   })
 }
 
@@ -830,6 +835,24 @@ onBeforeRouteLeave(() => {
                   <PictureOutlined/>
                   设置封面
                 </a-button>
+              </section>
+
+              <a-divider class="section-divider"/>
+
+              <section class="side-section">
+                <div class="side-title-row">
+                  <h3 class="side-title">
+                    <StarOutlined/>
+                    精选
+                  </h3>
+                </div>
+                <div class="featured-row">
+                  <div class="featured-text">
+                    <span class="side-label">首页精选展示</span>
+                    <p class="side-hint">开启后文章将优先展示在首页 Hero 精选位</p>
+                  </div>
+                  <a-switch v-model:checked="form.featured" checked-children="精选" un-checked-children="普通"/>
+                </div>
               </section>
 
               <a-divider class="section-divider"/>
@@ -1355,6 +1378,21 @@ onBeforeRouteLeave(() => {
   font-size: 12px;
   line-height: 1.6;
   color: var(--color-text-tertiary, #9ca3af);
+}
+
+.featured-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.featured-row .side-hint {
+  margin-top: 4px;
+}
+
+.featured-row .ant-switch {
+  flex-shrink: 0;
 }
 
 .field-block {

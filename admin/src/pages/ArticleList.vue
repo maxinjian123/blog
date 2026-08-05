@@ -7,6 +7,7 @@ import {
   ImportOutlined,
   PlusOutlined,
   SearchOutlined,
+  StarOutlined,
   UploadOutlined
 } from '@ant-design/icons-vue'
 import {message, Modal} from 'ant-design-vue'
@@ -23,7 +24,8 @@ const query = reactive({
   pageSize: 10,
   keyword: '',
   status: undefined as string | undefined,
-  category_id: undefined as string | undefined
+  category_id: undefined as string | undefined,
+  featured: undefined as string | undefined
 })
 
 const categories = ref<Array<{ id: string; name: string }>>([])
@@ -70,6 +72,12 @@ const columns = [
     width: 90
   },
   {
+    title: '精选',
+    dataIndex: 'featured',
+    key: 'featured',
+    width: 80
+  },
+  {
     title: '浏览量',
     dataIndex: 'view_count',
     key: 'view_count',
@@ -111,6 +119,7 @@ function handleReset() {
   query.keyword = ''
   query.status = undefined
   query.category_id = undefined
+  query.featured = undefined
   query.page = 1
   loadData()
 }
@@ -308,6 +317,11 @@ onMounted(() => {
           {{ cat.name }}
         </a-select-option>
       </a-select>
+      <a-select v-model:value="query.featured" placeholder="是否精选" style="width: 120px" allow-clear
+                @change="handleSearch">
+        <a-select-option value="true">精选</a-select-option>
+        <a-select-option value="false">普通</a-select-option>
+      </a-select>
       <a-button @click="handleReset">重置</a-button>
     </div>
 
@@ -355,6 +369,13 @@ onMounted(() => {
           <a-tag :color="record.status === 'published' ? 'green' : 'default'">
             {{ record.status === 'published' ? '已发布' : '草稿' }}
           </a-tag>
+        </template>
+        <template v-else-if="column.key === 'featured'">
+          <a-tag v-if="record.featured" color="gold">
+            <StarOutlined/>
+            精选
+          </a-tag>
+          <span v-else style="color: #999">-</span>
         </template>
       </template>
     </a-table>

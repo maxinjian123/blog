@@ -101,6 +101,8 @@ async function syncDatabase() {
         console.log('[MySQL] 模型已同步');
         // 迁移：为 media_files 表补充新增字段（sync 不修改已存在表结构）
         await migrateMediaFileFields();
+        // 迁移：为 articles 表补充新增字段（sync 不修改已存在表结构）
+        await migrateArticleFields();
     } catch (err) {
         console.error('[MySQL] 数据库同步失败:', err.message);
     }
@@ -128,6 +130,28 @@ async function migrateMediaFileFields() {
                     `ALTER TABLE media_files ADD COLUMN ${f.name} ${f.def} COMMENT '${f.comment}'`
                 );
                 console.log(`[MySQL] media_files 已添加字段: ${f.name}`);
+            }
+        } catch (err) {
+            console.error(`[MySQL] 迁移字段 ${f.name} 失败:`, err.message);
+        }
+    }
+}
+
+async function migrateArticleFields() {
+    const newFields = [
+        { name: 'featured', def: 'TINYINT(1) NOT NULL DEFAULT 0', comment: '是否精选（首页精选展示）' }
+    ];
+    for (const f of newFields) {
+        try {
+            const [rows] = await sequelize.query(
+                `SELECT COUNT(*) AS cnt FROM information_schema.COLUMNS
+                 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'articles' AND COLUMN_NAME = '${f.name}'`
+            );
+            if (rows[0].cnt === 0) {
+                await sequelize.query(
+                    `ALTER TABLE articles ADD COLUMN ${f.name} ${f.def} COMMENT '${f.comment}'`
+                );
+                console.log(`[MySQL] articles 已添加字段: ${f.name}`);
             }
         } catch (err) {
             console.error(`[MySQL] 迁移字段 ${f.name} 失败:`, err.message);
