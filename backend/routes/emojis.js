@@ -40,9 +40,11 @@ router.use(auth, adminOnly);
  *     parameters:
  *       - in: query
  *         name: page
+ *         description: 页码
  *         schema: { type: integer, default: 1 }
  *       - in: query
  *         name: pageSize
+ *         description: 每页数量
  *         schema: { type: integer, default: 20 }
  *       - in: query
  *         name: keyword
@@ -50,9 +52,11 @@ router.use(auth, adminOnly);
  *         description: 表情/名称关键字
  *       - in: query
  *         name: category
+ *         description: 按分类筛选
  *         schema: { type: string }
  *       - in: query
  *         name: enabled
+ *         description: 按启用状态筛选
  *         schema: { type: string, enum: [true, false] }
  */
 router.get('/admin', async (req, res, next) => {
@@ -124,6 +128,19 @@ router.get('/admin/categories', async (req, res, next) => {
  *     tags: [表情管理]
  *     security:
  *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [emoji]
+ *             properties:
+ *               emoji: { type: string, description: 表情字符（不能与其他表情重复） }
+ *               name: { type: string, description: 表情名称/含义 }
+ *               category: { type: string, description: 分类，默认 default }
+ *               sort_order: { type: integer, description: 排序值，默认 0 }
+ *               enabled: { type: boolean, description: 是否启用，默认 true }
  */
 router.post('/', async (req, res, next) => {
   try {
@@ -177,6 +194,24 @@ router.post('/import-default', async (req, res, next) => {
  *     tags: [表情管理]
  *     security:
  *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: 表情 ID
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               emoji: { type: string, description: 表情字符 }
+ *               name: { type: string, description: 表情名称/含义 }
+ *               category: { type: string, description: 分类 }
+ *               sort_order: { type: integer, description: 排序值 }
+ *               enabled: { type: boolean, description: 是否启用 }
  */
 router.put('/:id', async (req, res, next) => {
   try {
@@ -214,6 +249,12 @@ router.put('/:id', async (req, res, next) => {
  *     tags: [表情管理]
  *     security:
  *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: 表情 ID
+ *         schema: { type: integer }
  */
 router.delete('/:id', async (req, res, next) => {
   try {

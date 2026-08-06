@@ -78,6 +78,7 @@ router.get('/', auth, adminOnly, async (req, res, next) => {
  *       - in: path
  *         name: id
  *         required: true
+ *         description: 歌单 ID（UUID）
  *         schema: { type: string }
  *     responses:
  *       200:
@@ -133,9 +134,9 @@ router.get('/:id', auth, adminOnly, async (req, res, next) => {
  *           schema:
  *             type: object
  *             properties:
- *               name: { type: string }
- *               description: { type: string }
- *               cover: { type: string }
+ *               name: { type: string, description: 歌单名称（必填） }
+ *               description: { type: string, description: 歌单描述 }
+ *               cover: { type: string, description: 封面 URL }
  *     responses:
  *       200:
  *         description: 创建成功
@@ -176,6 +177,7 @@ router.post('/', auth, adminOnly, async (req, res, next) => {
  *       - in: path
  *         name: id
  *         required: true
+ *         description: 歌单 ID（UUID）
  *         schema: { type: string }
  *     requestBody:
  *       required: true
@@ -184,10 +186,10 @@ router.post('/', auth, adminOnly, async (req, res, next) => {
  *           schema:
  *             type: object
  *             properties:
- *               name: { type: string }
- *               description: { type: string }
- *               cover: { type: string }
- *               is_public: { type: boolean }
+ *               name: { type: string, description: 歌单名称 }
+ *               description: { type: string, description: 歌单描述 }
+ *               cover: { type: string, description: 封面 URL }
+ *               is_public: { type: boolean, description: 是否公开（可通过分享码访问） }
  *     responses:
  *       200:
  *         description: 更新成功
@@ -222,6 +224,7 @@ router.put('/:id', auth, adminOnly, async (req, res, next) => {
  *       - in: path
  *         name: id
  *         required: true
+ *         description: 歌单 ID（UUID）
  *         schema: { type: string }
  *     responses:
  *       200:
@@ -254,6 +257,7 @@ router.delete('/:id', auth, adminOnly, async (req, res, next) => {
  *       - in: path
  *         name: id
  *         required: true
+ *         description: 歌单 ID（UUID）
  *         schema: { type: string }
  *     requestBody:
  *       required: true
@@ -265,9 +269,11 @@ router.delete('/:id', auth, adminOnly, async (req, res, next) => {
  *               cover:
  *                 type: string
  *                 format: binary
+ *                 description: 封面图片（jpg/png/webp/gif，最大 10MB）
  *               storage:
  *                 type: string
  *                 enum: [local, minio]
+ *                 description: 存储源（默认取系统配置）
  *     responses:
  *       200:
  *         description: 封面上传成功
@@ -322,6 +328,7 @@ router.post('/:id/cover', auth, adminOnly, (req, res, next) => {
  *       - in: path
  *         name: id
  *         required: true
+ *         description: 歌单 ID（UUID）
  *         schema: { type: string }
  *     requestBody:
  *       required: true
@@ -329,10 +336,12 @@ router.post('/:id/cover', auth, adminOnly, (req, res, next) => {
  *         application/json:
  *           schema:
  *             type: object
+ *             required: [music_ids]
  *             properties:
  *               music_ids:
  *                 type: array
  *                 items: { type: string }
+ *                 description: 音乐 ID 数组（已存在自动跳过）
  *     responses:
  *       200:
  *         description: 添加成功
@@ -399,10 +408,12 @@ router.post('/:id/songs', auth, adminOnly, async (req, res, next) => {
  *       - in: path
  *         name: id
  *         required: true
+ *         description: 歌单 ID（UUID）
  *         schema: { type: string }
  *       - in: path
  *         name: songId
  *         required: true
+ *         description: 歌单歌曲关联记录 ID
  *         schema: { type: string }
  *     responses:
  *       200:
@@ -434,10 +445,12 @@ router.delete('/:id/songs/:songId', auth, adminOnly, async (req, res, next) => {
  *       - in: path
  *         name: id
  *         required: true
+ *         description: 歌单 ID（UUID）
  *         schema: { type: string }
  *       - in: path
  *         name: songId
  *         required: true
+ *         description: 歌单歌曲关联记录 ID
  *         schema: { type: string }
  *     requestBody:
  *       required: true
@@ -445,8 +458,9 @@ router.delete('/:id/songs/:songId', auth, adminOnly, async (req, res, next) => {
  *         application/json:
  *           schema:
  *             type: object
+ *             required: [sort_order]
  *             properties:
- *               sort_order: { type: integer }
+ *               sort_order: { type: integer, description: 目标排序值 }
  *     responses:
  *       200:
  *         description: 更新成功
@@ -480,6 +494,7 @@ router.put('/:id/songs/:songId/sort', auth, adminOnly, async (req, res, next) =>
  *       - in: path
  *         name: shareCode
  *         required: true
+ *         description: 歌单分享码
  *         schema: { type: string }
  *     responses:
  *       200:

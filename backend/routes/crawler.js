@@ -99,12 +99,15 @@ async function generateUniqueSlug(title) {
  *       - in: query
  *         name: keyword
  *         required: true
+ *         description: 搜索关键词
  *         schema: { type: string }
  *       - in: query
  *         name: page
+ *         description: 页码
  *         schema: { type: integer, default: 1 }
  *       - in: query
  *         name: pageSize
+ *         description: 每页数量
  *         schema: { type: integer, default: 20 }
  *       - in: query
  *         name: language
@@ -150,9 +153,11 @@ router.get('/search', auth, adminOnly, async (req, res, next) => {
  *         description: 搜索关键词（在 .md 文件内容中匹配）
  *       - in: query
  *         name: page
+ *         description: 页码
  *         schema: { type: integer, default: 1 }
  *       - in: query
  *         name: pageSize
+ *         description: 每页数量
  *         schema: { type: integer, default: 20 }
  *       - in: query
  *         name: repo
@@ -199,10 +204,12 @@ router.get('/search-code', auth, adminOnly, async (req, res, next) => {
  *       - in: path
  *         name: owner
  *         required: true
+ *         description: 仓库所有者/组织
  *         schema: { type: string }
  *       - in: path
  *         name: repo
  *         required: true
+ *         description: 仓库名
  *         schema: { type: string }
  *       - in: query
  *         name: ref
@@ -238,10 +245,10 @@ router.get('/repos/:owner/:repo/files', auth, adminOnly, async (req, res, next) 
  *           schema:
  *             type: object
  *             properties:
- *               owner: { type: string }
- *               repo: { type: string }
- *               path: { type: string }
- *               ref: { type: string }
+ *               owner: { type: string, description: 仓库所有者/组织（必填） }
+ *               repo: { type: string, description: 仓库名（必填） }
+ *               path: { type: string, description: 文件路径（必填） }
+ *               ref: { type: string, description: 分支/Tag，不传用默认分支 }
  *     responses:
  *       200:
  *         description: 文件内容
@@ -287,16 +294,17 @@ router.post('/preview', auth, adminOnly, async (req, res, next) => {
  *             properties:
  *               items:
  *                 type: array
+ *                 description: 要导入的文件列表（最多 20 个）
  *                 items:
  *                   type: object
  *                   properties:
- *                     owner: { type: string }
- *                     repo: { type: string }
- *                     path: { type: string }
- *                     ref: { type: string }
- *               autoSummary: { type: boolean, default: true }
- *               autoTags: { type: boolean, default: true }
- *               category_id: { type: string }
+ *                     owner: { type: string, description: 仓库所有者/组织 }
+ *                     repo: { type: string, description: 仓库名 }
+ *                     path: { type: string, description: 文件路径 }
+ *                     ref: { type: string, description: 分支/Tag }
+ *               autoSummary: { type: boolean, default: true, description: 是否 AI 自动生成摘要 }
+ *               autoTags: { type: boolean, default: true, description: 是否 AI 自动生成标签 }
+ *               category_id: { type: string, description: 导入文章的分类 ID }
  *     responses:
  *       200:
  *         description: 导入成功

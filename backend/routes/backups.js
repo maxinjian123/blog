@@ -57,9 +57,11 @@ async function cleanupTempDir() {
  *     parameters:
  *       - in: query
  *         name: page
+ *         description: 页码
  *         schema: { type: integer, default: 1 }
  *       - in: query
  *         name: pageSize
+ *         description: 每页数量（最大 100）
  *         schema: { type: integer, default: 20 }
  *       - in: query
  *         name: keyword
@@ -67,12 +69,15 @@ async function cleanupTempDir() {
  *         description: 文件名关键字
  *       - in: query
  *         name: type
+ *         description: 备份类型
  *         schema: { type: string, enum: [manual, scheduled, upload] }
  *       - in: query
  *         name: startDate
+ *         description: 开始日期（YYYY-MM-DD）
  *         schema: { type: string, format: date }
  *       - in: query
  *         name: endDate
+ *         description: 结束日期（YYYY-MM-DD）
  *         schema: { type: string, format: date }
  */
 router.get('/', async (req, res, next) => {
@@ -146,6 +151,17 @@ router.get('/schedule', async (req, res, next) => {
  *     tags: [数据备份]
  *     security:
  *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               enabled: { type: boolean, description: 是否启用定时备份 }
+ *               frequency: { type: string, enum: [daily, weekly, interval], description: 备份频率 }
+ *               time: { type: string, description: 执行时间（daily/weekly 时使用，格式 HH:mm） }
+ *               interval_minutes: { type: integer, description: 间隔分钟数（frequency=interval 时使用，最小 5） }
  */
 router.put('/schedule', async (req, res, next) => {
   try {
@@ -173,6 +189,7 @@ router.put('/schedule', async (req, res, next) => {
  *             properties:
  *               remark:
  *                 type: string
+ *                 description: 备份备注（最多 200 字）
  */
 router.post('/', async (req, res, next) => {
   try {
@@ -206,6 +223,7 @@ router.post('/', async (req, res, next) => {
  *               file:
  *                 type: string
  *                 format: binary
+ *                 description: 备份文件（.sql，最大 500MB）
  */
 router.post('/upload', uploadSingle, async (req, res, next) => {
   try {
@@ -230,6 +248,17 @@ router.post('/upload', uploadSingle, async (req, res, next) => {
  *     tags: [数据备份]
  *     security:
  *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: 备份文件（.sql，最大 500MB）
  */
 router.post('/restore-upload', uploadSingle, async (req, res, next) => {
   try {
@@ -254,6 +283,12 @@ router.post('/restore-upload', uploadSingle, async (req, res, next) => {
  *     tags: [数据备份]
  *     security:
  *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: 备份记录 ID（文件名或 ID）
+ *         schema: { type: string }
  */
 router.get('/:id/download', async (req, res, next) => {
   try {
@@ -274,6 +309,12 @@ router.get('/:id/download', async (req, res, next) => {
  *     tags: [数据备份]
  *     security:
  *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: 备份记录 ID（文件名或 ID）
+ *         schema: { type: string }
  */
 router.post('/:id/restore', async (req, res, next) => {
   try {
@@ -289,6 +330,12 @@ router.post('/:id/restore', async (req, res, next) => {
 
 /**
  * @swagger
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: 备份记录 ID（文件名或 ID）
+ *         schema: { type: string }
  * /backups/{id}:
  *   delete:
  *     summary: 删除备份文件

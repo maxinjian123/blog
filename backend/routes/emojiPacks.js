@@ -111,6 +111,27 @@ router.use(auth, adminOnly);
  *     tags: [表情管理]
  *     security:
  *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         description: 页码
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: pageSize
+ *         description: 每页数量
+ *         schema: { type: integer, default: 20 }
+ *       - in: query
+ *         name: keyword
+ *         description: 按名称/URL 搜索
+ *         schema: { type: string }
+ *       - in: query
+ *         name: category
+ *         description: 按分类筛选
+ *         schema: { type: string }
+ *       - in: query
+ *         name: enabled
+ *         description: 按启用状态筛选
+ *         schema: { type: string, enum: [true, false] }
  */
 router.get('/admin', async (req, res, next) => {
     try {
@@ -177,6 +198,22 @@ router.get('/admin/categories', async (req, res, next) => {
  *     tags: [表情管理]
  *     security:
  *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [file]
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: 图片文件（jpg/png/gif/webp，最大 5MB）
+ *               storage:
+ *                 type: string
+ *                 enum: [local, minio]
+ *                 description: 存储源（默认取系统配置）
  */
 router.post('/upload', stickerUpload.single('file'), handleMulterError, async (req, res, next) => {
     try {
@@ -227,6 +264,19 @@ router.post('/upload', stickerUpload.single('file'), handleMulterError, async (r
  *     tags: [表情管理]
  *     security:
  *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [url]
+ *             properties:
+ *               name: { type: string, description: 表情包名称 }
+ *               url: { type: string, description: 图片链接（http/https 或 /uploads/ 开头） }
+ *               category: { type: string, description: 分类，默认 default }
+ *               sort_order: { type: integer, description: 排序值，默认 0 }
+ *               enabled: { type: boolean, description: 是否启用，默认 true }
  */
 router.post('/', async (req, res, next) => {
     try {
@@ -258,6 +308,24 @@ router.post('/', async (req, res, next) => {
  *     tags: [表情管理]
  *     security:
  *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: 表情包 ID
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name: { type: string, description: 表情包名称 }
+ *               url: { type: string, description: 图片链接 }
+ *               category: { type: string, description: 分类 }
+ *               sort_order: { type: integer, description: 排序值 }
+ *               enabled: { type: boolean, description: 是否启用 }
  */
 router.put('/:id', async (req, res, next) => {
     try {
@@ -295,6 +363,12 @@ router.put('/:id', async (req, res, next) => {
  *     tags: [表情管理]
  *     security:
  *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: 表情包 ID
+ *         schema: { type: integer }
  */
 router.delete('/:id', async (req, res, next) => {
     try {

@@ -20,9 +20,11 @@ router.use(auth, adminOnly);
  *     parameters:
  *       - in: query
  *         name: page
+ *         description: 页码
  *         schema: { type: integer, default: 1 }
  *       - in: query
  *         name: pageSize
+ *         description: 每页数量
  *         schema: { type: integer, default: 20 }
  *       - in: query
  *         name: module
@@ -34,6 +36,7 @@ router.use(auth, adminOnly);
  *         description: 操作类型筛选
  *       - in: query
  *         name: status
+ *         description: 操作状态筛选
  *         schema: { type: string, enum: [success, fail] }
  *       - in: query
  *         name: username
@@ -41,9 +44,11 @@ router.use(auth, adminOnly);
  *         description: 操作者用户名（模糊匹配）
  *       - in: query
  *         name: startDate
+ *         description: 开始时间
  *         schema: { type: string, format: date-time }
  *       - in: query
  *         name: endDate
+ *         description: 结束时间
  *         schema: { type: string, format: date-time }
  *     responses:
  *       200:
@@ -89,6 +94,12 @@ router.get('/', async (req, res, next) => {
  *     tags: [操作日志]
  *     security:
  *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: 日志 ID
+ *         schema: { type: integer }
  */
 router.get('/:id', async (req, res, next) => {
   try {
@@ -102,7 +113,7 @@ router.get('/:id', async (req, res, next) => {
 
 /**
  * @swagger
- * /operation-logs/export:
+ * /operation-logs/export/data:
  *   get:
  *     summary: 导出操作日志（CSV/JSON）
  *     tags: [操作日志]
@@ -111,11 +122,36 @@ router.get('/:id', async (req, res, next) => {
  *     parameters:
  *       - in: query
  *         name: format
+ *         description: 导出格式
  *         schema: { type: string, enum: [csv, json], default: json }
  *       - in: query
  *         name: limit
  *         schema: { type: integer, default: 1000 }
  *         description: 导出条数上限（最大 5000）
+ *       - in: query
+ *         name: module
+ *         description: 按模块筛选
+ *         schema: { type: string }
+ *       - in: query
+ *         name: action
+ *         description: 按操作类型筛选
+ *         schema: { type: string }
+ *       - in: query
+ *         name: status
+ *         description: 按状态筛选
+ *         schema: { type: string, enum: [success, fail] }
+ *       - in: query
+ *         name: username
+ *         description: 按操作者用户名筛选
+ *         schema: { type: string }
+ *       - in: query
+ *         name: startDate
+ *         description: 开始时间
+ *         schema: { type: string, format: date-time }
+ *       - in: query
+ *         name: endDate
+ *         description: 结束时间
+ *         schema: { type: string, format: date-time }
  */
 router.get('/export/data', async (req, res, next) => {
   try {
@@ -210,9 +246,9 @@ router.delete('/cleanup', async (req, res, next) => {
 
 /**
  * @swagger
- * /operation-logs/stats:
+ * /operation-logs/stats/overview:
  *   get:
- *     summary: 操作日志统计看板
+ *     summary: 操作日志统计看板（趋势/模块分布/操作者 TOP）
  *     tags: [操作日志]
  *     security:
  *       - BearerAuth: []
@@ -220,7 +256,7 @@ router.delete('/cleanup', async (req, res, next) => {
  *       - in: query
  *         name: days
  *         schema: { type: integer, default: 7 }
- *         description: 统计最近 N 天数据
+ *         description: 统计最近 N 天数据（最大 90）
  */
 router.get('/stats/overview', async (req, res, next) => {
   try {

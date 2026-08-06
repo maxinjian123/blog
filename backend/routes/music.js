@@ -50,6 +50,7 @@ const audioUpload = multer({
  *       - in: path
  *         name: id
  *         required: true
+ *         description: 音乐 ID
  *         schema: { type: string }
  *     responses:
  *       200:
@@ -113,15 +114,19 @@ router.get('/platforms', auth, adminOnly, (req, res) => {
  *       - in: query
  *         name: keyword
  *         required: true
+ *         description: 搜索关键词（歌名/歌手）
  *         schema: { type: string }
  *       - in: query
  *         name: page
+ *         description: 页码
  *         schema: { type: integer, default: 1 }
  *       - in: query
  *         name: pageSize
+ *         description: 每页数量
  *         schema: { type: integer, default: 20 }
  *       - in: query
  *         name: platform
+ *         description: 搜索平台
  *         schema: { type: string, enum: [netease, qq], default: netease }
  *     responses:
  *       200:
@@ -156,6 +161,7 @@ router.get('/search-songs', auth, adminOnly, async (req, res, next) => {
  *         description: 歌单 ID 或歌单链接
  *       - in: query
  *         name: platform
+ *         description: 歌单所属平台
  *         schema: { type: string, enum: [netease, qq], default: netease }
  *     responses:
  *       200:
@@ -187,9 +193,19 @@ router.get('/playlist/:dissTid', auth, adminOnly, async (req, res, next) => {
  *       - in: path
  *         name: songMid
  *         required: true
+ *         description: 歌曲 MID（平台 ID）
+ *         schema: { type: string }
+ *       - in: query
+ *         name: name
+ *         description: 歌曲名（辅助获取高音质链接）
+ *         schema: { type: string }
+ *       - in: query
+ *         name: singer
+ *         description: 歌手名（辅助获取高音质链接）
  *         schema: { type: string }
  *       - in: query
  *         name: platform
+ *         description: 歌曲平台（QQ 失败自动回退网易云）
  *         schema: { type: string, enum: [netease, qq], default: netease }
  *     responses:
  *       200:
@@ -226,18 +242,19 @@ router.get('/song-url/:songMid', auth, adminOnly, async (req, res, next) => {
  *             properties:
  *               songs:
  *                 type: array
+ *                 description: 歌曲列表（最多 100 首）
  *                 items:
  *                   type: object
  *                   properties:
- *                     song_mid: { type: string }
- *                     name: { type: string }
- *                     singer: { type: string }
- *                     album_name: { type: string }
- *                     cover: { type: string }
- *                     duration: { type: integer }
- *               playlist_name: { type: string }
- *               fetchUrl: { type: boolean, default: false }
- *               platform: { type: string, enum: [netease, qq], default: netease }
+ *                     song_mid: { type: string, description: 歌曲平台 ID（必填） }
+ *                     name: { type: string, description: 歌曲名 }
+ *                     singer: { type: string, description: 歌手 }
+ *                     album_name: { type: string, description: 专辑名 }
+ *                     cover: { type: string, description: 封面 URL }
+ *                     duration: { type: integer, description: 时长（秒） }
+ *               playlist_name: { type: string, description: 归入的歌单名 }
+ *               fetchUrl: { type: boolean, default: false, description: 是否实时获取播放链接 }
+ *               platform: { type: string, enum: [netease, qq], default: netease, description: 歌曲平台 }
  *     responses:
  *       200:
  *         description: 导入结果
@@ -327,6 +344,7 @@ router.post('/import', auth, adminOnly, async (req, res, next) => {
  *       - in: path
  *         name: id
  *         required: true
+ *         description: 音乐 ID
  *         schema: { type: string }
  *     responses:
  *       200:
@@ -367,15 +385,19 @@ router.put('/refresh-url/:id', auth, adminOnly, async (req, res, next) => {
  *     parameters:
  *       - in: query
  *         name: page
+ *         description: 页码
  *         schema: { type: integer, default: 1 }
  *       - in: query
  *         name: pageSize
+ *         description: 每页数量
  *         schema: { type: integer, default: 20 }
  *       - in: query
  *         name: keyword
+ *         description: 按歌名/歌手/专辑搜索
  *         schema: { type: string }
  *       - in: query
  *         name: is_active
+ *         description: 是否仅返回启用歌曲
  *         schema: { type: boolean }
  *     responses:
  *       200:
@@ -421,6 +443,7 @@ router.get('/', auth, adminOnly, async (req, res, next) => {
  *       - in: path
  *         name: id
  *         required: true
+ *         description: 音乐 ID
  *         schema: { type: string }
  *     requestBody:
  *       required: true
@@ -429,13 +452,13 @@ router.get('/', auth, adminOnly, async (req, res, next) => {
  *           schema:
  *             type: object
  *             properties:
- *               name: { type: string }
- *               singer: { type: string }
- *               album: { type: string }
- *               cover: { type: string }
- *               play_url: { type: string }
- *               sort_order: { type: integer }
- *               is_active: { type: boolean }
+ *               name: { type: string, description: 歌曲名 }
+ *               singer: { type: string, description: 歌手 }
+ *               album: { type: string, description: 专辑 }
+ *               cover: { type: string, description: 封面 URL }
+ *               play_url: { type: string, description: 播放链接 }
+ *               sort_order: { type: integer, description: 排序值 }
+ *               is_active: { type: boolean, description: 是否启用 }
  *     responses:
  *       200:
  *         description: 更新成功
@@ -473,6 +496,7 @@ router.put('/:id', auth, adminOnly, async (req, res, next) => {
  *       - in: path
  *         name: id
  *         required: true
+ *         description: 音乐 ID
  *         schema: { type: string }
  *     responses:
  *       200:
@@ -505,6 +529,7 @@ router.delete('/:id', auth, adminOnly, async (req, res, next) => {
  *       - in: path
  *         name: id
  *         required: true
+ *         description: 音乐 ID
  *         schema: { type: string }
  *     requestBody:
  *       required: true
@@ -516,9 +541,11 @@ router.delete('/:id', auth, adminOnly, async (req, res, next) => {
  *               cover:
  *                 type: string
  *                 format: binary
+ *                 description: 封面图片（jpg/png/webp/gif）
  *               storage:
  *                 type: string
  *                 enum: [local, minio]
+ *                 description: 存储源（默认取系统配置）
  *     responses:
  *       200:
  *         description: 封面上传成功
@@ -578,6 +605,7 @@ router.post('/:id/cover', auth, adminOnly, (req, res, next) => {
  *       - in: path
  *         name: id
  *         required: true
+ *         description: 音乐 ID
  *         schema: { type: string }
  *     requestBody:
  *       required: true
@@ -632,6 +660,7 @@ router.post('/:id/lyric', auth, adminOnly, (req, res, next) => {
  *       - in: path
  *         name: id
  *         required: true
+ *         description: 音乐 ID
  *         schema: { type: string }
  *     requestBody:
  *       required: true
@@ -639,10 +668,12 @@ router.post('/:id/lyric', auth, adminOnly, (req, res, next) => {
  *         application/json:
  *           schema:
  *             type: object
+ *             required: [target_storage]
  *             properties:
  *               target_storage:
  *                 type: string
  *                 enum: [local, minio]
+ *                 description: 目标存储位置
  *     responses:
  *       200:
  *         description: 迁移成功
@@ -775,13 +806,17 @@ router.post('/:id/migrate-storage', auth, adminOnly, async (req, res, next) => {
  *                 description: LRC 歌词文件（可选）
  *               name:
  *                 type: string
+ *                 description: 歌曲名（不传则取文件名）
  *               singer:
  *                 type: string
+ *                 description: 歌手
  *               album:
  *                 type: string
+ *                 description: 专辑
  *               storage:
  *                 type: string
  *                 enum: [local, minio]
+ *                 description: 存储源（默认取系统配置）
  *     responses:
  *       200:
  *         description: 上传成功
@@ -896,6 +931,47 @@ router.post('/upload', auth, adminOnly, (req, res, next) => {
 /**
  * 从媒体库已有文件创建音乐记录（不重新上传文件，直接引用媒体库 URL）
  */
+/**
+ * @swagger
+ * /music/upload-from-media:
+ *   post:
+ *     summary: 从媒体库已有文件创建音乐记录（不重新上传）
+ *     tags: [音乐爬虫]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [media_id]
+ *             properties:
+ *               media_id:
+ *                 type: string
+ *                 description: 媒体库文件 ID（仅支持音频类型）
+ *               name:
+ *                 type: string
+ *                 description: 歌曲名（不传取文件名）
+ *               singer:
+ *                 type: string
+ *                 description: 歌手
+ *               album:
+ *                 type: string
+ *                 description: 专辑
+ *               cover:
+ *                 type: string
+ *                 description: 封面 URL
+ *               lyric:
+ *                 type: string
+ *                 description: 歌词文本
+ *               duration:
+ *                 type: integer
+ *                 description: 时长（秒）
+ *     responses:
+ *       201:
+ *         description: 创建成功
+ */
 router.post('/upload-from-media', auth, adminOnly, async (req, res, next) => {
   try {
     const { media_id, name, singer, album, cover, lyric, duration } = req.body;
@@ -946,6 +1022,47 @@ router.post('/upload-from-media', auth, adminOnly, async (req, res, next) => {
 /**
  * 通过外部播放 URL 创建音乐（不下载文件，直接引用外链）
  * 适用场景：用户已有音频直链（如自己的 CDN、第三方托管链接），无需上传文件
+ */
+/**
+ * @swagger
+ * /music/upload-from-url:
+ *   post:
+ *     summary: 通过外部播放 URL 创建音乐（外链引用，不下载文件）
+ *     tags: [音乐爬虫]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [play_url, name]
+ *             properties:
+ *               play_url:
+ *                 type: string
+ *                 description: 音频播放直链（http/https）
+ *               name:
+ *                 type: string
+ *                 description: 歌曲名
+ *               singer:
+ *                 type: string
+ *                 description: 歌手
+ *               album:
+ *                 type: string
+ *                 description: 专辑
+ *               cover:
+ *                 type: string
+ *                 description: 封面 URL
+ *               lyric:
+ *                 type: string
+ *                 description: 歌词文本
+ *               duration:
+ *                 type: integer
+ *                 description: 时长（秒）
+ *     responses:
+ *       201:
+ *         description: 创建成功
  */
 router.post('/upload-from-url', auth, adminOnly, async (req, res, next) => {
   try {
@@ -1004,19 +1121,33 @@ router.post('/upload-from-url', auth, adminOnly, async (req, res, next) => {
  *             properties:
  *               song_mid:
  *                 type: string
+ *                 description: 歌曲平台 ID（必填）
  *               name:
  *                 type: string
+ *                 description: 歌曲名（必填）
  *               singer:
  *                 type: string
+ *                 description: 歌手
  *               album_name:
  *                 type: string
+ *                 description: 专辑名
  *               cover:
  *                 type: string
+ *                 description: 封面 URL
  *               duration:
  *                 type: integer
+ *                 description: 时长（秒）
  *               storage:
  *                 type: string
  *                 enum: [local, minio]
+ *                 description: 存储源（默认取系统配置）
+ *               playlist_name:
+ *                 type: string
+ *                 description: 归入的歌单名
+ *               platform:
+ *                 type: string
+ *                 enum: [netease, qq]
+ *                 description: 歌曲平台
  *     responses:
  *       200:
  *         description: 保存成功

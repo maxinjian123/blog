@@ -63,16 +63,20 @@ router.get('/platforms', auth, adminOnly, async (req, res, next) => {
  *       - in: query
  *         name: keyword
  *         required: true
+ *         description: 搜索关键词
  *         schema: { type: string }
  *       - in: query
  *         name: platform
  *         required: true
+ *         description: 图片平台
  *         schema: { type: string, enum: [bing, baidu, dogetu, pexels, pixabay, unsplash] }
  *       - in: query
  *         name: page
+ *         description: 页码
  *         schema: { type: integer, default: 1 }
  *       - in: query
  *         name: pageSize
+ *         description: 每页数量
  *         schema: { type: integer, default: 20 }
  *     responses:
  *       200:
@@ -119,11 +123,11 @@ router.get('/search', auth, adminOnly, async (req, res, next) => {
  *           schema:
  *             type: object
  *             properties:
- *               platform: { type: string, enum: [bing, baidu, dogetu, pexels, pixabay, unsplash] }
- *               storage: { type: string, enum: [local, minio] }
+ *               platform: { type: string, enum: [bing, baidu, dogetu, pexels, pixabay, unsplash], description: 图片平台（必填） }
+ *               storage: { type: string, enum: [local, minio], description: 存储源，默认 local }
  *               item:
  *                 type: object
- *                 description: search 接口返回的列表项
+ *                 description: search 接口返回的列表项（含下载地址等）
  *     responses:
  *       200:
  *         description: 下载结果
@@ -195,11 +199,12 @@ router.post('/download', auth, adminOnly, async (req, res, next) => {
  *           schema:
  *             type: object
  *             properties:
- *               platform: { type: string, enum: [bing, baidu, dogetu, pexels, pixabay, unsplash] }
- *               storage: { type: string, enum: [local, minio] }
+ *               platform: { type: string, enum: [bing, baidu, dogetu, pexels, pixabay, unsplash], description: 图片平台（必填） }
+ *               storage: { type: string, enum: [local, minio], description: 存储源，默认 local }
  *               items:
  *                 type: array
  *                 items: { type: object }
+ *                 description: search 接口返回的列表项数组（最多 20 个）
  *     responses:
  *       200:
  *         description: 批量下载结果
