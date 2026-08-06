@@ -1,5 +1,6 @@
 import {
     AppstoreOutlined,
+    CodeOutlined,
     CommentOutlined,
     CustomerServiceOutlined,
     DashboardOutlined,
@@ -45,6 +46,7 @@ export default [
         ]
     },
     {key: '/media', icon: h(FolderOpenOutlined), label: '媒体库'},
+    {key: '/client-pages', icon: h(CodeOutlined), label: '客户端设计'},
     {key: '/comments', icon: h(CommentOutlined), label: '评论管理'},
     {key: '/guestbook', icon: h(MessageOutlined), label: '留言管理'},
     {key: '/announcements', icon: h(NotificationOutlined), label: '公告管理'},

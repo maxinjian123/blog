@@ -103,6 +103,8 @@ async function syncDatabase() {
         await migrateMediaFileFields();
         // 迁移：为 articles 表补充新增字段（sync 不修改已存在表结构）
         await migrateArticleFields();
+        // 迁移：自定义页面由数据库改为文件存储（backend/public），迁移后删除 client_pages 表
+        await migrateClientPagesToFiles();
     } catch (err) {
         console.error('[MySQL] 数据库同步失败:', err.message);
     }
@@ -164,6 +166,76 @@ async function migrateArticleFields() {
         } catch (err) {
             console.error(`[MySQL] 迁移字段 ${f.name} 失败:`, err.message);
         }
+    }
+}
+
+/**
+ * 迁移：自定义页面由数据库改为文件存储（backend/public/client-pages/<slug>/）
+ * 将 client_pages 表中的数据写入对应文件（index.html / style.css / script.js），
+ * 并注入 BlogAPI / BLOG_CONFIG 辅助脚本（若尚未包含），随后删除该表。
+ * 若表不存在或为空则直接跳过。
+ */
+async function migrateClientPagesToFiles() {
+    try {
+        const [tables] = await sequelize.query(
+            `SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'client_pages'`
+        );
+        if (!tables || tables.length === 0) return;
+
+        const [rows] = await sequelize.query('SELECT * FROM client_pages');
+        if (rows && rows.length > 0) {
+            const fs = require('fs');
+            const path = require('path');
+            const { buildBlogHelperScript } = require('../utils/clientPageTemplate');
+            const root = path.resolve(__dirname, '..', 'public', 'client-pages');
+
+            for (const row of rows) {
+                if (!row.slug) continue;
+                const dir = path.join(root, String(row.slug).trim());
+                fs.mkdirSync(dir, {recursive: true});
+
+                let html = row.html_content || '';
+                // 注入 BlogAPI / BLOG_CONFIG 辅助脚本（若尚未包含）
+                if (!html.includes('window.BlogAPI') && !html.includes('BlogAPI')) {
+                    const inject = `<script>\n${buildBlogHelperScript()}\n</script>`;
+                    const headEnd = html.lastIndexOf('</head>');
+                    if (headEnd !== -1) {
+                        html = html.slice(0, headEnd) + inject + html.slice(headEnd);
+                    } else {
+                        html = inject + '\n' + html;
+                    }
+                }
+                // 补充 style.css 引用（若内容存在且页面未显式引用）
+                if (row.css_content && !html.includes('style.css')) {
+                    const link = '<link rel="stylesheet" href="style.css">';
+                    const headEnd = html.lastIndexOf('</head>');
+                    if (headEnd !== -1) {
+                        html = html.slice(0, headEnd) + link + html.slice(headEnd);
+                    } else {
+                        html = link + '\n' + html;
+                    }
+                }
+                // 补充 script.js 引用（若内容存在且页面未显式引用）
+                if (row.js_content && !html.includes('script.js')) {
+                    const script = '<script src="script.js"></script>';
+                    const bodyEnd = html.lastIndexOf('</body>');
+                    if (bodyEnd !== -1) {
+                        html = html.slice(0, bodyEnd) + script + html.slice(bodyEnd);
+                    } else {
+                        html += '\n' + script;
+                    }
+                }
+                fs.writeFileSync(path.join(dir, 'index.html'), html, 'utf8');
+                if (row.css_content) fs.writeFileSync(path.join(dir, 'style.css'), row.css_content, 'utf8');
+                if (row.js_content) fs.writeFileSync(path.join(dir, 'script.js'), row.js_content, 'utf8');
+                console.log(`[MySQL] 自定义页面已迁移为文件: client-pages/${row.slug}`);
+            }
+        }
+
+        await sequelize.query('DROP TABLE IF EXISTS client_pages');
+        console.log('[MySQL] 已删除 client_pages 表（自定义页面改为文件存储）');
+    } catch (err) {
+        console.error('[MySQL] 迁移 client_pages 失败:', err.message);
     }
 }
 

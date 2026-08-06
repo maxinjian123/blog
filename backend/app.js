@@ -77,6 +77,19 @@ app.use('/api/v1/', operationLogger());
 // 统一注册所有路由
 registerRoutes(app);
 
+// 静态资源：public 目录作为后端静态资源目录，可通过链接直接访问（如 /logo.svg、/robots.txt）
+// 放在路由之后：仅当没有路由匹配时才回落到静态文件，避免与 API / 健康检查冲突
+// index 开启后，目录请求（如 /client-pages/home/）自动返回其中的 index.html
+app.use('/', (req, res, next) => {
+    // 静态 HTML 可能含内联样式/脚本，同样移除 CSP；允许跨源加载（Electron / 跨域前端）
+    res.removeHeader('Content-Security-Policy');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    next();
+}, express.static(path.join(__dirname, 'public'), {
+    index: ['index.html'],
+    maxAge: process.env.NODE_ENV === 'production' ? '1d' : 0
+}));
+
 app.use((req, res) => {
     res.status(404).json({code: 404, message: 'Route not found', data: null});
 });

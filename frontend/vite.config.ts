@@ -39,6 +39,11 @@ export default defineConfig({
                 changeOrigin: true,
                 rewrite: (path) => path
             },
+            // 自定义客户端页面（public/client-pages 静态文件）由后端提供，博客客户端同域访问
+            '/client-pages/': {
+                target: 'http://localhost:3000',
+                changeOrigin: true,
+            },
         },
     },
     // ==============打包优化===============

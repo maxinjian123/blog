@@ -14,7 +14,7 @@ RUN npm install
 COPY . .
 
 # 创建 uploads / bakup 目录
-RUN mkdir -p uploads bakup
+RUN mkdir -p uploads bakup public
 
 # 暴露端口
 EXPOSE 3000

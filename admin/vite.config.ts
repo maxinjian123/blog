@@ -23,6 +23,11 @@ export default defineConfig({
       '/uploads': {
         target: 'http://localhost:3000',
         changeOrigin: true
+      },
+      // 自定义客户端页面静态文件（public/client-pages）预览
+      '/client-pages/': {
+        target: 'http://localhost:3000',
+        changeOrigin: true
       }
     }
   }

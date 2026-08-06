@@ -2361,3 +2361,159 @@
  *       200:
  *         description: 返回 application/xml
  */
+
+/**
+ * @swagger
+ * tags:
+ *   - name: 自定义页面
+ *     description: 博客客户端设计模式 - public 目录文件管理（文件树 / 文件 / 目录 / 页面模板）
+ */
+
+/**
+ * @swagger
+ * /client-pages/tree:
+ *   get:
+ *     summary: 获取 public 静态目录完整文件树
+ *     tags: [自定义页面]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 返回 { root, tree }，节点含 name / path / type(dir|file) / children / size / updatedAt
+ *
+ * /client-pages/file:
+ *   get:
+ *     summary: 读取文件内容（仅文本文件可在线编辑）
+ *     tags: [自定义页面]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: path
+ *         required: true
+ *         schema: { type: string }
+ *         description: public 目录内的相对路径，如 client-pages/home/index.html
+ *     responses:
+ *       200:
+ *         description: 返回 { path, name, size, isText, content, updatedAt }
+ *   post:
+ *     summary: 创建新文件（已存在返回 409）
+ *     tags: [自定义页面]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [path]
+ *             properties:
+ *               path: { type: string, description: 相对路径 }
+ *               content: { type: string, description: 文件内容（默认空） }
+ *     responses:
+ *       201:
+ *         description: 创建成功
+ *   put:
+ *     summary: 写入 / 覆盖文件内容（保存时调用，自动创建父目录）
+ *     tags: [自定义页面]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [path, content]
+ *             properties:
+ *               path: { type: string }
+ *               content: { type: string }
+ *     responses:
+ *       200:
+ *         description: 已保存
+ *   delete:
+ *     summary: 删除文件
+ *     tags: [自定义页面]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: path
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: 已删除
+ *
+ * /client-pages/dir:
+ *   post:
+ *     summary: 创建目录（可递归）
+ *     tags: [自定义页面]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [path]
+ *             properties:
+ *               path: { type: string, description: 相对路径，如 client-pages/home }
+ *     responses:
+ *       201:
+ *         description: 创建成功
+ *   delete:
+ *     summary: 删除目录（递归，不能删除根目录）
+ *     tags: [自定义页面]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: path
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: 已删除
+ *
+ * /client-pages/rename:
+ *   put:
+ *     summary: 重命名 / 移动文件或目录
+ *     tags: [自定义页面]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [from, to]
+ *             properties:
+ *               from: { type: string, description: 源相对路径 }
+ *               to: { type: string, description: 目标相对路径 }
+ *     responses:
+ *       200:
+ *         description: 重命名成功
+ *
+ * /client-pages/page:
+ *   post:
+ *     summary: 新建页面（在 public/client-pages/<name>/ 创建 index.html / style.css / script.js 模板，内置 BlogAPI 辅助脚本）
+ *     tags: [自定义页面]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name]
+ *             properties:
+ *               name: { type: string, description: 页面名称（自动生成目录标识） }
+ *     responses:
+ *       201:
+ *         description: 页面已创建
+ */

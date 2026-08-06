@@ -26,6 +26,7 @@ const operationLogRoutes = require('./operationLogs');
 const backupRoutes = require('./backups');
 const emojiRoutes = require('./emojis');
 const emojiPackRoutes = require('./emojiPacks');
+const clientPagesRouter = require('./clientPages');
 
 // 加载 Swagger 文档声明（不注册为实际路由）
 require('./swagger-docs');
@@ -62,6 +63,7 @@ const routes = [
     {path: '/api/v1/backups', router: backupRoutes},
     {path: '/api/v1/emojis', router: emojiRoutes},
     {path: '/api/v1/emoji-packs', router: emojiPackRoutes},
+    {path: '/api/v1/client-pages', router: clientPagesRouter},
     {path: '/', router: sitemapRoutes}
 ];
 

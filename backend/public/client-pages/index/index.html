@@ -1,0 +1,44 @@
+<link rel="stylesheet" href="style.css">
+<script>
+window.BLOG_CONFIG = { apiBase: '/api/v1', siteUrl: window.location.origin };
+window.BlogAPI = (function () {
+  var API_BASE = window.BLOG_CONFIG.apiBase;
+  function buildQuery(params) {
+    if (!params) return '';
+    var parts = [];
+    Object.keys(params).forEach(function (k) {
+      var v = params[k];
+      if (v === undefined || v === null || v === '') return;
+      parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(v));
+    });
+    return parts.length ? '?' + parts.join('&') : '';
+  }
+  async function request(path, options) {
+    options = options || {};
+    var headers = Object.assign({ 'Content-Type': 'application/json', 'X-Client-Type': 'blog-client' }, options.headers || {});
+    var res = await fetch(API_BASE + path, Object.assign({}, options, { headers: headers }));
+    var json = null;
+    try { json = await res.json(); } catch (e) { json = null; }
+    if (!res.ok || (json && json.code && json.code >= 400)) {
+      var err = new Error((json && json.message) || ('HTTP ' + res.status));
+      err.status = res.status;
+      throw err;
+    }
+    return json ? json.data : null;
+  }
+  return {
+    get: function (path, params) { return request(path + buildQuery(params), { method: 'GET' }); },
+    post: function (path, body) { return request(path, { method: 'POST', body: JSON.stringify(body || {}) }); },
+    put: function (path, body) { return request(path, { method: 'PUT', body: JSON.stringify(body || {}) }); },
+    del: function (path, body) { return request(path, { method: 'DELETE', body: body ? JSON.stringify(body) : undefined }); }
+  };
+})();
+</script>
+<div class="wrap">
+  <h1 id="app-title">加载中...</h1>
+  <div id="article-list"></div>
+</div>
+<div>
+<a href='../about/index.html'>关于我</a>
+</div>
+<script src="script.js"></script>

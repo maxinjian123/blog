@@ -54,6 +54,12 @@ const routes: RouteRecordRaw[] = [
         meta: {title: '表情管理', requiresAuth: true}
     },
     {
+        path: '/client-pages',
+        name: 'ClientPages',
+        component: () => import('@/pages/ClientPages.vue'),
+        meta: {title: '客户端设计', requiresAuth: true}
+    },
+    {
         path: '/comments',
         name: 'CommentManage',
         component: () => import('@/pages/CommentManage.vue'),

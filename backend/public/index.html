@@ -1,10 +1,38 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog 后端服务</title>
+    <style>
+        body { font-family: -apple-system, 'Segoe UI', 'Microsoft YaHei', sans-serif; background: #f5f6f8; color: #333; margin: 0; padding: 0; }
+        .wrap { max-width: 720px; margin: 80px auto; padding: 0 20px; }
+        .card { background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,.06); padding: 40px 48px; }
+        h1 { margin: 0 0 8px; font-size: 26px; }
+        p.sub { color: #888; margin: 0 0 28px; }
+        a { color: #1677ff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        ul { list-style: none; padding: 0; margin: 0 0 24px; }
+        li { padding: 10px 0; border-bottom: 1px dashed #eee; display: flex; justify-content: space-between; gap: 16px; }
+        li code { background: #f0f2f5; padding: 2px 8px; border-radius: 4px; font-size: 13px; }
+        .badge { color: #52c41a; font-size: 13px; }
+    </style>
 </head>
 <body>
-node
+<div class="wrap">
+    <div class="card">
+        <h1>Blog 后端服务运行中</h1>
+        <p class="sub">本目录（backend/public）为后端静态资源目录，放入的文件可通过链接直接访问。</p>
+        <ul>
+            <li><span>健康检查</span><code><a href="/">GET /</a></code></li>
+            <li><span>Swagger API 文档</span><code><a href="/api-docs">/api-docs</a></code></li>
+            <li><span>RSS 订阅</span><code><a href="/api/v1/rss">/api/v1/rss</a></code></li>
+            <li><span>站点地图</span><code><a href="/sitemap.xml">/sitemap.xml</a></code></li>
+            <li><span>上传文件</span><code><a href="/uploads/">/uploads/</a></code></li>
+            <li><span>自定义客户端页面</span><code><a href="/client-pages/">/client-pages/</a></code></li>
+        </ul>
+        <p style="color:#999;font-size:13px;margin:0;">提示：站点 Logo（site_logo）等静态资源可放入此目录后以绝对路径引用，例如 /logo.svg。</p>
+    </div>
+</div>
 </body>
 </html>

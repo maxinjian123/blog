@@ -80,6 +80,7 @@ const ROUTE_MODULE_MAP = [
   {pattern: /\/(admin\/)?users/i, module: 'user', label: '用户'},
   {pattern: /\/(admin\/)?guestbook/i, module: 'guestbook', label: '留言板'},
   {pattern: /\/(admin\/)?messages/i, module: 'message', label: '消息'},
+  {pattern: /\/(admin\/)?client-pages/i, module: 'client_page', label: '自定义页面'},
   {pattern: /\/auth\/login/i, module: 'auth', label: '认证', action: 'login'},
   {pattern: /\/auth\/logout/i, module: 'auth', label: '认证', action: 'logout'},
   {pattern: /\/auth\/github/i, module: 'auth', label: '认证', action: 'github_login'},

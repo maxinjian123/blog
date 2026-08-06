@@ -1,0 +1,9 @@
+body { font-family: system-ui, sans-serif; background: #f6f7fb; margin: 0; }
+.wrap { max-width: 720px; margin: 40px auto; padding: 0 20px; }
+h1 { color: #1677ff; }
+#article-list { margin-top: 20px; }
+.item { background: #fff; padding: 14px 16px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,.05); }
+.item h3 { margin: 0 0 4px; }
+.item a { color: #333; text-decoration: none; }
+.item a:hover { color: #1677ff; }
+.meta { color: #999; font-size: 13px; }

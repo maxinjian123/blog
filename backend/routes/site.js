@@ -3,8 +3,18 @@ const { optionalAuth } = require('../middleware/auth');
 const { success } = require('../utils/response');
 const { User, Article, Category, Tag, Comment, VisitorLog, sequelize } = require('../models');
 const config = require('../config');
+const clientApiDocs = require('../services/clientApiDocs');
 
 const router = express.Router();
+
+// 自定义页面开发参考：常用公开接口文档（动态提供，管理端「接口文档」页签从此接口获取，不硬编码）
+router.get('/api-docs', async (req, res, next) => {
+  try {
+    return success(res, clientApiDocs);
+  } catch (err) {
+    next(err);
+  }
+});
 
 router.get('/info', optionalAuth, async (req, res, next) => {
   try {

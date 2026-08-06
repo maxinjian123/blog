@@ -71,6 +71,7 @@ services:
     volumes:
       - uploads_data:/blog-app/uploads
       - bakup_data:/blog-app/bakup
+      - public_data:/blog-app/public
     depends_on:
       mysql:
         condition: service_healthy
@@ -112,6 +113,7 @@ volumes:
   redis_data:
   uploads_data:
   bakup_data:
+  public_data:
 
 networks:
   blog-network:
