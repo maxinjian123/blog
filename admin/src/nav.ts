@@ -40,7 +40,8 @@ export default [
         children: [
             {key: '/crawler', icon: h(GithubOutlined), label: 'GitHub抓取'},
             {key: '/music', icon: h(CustomerServiceOutlined), label: '音乐抓取'},
-            {key: '/image-crawler', icon: h(PictureOutlined), label: '图片抓取'}
+            {key: '/image-crawler', icon: h(PictureOutlined), label: '图片抓取'},
+            {key: '/article-crawler', icon: h(FileTextOutlined), label: '文章抓取'}
         ]
     },
     {key: '/media', icon: h(FolderOpenOutlined), label: '媒体库'},

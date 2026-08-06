@@ -318,6 +318,7 @@ router.put('/settings', auth, adminOnly, async (req, res, next) => {
       'minio_enabled', 'minio_endpoint', 'minio_port', 'minio_use_ssl',
       'minio_access_key', 'minio_secret_key', 'minio_bucket', 'minio_public_base_url', 'minio_region',
       'github_token',
+      'zhihu_access_secret',
       'pexels_api_key', 'pixabay_api_key', 'unsplash_api_key',
       'doubao_api_key', 'doubao_base_url', 'doubao_chat_model', 'doubao_image_model',
       'ollama_host', 'ollama_chat_enabled', 'ollama_chat_model'

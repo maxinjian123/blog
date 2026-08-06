@@ -139,7 +139,11 @@ async function migrateMediaFileFields() {
 
 async function migrateArticleFields() {
     const newFields = [
-        { name: 'featured', def: 'TINYINT(1) NOT NULL DEFAULT 0', comment: '是否精选（首页精选展示）' }
+        { name: 'featured', def: 'TINYINT(1) NOT NULL DEFAULT 0', comment: '是否精选（首页精选展示）' },
+        { name: 'source_platform', def: 'VARCHAR(50) NULL', comment: '文章来源平台标识' },
+        { name: 'source_author', def: 'VARCHAR(200) NULL', comment: '文章原始作者' },
+        { name: 'source_url', def: 'VARCHAR(1000) NULL', comment: '文章原始链接' },
+        { name: 'source_license', def: 'VARCHAR(255) NULL', comment: '文章来源版权/授权说明' }
     ];
     for (const f of newFields) {
         try {

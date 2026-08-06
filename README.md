@@ -21,7 +21,7 @@
 
 - **AI 创作增强**：AI 辅助写作与润色、自动标签/摘要、按文章内容生成封面，支持豆包云端模型与 Ollama 本地模型
 - **富文本编辑**：Markdown 编辑器（md-editor-v3），支持表情、导出 PDF、定时发布、版本历史、Markdown 导入、精选文章标记（首页精选位展示）
-- **媒体与抓取**：双存储媒体库（本地 + MinIO）、图片/音乐/GitHub 仓库抓取与导入
+- **媒体与抓取**：双存储媒体库（本地 + MinIO）、图片/音乐/GitHub 仓库抓取与导入、多平台文章采集（按关键词搜索掘金 / 知乎 / CSDN / 通用 RSS 的文章，预览后导入为草稿并记录来源与版权信息）
 - **互动能力**：评论（图形验证码防刷 + 管理员回复邮件通知）、留言板、友链、邮件订阅与通知
 - **运维友好**：Docker Compose 一键部署、Swagger API 文档、Nginx 网关配置、操作日志审计
 - **数据备份**：管理后台在线/定时备份 MySQL 数据、下载备份文件、在线恢复、删除与条件搜索，备份固定保存在后端 `bakup` 目录
@@ -71,6 +71,7 @@ blog/
 - 媒体库：双存储（本地 + MinIO）、文件类型筛选、卡片/列表视图、存储迁移
 - 音乐管理：网易云/QQ 音乐搜索导入、歌单管理、手动上传、歌词编辑
 - 图片抓取：Bing / 百度（搜索引擎）、Pexels / Pixabay / Unsplash（图库，需在「系统设置」配置 API Key）、dogetu（表情包），瀑布流触底加载、在线预览、批量下载到本地或 MinIO（自动记录作者、来源、授权信息）
+- 文章抓取：按关键词从掘金 / 知乎 / CSDN / 通用 RSS 多平台采集文章，搜索→预览→勾选导入为草稿，自动 AI 摘要/标签、分类归类，并记录来源平台 / 作者 / 原文链接 / 版权说明（source_platform / source_author / source_url / source_license），同一原文自动去重
 - 友链管理、邮件订阅管理、系统设置（站点信息 / 邮件 / 上传 / AI / 图片抓取 API Key / 爬虫 Token，保存即生效）
 - GitHub 仓库抓取（搜索接口受官方前 1000 条结果限制，页码已做钳制与提示）
 - 数据备份：手动/定时生成 SQL 备份、下载到本机、在线恢复（含上传文件恢复）、删除与按文件名/类型/时间搜索
@@ -245,7 +246,7 @@ cd ../admin && npm install && npm run build
 | 上传 | `/api/v1/upload`、`/api/v1/comment-upload` | 文件与评论图片上传 |
 | 音乐 | `/api/v1/music`、`/api/v1/playlists` | 音乐搜索导入、歌单、上传 |
 | AI | `/api/v1/ai` | 摘要、对话、自动回复、连接测试 |
-| 抓取 | `/api/v1/crawler`、`/api/v1/image-crawler` | GitHub 仓库与图片抓取 |
+| 抓取 | `/api/v1/crawler`、`/api/v1/image-crawler`、`/api/v1/article-crawler` | GitHub 仓库、图片与多平台文章抓取 |
 | 站点 | `/api/v1/site` | 站点信息、统计 |
 | 管理 | `/api/v1/admin` | 仪表盘统计、系统设置、测试邮件、操作日志、数据导出 |
 | 操作日志 | `/api/v1/operation-logs` | 管理端写操作审计 |

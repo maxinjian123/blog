@@ -71,6 +71,12 @@ const DEFAULT_CONFIGS = [
         category: 'crawler',
         description: 'GitHub Personal Access Token（用于仓库搜索与内容爬取，避免 60次/小时限流）'
     },
+    {
+        config_key: 'zhihu_access_secret',
+        config_value: '',
+        category: 'crawler',
+        description: '知乎开放平台 AccessKey（用于知乎文章搜索，在 https://developer.zhihu.com 申请）'
+    },
 
     // 图片抓取 - 第三方平台 API Key
     {
@@ -121,6 +127,7 @@ const SENSITIVE_KEYS = new Set([
     'mail_pass',
     'minio_secret_key',
     'github_token',
+    'zhihu_access_secret',
     'pexels_api_key',
     'pixabay_api_key',
     'unsplash_api_key',
@@ -231,9 +238,10 @@ function applyToConfig() {
         }
     };
 
-    // crawler - GitHub
+    // crawler - GitHub / 知乎
     config.crawler = {
-        githubToken: cache.github_token || ''
+        githubToken: cache.github_token || '',
+        zhihuAccessSecret: cache.zhihu_access_secret || ''
     };
 
     // image_crawler - 第三方图片平台 API Key

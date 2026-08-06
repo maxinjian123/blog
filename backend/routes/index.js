@@ -19,6 +19,7 @@ const subscriberRoutes = require('./subscribers');
 const mediaRoutes = require('./media');
 const crawlerRoutes = require('./crawler');
 const imageCrawlerRoutes = require('./imageCrawler');
+const articleCrawlerRoutes = require('./articleCrawler');
 const musicRoutes = require('./music');
 const playlistRoutes = require('./playlists');
 const operationLogRoutes = require('./operationLogs');
@@ -54,6 +55,7 @@ const routes = [
     {path: '/api/v1/media', router: mediaRoutes},
     {path: '/api/v1/crawler', router: crawlerRoutes},
     {path: '/api/v1/image-crawler', router: imageCrawlerRoutes},
+    {path: '/api/v1/article-crawler', router: articleCrawlerRoutes},
     {path: '/api/v1/music', router: musicRoutes},
     {path: '/api/v1/playlists', router: playlistRoutes},
     {path: '/api/v1/operation-logs', router: operationLogRoutes},

@@ -168,7 +168,8 @@ const profileLoading = ref(false)
 
 // 爬虫配置表单
 const crawlerForm = reactive({
-  github_token: ''
+  github_token: '',
+  zhihu_access_secret: ''
 })
 
 // 图片抓取平台 API Key 表单
@@ -195,6 +196,7 @@ const sensitiveHasValue = reactive<Record<string, boolean>>({
   mail_pass: false,
   minio_secret_key: false,
   github_token: false,
+  zhihu_access_secret: false,
   pexels_api_key: false,
   pixabay_api_key: false,
   unsplash_api_key: false,
@@ -259,7 +261,9 @@ function applyGroupedToForms() {
 
   const crawler = grouped.value.crawler || {}
   crawlerForm.github_token = crawler.github_token?.value || ''
+  crawlerForm.zhihu_access_secret = crawler.zhihu_access_secret?.value || ''
   sensitiveHasValue.github_token = !!crawler.github_token?.hasValue
+  sensitiveHasValue.zhihu_access_secret = !!crawler.zhihu_access_secret?.hasValue
 
   const imageCrawler = grouped.value.image_crawler || {}
   imageCrawlerForm.pexels_api_key = imageCrawler.pexels_api_key?.value || ''
@@ -322,7 +326,7 @@ function handleSaveUpload() {
 }
 
 function handleSaveCrawler() {
-  return saveConfigs({...crawlerForm}, 'GitHub Token 已保存')
+  return saveConfigs({...crawlerForm}, '抓取配置已保存')
 }
 
 function handleSaveImageCrawler() {
@@ -932,10 +936,10 @@ onMounted(() => {
                 </a-descriptions>
               </div>
               <div class="settings-section">
-                <h3>GitHub 抓取配置</h3>
+                <h3>抓取配置</h3>
                 <a-form layout="vertical">
                   <a-form-item
-                      label="Personal Access Token"
+                      label="GitHub Personal Access Token"
                       help="用于 GitHub 仓库搜索与内容爬取，配置后可将限流从 60次/小时提升至 5000次/小时"
                   >
                     <a-input-password
@@ -944,9 +948,19 @@ onMounted(() => {
                         allow-clear
                     />
                   </a-form-item>
+                  <a-form-item
+                      label="知乎 AccessKey"
+                      help="用于知乎文章搜索（知乎开放平台 OpenAPI），在 https://developer.zhihu.com 开放平台申请"
+                  >
+                    <a-input-password
+                        v-model:value="crawlerForm.zhihu_access_secret"
+                        :placeholder="sensitiveHasValue.zhihu_access_secret ? '已配置（不显示明文），如需修改请输入新值' : '请输入知乎开放平台 AccessKey'"
+                        allow-clear
+                    />
+                  </a-form-item>
                   <a-form-item>
                     <a-button type="primary" :loading="saving" @click="handleSaveCrawler">
-                      保存 Token
+                      保存配置
                     </a-button>
                   </a-form-item>
                 </a-form>

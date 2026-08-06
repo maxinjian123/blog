@@ -75,6 +75,26 @@ module.exports = (sequelize) => {
       type: DataTypes.JSON,
       allowNull: true
     },
+    source_platform: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      comment: '文章来源平台标识（juejin/zhihu/csdn/rss 等）'
+    },
+    source_author: {
+      type: DataTypes.STRING(200),
+      allowNull: true,
+      comment: '文章原始作者'
+    },
+    source_url: {
+      type: DataTypes.STRING(1000),
+      allowNull: true,
+      comment: '文章原始链接'
+    },
+    source_license: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      comment: '文章来源版权/授权说明'
+    },
     created_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW

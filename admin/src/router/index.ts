@@ -135,6 +135,12 @@ const routes: RouteRecordRaw[] = [
                 name: 'ImageCrawler',
                 component: () => import('@/pages/ImageCrawler.vue'),
                 meta: {title: '图片抓取', requiresAuth: true}
+            },
+            {
+                path: '/article-crawler',
+                name: 'ArticleCrawler',
+                component: () => import('@/pages/ArticleCrawler.vue'),
+                meta: {title: '文章抓取', requiresAuth: true}
             }
         ]
     },
