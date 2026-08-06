@@ -23,6 +23,10 @@ export interface Article {
     comment_count: number
     similarity?: number
     catalog: Array<{ text: string; level: number }>
+    article_type: string
+    original_url: string
+    original_authorized: boolean
+    creation_declaration: string
 }
 
 export interface Tag {
@@ -97,7 +101,11 @@ export const useArticleStore = defineStore('article', () => {
                 like_count: a.like_count || 0,
                 comment_count: a.comment_count || 0,
                 similarity: a.similarity,
-                catalog: a.catalog || []
+                catalog: a.catalog || [],
+                article_type: a.article_type || 'original',
+                original_url: a.original_url || '',
+                original_authorized: !!a.original_authorized,
+                creation_declaration: a.creation_declaration || 'none'
             }))
             total.value = data.pagination?.total || data.total || 0
             page.value = data.page || 1
@@ -135,7 +143,11 @@ export const useArticleStore = defineStore('article', () => {
                 view_count: a.view_count || 0,
                 like_count: a.like_count || 0,
                 comment_count: a.comment_count || 0,
-                catalog: a.catalog || []
+                catalog: a.catalog || [],
+                article_type: a.article_type || 'original',
+                original_url: a.original_url || '',
+                original_authorized: !!a.original_authorized,
+                creation_declaration: a.creation_declaration || 'none'
             }
             return currentArticle.value
         } catch (e: any) {

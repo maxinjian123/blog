@@ -100,6 +100,33 @@ const showToc = computed(() => {
   return article && article.content_type === 'markdown' && article.catalog && article.catalog.length > 0
 })
 
+// 文章类型 / 创作声明展示辅助
+const articleTypeInfo = computed(() => {
+  const type = currentArticle.value?.article_type || 'original'
+  const map: Record<string, {label: string; color: string}> = {
+    original: {label: '原创', color: '#10b981'},
+    repost: {label: '转载', color: '#3b82f6'},
+    translation: {label: '翻译', color: '#a855f7'},
+  }
+  return map[type] || map.original
+})
+
+const declarationInfo = computed(() => {
+  const decl = currentArticle.value?.creation_declaration || 'none'
+  const map: Record<string, {label: string; color: string}> = {
+    none: {label: '', color: ''},
+    ai_assisted: {label: '部分内容由AI辅助生成', color: '#8b5cf6'},
+    network_recompiled: {label: '内容来源网络，进行整合/再创作', color: '#f59e0b'},
+    personal_opinion: {label: '个人观点，仅供参考', color: '#10b981'},
+  }
+  return map[decl] || map.none
+})
+
+const showOriginalLink = computed(() => {
+  const type = currentArticle.value?.article_type
+  return (type === 'repost' || type === 'translation') && !!currentArticle.value?.original_url
+})
+
 useArticleSeo(currentArticle)
 
 const showTocDrawer = ref(false)
@@ -386,13 +413,24 @@ function goBack() {
         </button>
 
         <header class="mb-8">
-          <span v-if="currentArticle.category"
-                class="inline-flex items-center gap-1 text-xs px-3 py-1 rounded-full font-medium mb-4"
-                style="background-color: var(--color-primary-light); color: var(--color-primary)">
+          <div class="flex flex-wrap items-center gap-2 mb-4">
+            <span v-if="currentArticle.category"
+                  class="inline-flex items-center gap-1 text-xs px-3 py-1 rounded-full font-medium"
+                  style="background-color: var(--color-primary-light); color: var(--color-primary)">
             <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path
                 d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
             {{ currentArticle.category }}
           </span>
+            <span class="inline-flex items-center text-xs px-2.5 py-1 rounded-full font-medium"
+                  :style="`color: ${articleTypeInfo.color}; background-color: ${articleTypeInfo.color}1a; border: 1px solid ${articleTypeInfo.color}33`">
+              {{ articleTypeInfo.label }}
+            </span>
+            <span v-if="declarationInfo.label"
+                  class="inline-flex items-center text-xs px-2.5 py-1 rounded-full font-medium"
+                  :style="`color: ${declarationInfo.color}; background-color: ${declarationInfo.color}1a; border: 1px solid ${declarationInfo.color}33`">
+              {{ declarationInfo.label }}
+            </span>
+          </div>
           <h1 class="text-2xl md:text-3xl lg:text-4xl font-extrabold leading-tight tracking-tight mb-4"
               style="color: var(--color-text)">
             {{ currentArticle.title }}
@@ -436,6 +474,26 @@ function goBack() {
             <span class="hidden md:flex items-center gap-1 text-xs" style="color: var(--color-text-secondary)">
                 约 {{ readingStats.words }} 字
               </span>
+          </div>
+          <div v-if="showOriginalLink"
+               class="mt-3 flex flex-wrap items-center gap-2 text-sm"
+               style="color: var(--color-text-secondary)">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
+                 style="color: var(--color-primary)">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+            </svg>
+            <span>{{ currentArticle.article_type === 'repost' ? '原文链接' : '翻译原文' }}：</span>
+            <a :href="currentArticle.original_url" target="_blank" rel="noopener noreferrer nofollow"
+               class="underline underline-offset-2 hover:opacity-80 transition-opacity"
+               style="color: var(--color-primary)">
+              {{ currentArticle.original_url }}
+            </a>
+            <span v-if="currentArticle.original_authorized"
+                  class="text-xs px-2 py-0.5 rounded-full"
+                  style="background-color: rgba(16,185,129,0.12); color: #10b981">
+              ✓ 已获授权
+            </span>
           </div>
         </header>
 

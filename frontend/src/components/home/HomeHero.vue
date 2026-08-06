@@ -109,6 +109,11 @@ function formatDate(dateStr: string) {
                 <span v-if="featuredArticle.category" class="text-xs font-medium px-2 py-0.5 rounded-md" style="background-color: rgba(255,255,255,0.18); color: rgba(255,255,255,0.9)">
                   {{ featuredArticle.category }}
                 </span>
+                <span v-if="featuredArticle.article_type && featuredArticle.article_type !== 'original'"
+                      class="text-xs font-medium px-2 py-0.5 rounded-md"
+                      style="background-color: rgba(255,255,255,0.18); color: rgba(255,255,255,0.9)">
+                  {{ featuredArticle.article_type === 'repost' ? '转载' : '翻译' }}
+                </span>
               </div>
               <div class="absolute bottom-0 left-0 right-0 p-4 md:p-6">
                 <h2 class="text-lg md:text-xl font-bold text-white mb-1 line-clamp-2 group-hover:underline">{{ featuredArticle.title }}</h2>

@@ -25,6 +25,10 @@ export function mapArticle(a: any): Article {
     like_count: a.like_count || 0,
     comment_count: a.comment_count || 0,
     catalog: a.catalog || [],
+    article_type: a.article_type || 'original',
+    original_url: a.original_url || '',
+    original_authorized: !!a.original_authorized,
+    creation_declaration: a.creation_declaration || 'none',
   }
 }
 

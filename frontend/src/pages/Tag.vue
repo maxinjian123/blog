@@ -142,6 +142,10 @@ function goBack() {
             like_count: (article as any).like_count || 0,
             comment_count: (article as any).comment_count || 0,
             catalog: (article as any).catalog || [],
+            article_type: (article as any).article_type || 'original',
+            original_url: (article as any).original_url || '',
+            original_authorized: !!((article as any).original_authorized),
+            creation_declaration: (article as any).creation_declaration || 'none',
           }"
         />
       </router-link>

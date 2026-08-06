@@ -118,6 +118,25 @@ router.post('/polish', auth, adminOnly, async (req, res, next) => {
     }
 });
 
+// 智能排版
+router.post('/format', auth, adminOnly, async (req, res, next) => {
+    try {
+        const {content, content_type = 'html'} = req.body;
+        if (!content) {
+            return error(res, '排版内容不能为空', 400);
+        }
+        // 根据文章类型加载不同的prompt文件
+        const promptFile = content_type === 'markdown' ? 'md-format-prompt.txt' : 'html-format-prompt.txt';
+        const text = await loadPrompt(promptFile)
+
+        const formatted = await ai.chat.chatSimple(content, text);
+
+        return success(res, {formatted});
+    } catch (err) {
+        next(err);
+    }
+});
+
 // 续写内容
 router.post('/continue', auth, adminOnly, async (req, res, next) => {
     try {

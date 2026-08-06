@@ -247,6 +247,23 @@
  *                 type: boolean
  *                 description: 是否推荐/置顶
  *                 default: false
+ *               article_type:
+ *                 type: string
+ *                 enum: [original, repost, translation]
+ *                 description: 文章类型（original=原创 / repost=转载 / translation=翻译）
+ *                 default: original
+ *               original_url:
+ *                 type: string
+ *                 description: 原文链接（转载/翻译时填写，原创留空）
+ *               original_authorized:
+ *                 type: boolean
+ *                 description: 原文允许转载/翻译或本次已获得原文作者授权
+ *                 default: false
+ *               creation_declaration:
+ *                 type: string
+ *                 enum: [none, ai_assisted, network_recompiled, personal_opinion]
+ *                 description: 创作声明（none=无声明 / ai_assisted=部分内容由AI辅助生成 / network_recompiled=内容来源网络进行整合再创作 / personal_opinion=个人观点仅供参考）
+ *                 default: none
  *     responses:
  *       201:
  *         description: 创建成功
@@ -350,6 +367,20 @@
  *               catalog: { type: array, description: 目录 }
  *               scheduled_at: { type: string, format: date-time, description: 定时发布时间 }
  *               featured: { type: boolean, description: 是否推荐 }
+ *               article_type:
+ *                 type: string
+ *                 enum: [original, repost, translation]
+ *                 description: 文章类型（original=原创 / repost=转载 / translation=翻译）
+ *               original_url:
+ *                 type: string
+ *                 description: 原文链接（转载/翻译时填写，原创清空）
+ *               original_authorized:
+ *                 type: boolean
+ *                 description: 原文允许转载/翻译或本次已获得原文作者授权
+ *               creation_declaration:
+ *                 type: string
+ *                 enum: [none, ai_assisted, network_recompiled, personal_opinion]
+ *                 description: 创作声明（none=无声明 / ai_assisted=部分内容由AI辅助生成 / network_recompiled=内容来源网络进行整合再创作 / personal_opinion=个人观点仅供参考）
  *     responses:
  *       200:
  *         description: 更新成功
@@ -1972,6 +2003,32 @@
  *     responses:
  *       200:
  *         description: 成功
+ *
+ * /ai/format:
+ *   post:
+ *     summary: AI 智能排版文章
+ *     tags: [AI]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [content]
+ *             properties:
+ *               content:
+ *                 type: string
+ *                 description: 待排版内容
+ *               content_type:
+ *                 type: string
+ *                 enum: [html, markdown]
+ *                 description: 内容类型
+ *                 default: html
+ *     responses:
+ *       200:
+ *         description: 成功（formatted 为排版后的内容）
  *
  * /ai/tags:
  *   post:

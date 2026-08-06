@@ -95,6 +95,29 @@ module.exports = (sequelize) => {
       allowNull: true,
       comment: '文章来源版权/授权说明'
     },
+    article_type: {
+      type: DataTypes.ENUM('original', 'repost', 'translation'),
+      defaultValue: 'original',
+      allowNull: false,
+      comment: '文章类型：original=原创 / repost=转载 / translation=翻译'
+    },
+    original_url: {
+      type: DataTypes.STRING(1000),
+      allowNull: true,
+      comment: '原文链接（转载/翻译时填写）'
+    },
+    original_authorized: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      allowNull: false,
+      comment: '原文允许转载/翻译或本次已获得原文作者授权'
+    },
+    creation_declaration: {
+      type: DataTypes.ENUM('none', 'ai_assisted', 'network_recompiled', 'personal_opinion'),
+      defaultValue: 'none',
+      allowNull: false,
+      comment: '创作声明：none=无声明 / ai_assisted=部分内容由AI辅助生成 / network_recompiled=内容来源网络进行整合再创作 / personal_opinion=个人观点仅供参考'
+    },
     created_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW

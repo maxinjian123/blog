@@ -5,15 +5,15 @@ const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
 const config = require('./config');
-const { syncDatabase } = require('./models');
+const {syncDatabase} = require('./models');
 require('./utils/redis');
 const errorHandler = require('./middleware/errorHandler');
 
-const { registerRoutes } = require('./routes');
-const { startScheduler } = require('./utils/scheduler');
-const { verifyMailer } = require('./services/mail');
-const { initDefaults, loadConfigs } = require('./services/configService');
-const { initDefaultEmojis } = require('./services/emojiService');
+const {registerRoutes} = require('./routes');
+const {startScheduler} = require('./utils/scheduler');
+const {verifyMailer} = require('./services/mail');
+const {initDefaults, loadConfigs} = require('./services/configService');
+const {initDefaultEmojis} = require('./services/emojiService');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpecs = require('./config/swagger');
 
@@ -25,48 +25,48 @@ app.set('trust proxy', 1);
 app.use(helmet());
 
 const corsOrigins = config.cors.origin
-  ? config.cors.origin.split(',').map((s) => s.trim())
-  : "*";
+    ? config.cors.origin.split(',').map((s) => s.trim())
+    : "*";
 app.use(cors({
-  origin: corsOrigins,
-  credentials: true,
-  // 暴露 X-New-Token 给前端，用于 JWT 滑动续期
-  exposedHeaders: ['X-New-Token']
+    origin: corsOrigins,
+    credentials: true,
+    // 暴露 X-New-Token 给前端，用于 JWT 滑动续期
+    exposedHeaders: ['X-New-Token']
 }));
 
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({limit: '10mb'}));
+app.use(express.urlencoded({extended: true}));
 
 if (process.env.NODE_ENV === 'development') {
-  app.use(morgan('dev'));
+    app.use(morgan('dev'));
 } else {
-  app.use(morgan('combined'));
+    app.use(morgan('combined'));
 }
 
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 300,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { code: 429, message: '请求过多，请稍后再试。', data: null }
+    windowMs: 15 * 60 * 1000,
+    max: 300,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {code: 429, message: '请求过多，请稍后再试。', data: null}
 });
 app.use('/api/', limiter);
 
 // 静态资源：允许跨源加载（Electron 桌面端 file:// 页面、跨域前端访问图片/音频/视频）
 // helmet 默认设置 Cross-Origin-Resource-Policy: same-origin 会阻止 no-cors 跨源加载（ERR_BLOCKED_BY_RESPONSE）
 app.use('/uploads', (req, res, next) => {
-  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-  next();
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    next();
 }, express.static(path.join(__dirname, '.', config.upload.dir)));
 
 // Swagger API 文档（开发环境无需鉴权，便于调试）
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs, {
-  explorer: true,
-  customSiteTitle: 'Blog API Docs'
+    explorer: true,
+    customSiteTitle: 'Blog API Docs'
 }));
 app.get('/api-docs.json', (req, res) => {
-  res.setHeader('Content-Type', 'application/json');
-  res.send(swaggerSpecs);
+    res.setHeader('Content-Type', 'application/json');
+    res.send(swaggerSpecs);
 });
 
 // 操作日志中间件：自动记录管理端写操作（POST/PUT/DELETE）
@@ -78,31 +78,33 @@ app.use('/api/v1/', operationLogger());
 registerRoutes(app);
 
 app.use((req, res) => {
-  res.status(404).json({ code: 404, message: 'Route not found', data: null });
+    res.status(404).json({code: 404, message: 'Route not found', data: null});
 });
 
 app.use(errorHandler);
 
 // syncDatabase();
 
+
+
 const PORT = config.port;
 app.listen(PORT, async () => {
-  console.log(`[Server] Running on http://localhost:${PORT}`);
-  console.log(`[Server] Environment: ${process.env.NODE_ENV || 'development'}`);
-  // P4-2: 启动定时发布调度器
-  startScheduler();
+    console.log(`[Server] Running on http://localhost:${PORT}`);
+    console.log(`[Server] Environment: ${process.env.NODE_ENV || 'development'}`);
+    // P4-2: 启动定时发布调度器
+    startScheduler();
 
-  // 启动后同步数据库模型 + 加载站点/邮件/上传配置
-  try {
-    await syncDatabase();
-    await initDefaults();
-    await initDefaultEmojis();
-    await loadConfigs();
-    // 配置加载完成后，验证邮件服务（按最新配置）
-    await verifyMailer();
-  } catch (err) {
-    console.error('[Server] 配置加载失败:', err.message);
-  }
+    // 启动后同步数据库模型 + 加载站点/邮件/上传配置
+    try {
+        await syncDatabase();
+        await initDefaults();
+        await initDefaultEmojis();
+        await loadConfigs();
+        // 配置加载完成后，验证邮件服务（按最新配置）
+        await verifyMailer();
+    } catch (err) {
+        console.error('[Server] 配置加载失败:', err.message);
+    }
 });
 
 module.exports = app;

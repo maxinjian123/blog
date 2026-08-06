@@ -143,7 +143,11 @@ async function migrateArticleFields() {
         { name: 'source_platform', def: 'VARCHAR(50) NULL', comment: '文章来源平台标识' },
         { name: 'source_author', def: 'VARCHAR(200) NULL', comment: '文章原始作者' },
         { name: 'source_url', def: 'VARCHAR(1000) NULL', comment: '文章原始链接' },
-        { name: 'source_license', def: 'VARCHAR(255) NULL', comment: '文章来源版权/授权说明' }
+        { name: 'source_license', def: 'VARCHAR(255) NULL', comment: '文章来源版权/授权说明' },
+        { name: 'article_type', def: "ENUM('original','repost','translation') NOT NULL DEFAULT 'original'", comment: '文章类型：原创/转载/翻译' },
+        { name: 'original_url', def: 'VARCHAR(1000) NULL', comment: '原文链接（转载/翻译时填写）' },
+        { name: 'original_authorized', def: 'TINYINT(1) NOT NULL DEFAULT 0', comment: '原文允许转载/翻译或已获得授权' },
+        { name: 'creation_declaration', def: "ENUM('none','ai_assisted','network_recompiled','personal_opinion') NOT NULL DEFAULT 'none'", comment: '创作声明' }
     ];
     for (const f of newFields) {
         try {

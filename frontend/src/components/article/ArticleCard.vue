@@ -61,6 +61,15 @@ function formatDate(dateStr: string) {
         >
           {{ article.category }}
         </span>
+        <span
+          v-if="article.article_type && article.article_type !== 'original'"
+          class="text-xs px-2 py-0.5 rounded-md font-medium"
+          :style="article.article_type === 'repost'
+            ? 'background-color: rgba(59,130,246,0.12); color: #3b82f6'
+            : 'background-color: rgba(168,85,247,0.12); color: #a855f7'"
+        >
+          {{ article.article_type === 'repost' ? '转载' : '翻译' }}
+        </span>
         <span class="text-xs" style="color: var(--color-text-secondary)">{{ formatDate(article.created_at) }}</span>
       </div>
       <h3

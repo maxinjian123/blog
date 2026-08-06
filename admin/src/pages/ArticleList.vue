@@ -72,6 +72,12 @@ const columns = [
     width: 90
   },
   {
+    title: '类型',
+    dataIndex: 'article_type',
+    key: 'article_type',
+    width: 90
+  },
+  {
     title: '精选',
     dataIndex: 'featured',
     key: 'featured',
@@ -376,6 +382,11 @@ onMounted(() => {
             精选
           </a-tag>
           <span v-else style="color: #999">-</span>
+        </template>
+        <template v-else-if="column.key === 'article_type'">
+          <a-tag :color="record.article_type === 'original' ? 'green' : (record.article_type === 'repost' ? 'blue' : 'purple')">
+            {{ record.article_type === 'original' ? '原创' : (record.article_type === 'repost' ? '转载' : '翻译') }}
+          </a-tag>
         </template>
       </template>
     </a-table>

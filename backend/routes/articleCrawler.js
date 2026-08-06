@@ -291,7 +291,9 @@ router.post('/import', auth, adminOnly, async (req, res, next) => {
           source_platform: article.source_platform || platform,
           source_author: article.author || '',
           source_url: article.source_url || '',
-          source_license: getPlatformLicense(platform)
+          source_license: getPlatformLicense(platform),
+          article_type: 'repost',
+          original_url: article.source_url || ''
         });
 
         // 8. 关联标签

@@ -64,6 +64,7 @@ async function callAi(endpoint: string, payload: Record<string, any>) {
         data.summary ||
         data.polished ||
         data.continuation ||
+        data.formatted ||
         JSON.stringify(data, null, 2)
     emit('result', result.value)
 
@@ -134,6 +135,18 @@ async function handleSummary() {
   })
 }
 
+async function handleFormat() {
+  if (!hasEditorContent.value) {
+    message.warning('请先在编辑器中输入内容')
+    return
+  }
+  currentAction.value = '智能排版'
+  await callAi('/ai/format', {
+    content: props.editorContent,
+    content_type: props.contentType || 'html',
+  })
+}
+
 async function handleAutoTags() {
   if (!hasEditorContent.value) {
     message.warning('请先在编辑器中输入内容')
@@ -176,7 +189,7 @@ function clearResult() {
       </div>
       <a-tag color="processing" class="format-tag">输出格式：{{ formatLabel }}</a-tag>
     </div>
-    <p class="ai-subtitle">围绕当前文章内容智能创作、润色与提炼</p>
+    <p class="ai-subtitle">围绕当前文章内容智能创作、润色、排版与提炼</p>
 
     <!-- 创作文章 -->
     <section class="ai-section">
@@ -239,6 +252,14 @@ function clearResult() {
         >
           <template #icon><ThunderboltOutlined/></template>
           润色
+        </a-button>
+        <a-button
+            class="tool-btn"
+            :loading="loading && currentAction === '智能排版'"
+            @click="handleFormat"
+        >
+          <template #icon><ToolOutlined/></template>
+          智能排版
         </a-button>
         <a-button
             class="tool-btn"

@@ -73,7 +73,24 @@ const form = reactive({
   status: 'draft' as 'draft' | 'published',
   scheduledAt: null as string | null,
   featured: false,
+  articleType: 'original' as 'original' | 'repost' | 'translation',
+  originalUrl: '',
+  originalAuthorized: false,
+  creationDeclaration: 'none' as 'none' | 'ai_assisted' | 'network_recompiled' | 'personal_opinion',
 })
+
+const articleTypeOptions = [
+  {value: 'original', label: '原创'},
+  {value: 'repost', label: '转载'},
+  {value: 'translation', label: '翻译'},
+]
+
+const declarationOptions = [
+  {value: 'none', label: '无声明'},
+  {value: 'ai_assisted', label: '部分内容由AI辅助生成'},
+  {value: 'network_recompiled', label: '内容来源网络，进行整合/再创作'},
+  {value: 'personal_opinion', label: '个人观点，仅供参考'},
+]
 
 const categories = ref<CategoryOption[]>([])
 const tags = ref<TagOption[]>([])
@@ -215,6 +232,14 @@ async function loadArticle() {
     form.tagIds = (article.tags || []).map((t: TagOption) => t.id)
     form.status = article.status === 'published' ? 'published' : 'draft'
     form.featured = !!article.featured
+    form.articleType = ['original', 'repost', 'translation'].includes(article.article_type)
+        ? article.article_type
+        : 'original'
+    form.originalUrl = article.original_url || ''
+    form.originalAuthorized = !!article.original_authorized
+    form.creationDeclaration = ['none', 'ai_assisted', 'network_recompiled', 'personal_opinion'].includes(article.creation_declaration)
+        ? article.creation_declaration
+        : 'none'
     catalog.value = article.catalog || []
     form.content = article.content || ''
     if (article.scheduled_at) {
@@ -328,6 +353,22 @@ async function handleSave(draft = true) {
     return
   }
 
+  // 转载/翻译：必须填写原文链接并确认授权
+  if (form.articleType !== 'original') {
+    if (!form.originalUrl.trim()) {
+      message.warning(form.articleType === 'repost' ? '转载文章需填写原文链接' : '翻译文章需填写原文链接')
+      return
+    }
+    if (!form.originalAuthorized) {
+      message.warning(
+          form.articleType === 'repost'
+              ? '请确认原文允许转载或本次转载已获得原文作者授权'
+              : '请确认原文允许翻译或本次翻译已获得原文作者授权'
+      )
+      return
+    }
+  }
+
   saveLoading.value = true
   const payload: Record<string, any> = {
     title: form.title,
@@ -343,6 +384,10 @@ async function handleSave(draft = true) {
     content_type: 'markdown',
     catalog: catalog.value,
     scheduled_at: form.scheduledAt ? new Date(form.scheduledAt).toISOString() : null,
+    article_type: form.articleType,
+    original_url: form.articleType === 'original' ? '' : form.originalUrl.trim(),
+    original_authorized: form.originalAuthorized,
+    creation_declaration: form.creationDeclaration,
   }
 
   try {
@@ -559,6 +604,10 @@ function getComparableSnapshot(): string {
     status: form.status,
     scheduledAt: form.scheduledAt,
     featured: form.featured,
+    articleType: form.articleType,
+    originalUrl: form.originalUrl,
+    originalAuthorized: form.originalAuthorized,
+    creationDeclaration: form.creationDeclaration,
   })
 }
 
@@ -779,6 +828,62 @@ onBeforeRouteLeave(() => {
                     {{ tag.name }}
                   </a-select-option>
                 </a-select>
+              </section>
+
+              <a-divider class="section-divider"/>
+
+              <section class="side-section">
+                <h3 class="side-title">
+                  <AppstoreOutlined/>
+                  文章类型
+                </h3>
+                <a-radio-group
+                    v-model:value="form.articleType"
+                    class="article-type-group"
+                    :options="articleTypeOptions"
+                    option-type="button"
+                />
+                <div v-if="form.articleType !== 'original'" class="field-block original-block">
+                  <label class="field-label">
+                    原文链接
+                    <a-tooltip :title="form.articleType === 'repost' ? '填写被转载文章的原始链接' : '填写被翻译文章的原始链接'">
+                      <InfoCircleOutlined class="field-tip"/>
+                    </a-tooltip>
+                  </label>
+                  <a-input
+                      v-model:value="form.originalUrl"
+                      placeholder="https://example.com/article/xxx"
+                      class="field-input"
+                  />
+                  <a-checkbox
+                      v-model:checked="form.originalAuthorized"
+                      class="authorize-check"
+                  >
+                    {{ form.articleType === 'repost' ? '原文允许转载或本次转载已获得原文作者授权' : '原文允许翻译或本次翻译已获得原文作者授权' }}
+                  </a-checkbox>
+                  <p class="side-hint">
+                    {{ form.articleType === 'repost' ? '转载他人文章时，请确认已获得授权并填写原文链接' : '翻译他人文章时，请确认已获得授权并填写原文链接' }}
+                  </p>
+                </div>
+              </section>
+
+              <a-divider class="section-divider"/>
+
+              <section class="side-section">
+                <h3 class="side-title">
+                  <FileTextOutlined/>
+                  创作声明
+                </h3>
+                <a-select
+                    v-model:value="form.creationDeclaration"
+                    placeholder="选择创作声明"
+                    class="field-select"
+                >
+                  <a-select-option v-for="opt in declarationOptions" :key="opt.value" :value="opt.value">
+                    {{ opt.label }}
+                  </a-select-option>
+                </a-select>
+                <p class="side-hint">创作声明将展示在文章页，帮助读者了解内容来源</p>
               </section>
 
               <a-divider class="section-divider"/>
@@ -1416,6 +1521,33 @@ onBeforeRouteLeave(() => {
 
 .field-select {
   width: 100%;
+}
+
+.article-type-group {
+  display: flex;
+  width: 100%;
+}
+
+.article-type-group :deep(.ant-radio-button-wrapper) {
+  flex: 1;
+  text-align: center;
+}
+
+.original-block {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px dashed var(--color-border, #d9d9d9);
+  border-radius: 6px;
+}
+
+.field-input {
+  width: 100%;
+}
+
+.authorize-check {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
 }
 
 .schedule-hint {

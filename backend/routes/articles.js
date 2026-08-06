@@ -511,7 +511,7 @@ router.get('/:id/neighbors', async (req, res, next) => {
 
 router.post('/', auth, adminOnly, async (req, res, next) => {
     try {
-        const {title, slug, content, summary, cover, status, category_id, tags, content_type, catalog, featured} = req.body
+        const {title, slug, content, summary, cover, status, category_id, tags, content_type, catalog, featured, article_type, original_url, original_authorized, creation_declaration} = req.body
         if (!title || !content) {
             return error(res, '标题和内容不能为空', 400)
         }
@@ -532,7 +532,11 @@ router.post('/', auth, adminOnly, async (req, res, next) => {
             category_id,
             featured: !!featured,
             content_type: ['html', 'markdown'].includes(content_type) ? content_type : 'html',
-            catalog: catalog || (content_type === 'markdown' ? extractCatalog(content) : null)
+            catalog: catalog || (content_type === 'markdown' ? extractCatalog(content) : null),
+            article_type: ['original', 'repost', 'translation'].includes(article_type) ? article_type : 'original',
+            original_url: article_type === 'original' ? null : (original_url || null),
+            original_authorized: !!original_authorized,
+            creation_declaration: ['none', 'ai_assisted', 'network_recompiled', 'personal_opinion'].includes(creation_declaration) ? creation_declaration : 'none'
         })
 
         if (tags && Array.isArray(tags)) {
@@ -571,7 +575,7 @@ router.put('/:id', auth, adminOnly, async (req, res, next) => {
             return error(res, '文章不存在', 404)
         }
 
-        const {title, slug, content, summary, cover, status, category_id, tags, content_type, catalog, scheduled_at, featured} = req.body
+        const {title, slug, content, summary, cover, status, category_id, tags, content_type, catalog, scheduled_at, featured, article_type, original_url, original_authorized, creation_declaration} = req.body
 
         // P4-1: 保存版本历史（仅当内容或标题变更时）
         const titleChanged = title && title !== article.title
@@ -614,6 +618,9 @@ router.put('/:id', auth, adminOnly, async (req, res, next) => {
             // 草稿 + 定时时间 = 等待发布
         }
 
+        const finalArticleType = ['original', 'repost', 'translation'].includes(article_type) ? article_type : article.article_type
+        const finalDeclaration = ['none', 'ai_assisted', 'network_recompiled', 'personal_opinion'].includes(creation_declaration) ? creation_declaration : article.creation_declaration
+
         await article.update({
             title: title || article.title,
             slug: slug || article.slug,
@@ -626,7 +633,11 @@ router.put('/:id', auth, adminOnly, async (req, res, next) => {
             category_id: category_id !== undefined ? category_id : article.category_id,
             featured: featured !== undefined ? !!featured : article.featured,
             content_type: content_type !== undefined ? (['html', 'markdown'].includes(content_type) ? content_type : article.content_type) : article.content_type,
-            catalog: catalog !== undefined ? catalog : (content && (content_type === 'markdown' || (content_type === undefined && article.content_type === 'markdown')) ? extractCatalog(content) : article.catalog)
+            catalog: catalog !== undefined ? catalog : (content && (content_type === 'markdown' || (content_type === undefined && article.content_type === 'markdown')) ? extractCatalog(content) : article.catalog),
+            article_type: finalArticleType,
+            original_url: finalArticleType === 'original' ? null : (original_url !== undefined ? original_url : article.original_url),
+            original_authorized: original_authorized !== undefined ? !!original_authorized : article.original_authorized,
+            creation_declaration: finalDeclaration
         })
 
         if (tags && Array.isArray(tags)) {
