@@ -81,7 +81,7 @@ services:
       - blog-network  # 加入自定义网络
 
   client:
-    image: nginx:alpine
+    image: nginx:latest
     container_name: blog-client
     restart: unless-stopped
     ports:
@@ -95,7 +95,7 @@ services:
       - blog-network  # 加入自定义网络
 
   admin:
-    image: nginx:alpine
+    image: nginx:latest
     container_name: blog-admin
     restart: unless-stopped
     ports:
