@@ -10,7 +10,8 @@ import tsWorker from 'monaco-editor/language/typescript/ts.worker?worker'
 
 let inited = false
 
-// 自定义页面内置全局对象的类型声明：为 JS/TS 提供 BlogAPI / BLOG_CONFIG 代码提示
+// 自定义页面内置全局对象的类型声明：为 JS/TS 提供 BlogAPI / BlogApi / BLOG_CONFIG 代码提示
+// 这些对象统一封装在公共脚本 public/common.js 中，页面通过 <script src="/common.js"> 引用
 const BLOG_LIB_DTS = `
 declare var BlogAPI: {
   /** 发起 GET 请求，自动解包 { code, message, data }，返回 data */
@@ -21,6 +22,54 @@ declare var BlogAPI: {
   put(path: string, body?: Record<string, any>): Promise<any>;
   /** 发起 DELETE 请求 */
   del(path: string, body?: Record<string, any>): Promise<any>;
+};
+declare var BlogApi: {
+  /** 站点信息 */
+  getSiteInfo(): Promise<any>;
+  /** 站点统计 */
+  getSiteStats(): Promise<any>;
+  /** 文章列表（params: page/pageSize/featured/category_id/tag_id/keyword/sort） */
+  getArticles(params?: Record<string, any>): Promise<any>;
+  /** 文章详情 */
+  getArticle(id: string | number): Promise<any>;
+  /** 文章归档 */
+  getArticleArchive(): Promise<any>;
+  /** 文章评论列表 */
+  getArticleComments(id: string | number, params?: Record<string, any>): Promise<any>;
+  /** 发表评论（需先 getCaptcha 获取验证码） */
+  postArticleComment(id: string | number, data?: Record<string, any>): Promise<any>;
+  /** 文章点赞 */
+  likeArticle(id: string | number): Promise<any>;
+  /** 相关文章推荐 */
+  getRelatedArticles(id: string | number, params?: Record<string, any>): Promise<any>;
+  /** 上一篇 / 下一篇 */
+  getArticleNeighbors(id: string | number): Promise<any>;
+  /** 分类列表 */
+  getCategories(): Promise<any>;
+  /** 热门分类 */
+  getHotCategories(params?: Record<string, any>): Promise<any>;
+  /** 标签列表 */
+  getTags(): Promise<any>;
+  /** 热门标签 */
+  getHotTags(params?: Record<string, any>): Promise<any>;
+  /** 标签下的文章 */
+  getTagArticles(id: string | number, params?: Record<string, any>): Promise<any>;
+  /** 图形验证码（返回 { key, svg }） */
+  getCaptcha(): Promise<any>;
+  /** 公告列表 */
+  getAnnouncements(): Promise<any>;
+  /** 最新公告 */
+  getLatestAnnouncement(): Promise<any>;
+  /** 友情链接 */
+  getLinks(): Promise<any>;
+  /** 留言板 */
+  getGuestbook(params?: Record<string, any>): Promise<any>;
+  /** 发布留言（data: { author_name, author_email, content, parent_id }） */
+  postGuestbook(data?: Record<string, any>): Promise<any>;
+  /** 图片表情包 */
+  getEmojiPacks(): Promise<any>;
+  /** 公开歌单 */
+  getPublicPlaylist(shareCode: string): Promise<any>;
 };
 declare var BLOG_CONFIG: {
   /** API 基地址（相对路径，如 /api/v1） */

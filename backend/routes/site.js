@@ -25,6 +25,7 @@ router.get('/info', optionalAuth, async (req, res, next) => {
 
     const siteInfo = {
       site_name: config.site?.name || 'Blog',
+      site_url: config.site?.url || '',
       site_logo: config.site?.logo || '/logo.svg',
       author_email: admin?.email || config.adminEmail || '',
       site_description: config.site?.description || '记录技术学习与思考的个人博客',

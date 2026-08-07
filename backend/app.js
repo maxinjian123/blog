@@ -10,6 +10,7 @@ require('./utils/redis');
 const errorHandler = require('./middleware/errorHandler');
 
 const {registerRoutes} = require('./routes');
+const {ensureCommonJs} = require('./routes/clientPages');
 const {startScheduler} = require('./utils/scheduler');
 const {verifyMailer} = require('./services/mail');
 const {initDefaults, loadConfigs} = require('./services/configService');
@@ -74,6 +75,27 @@ app.get('/api-docs.json', (req, res) => {
 const {operationLogger} = require('./middleware/operationLog');
 app.use('/api/v1/', operationLogger());
 
+// 迁移：自定义页面目录由 client-pages/ 提升到 public 根目录（页面直接存放于 public 下）
+// 将 client-pages 下的子目录移动到 public 根，随后删除空的 client-pages 目录
+function migrateClientPagesDir() {
+    const fs = require('fs');
+    const src = path.join(__dirname, 'public', 'client-pages');
+    if (!fs.existsSync(src)) return;
+    const entries = fs.readdirSync(src, {withFileTypes: true});
+    for (const entry of entries) {
+        const from = path.join(src, entry.name);
+        const to = path.join(__dirname, 'public', entry.name);
+        if (entry.isDirectory() && !fs.existsSync(to)) {
+            fs.renameSync(from, to);
+            console.log(`[Server] 自定义页面目录迁移: client-pages/${entry.name} -> ${entry.name}`);
+        }
+    }
+    if (fs.readdirSync(src).length === 0) {
+        fs.rmdirSync(src);
+        console.log('[Server] 已删除 client-pages 目录（自定义页面直接存放于 public 根目录）');
+    }
+}
+
 // 统一注册所有路由
 registerRoutes(app);
 
@@ -109,6 +131,10 @@ app.listen(PORT, async () => {
 
     // 启动后同步数据库模型 + 加载站点/邮件/上传配置
     try {
+        // 文件系统迁移：client-pages 目录 -> public 根目录
+        migrateClientPagesDir();
+        // 确保公共封装脚本 public/common.js 存在（页面模板统一引用）
+        await ensureCommonJs();
         await syncDatabase();
         await initDefaults();
         await initDefaultEmojis();

@@ -228,7 +228,7 @@ cd ../admin && npm install && npm run build
 - **系统设置**：站点信息、邮件、上传、AI、爬虫 Token，**保存即生效**
 - **数据备份**：手动 / 定时生成 SQL 备份、下载、在线恢复（含上传文件恢复）、删除与按文件名 / 类型 / 时间搜索，备份固定保存在后端 `bakup` 目录
 - **表情管理**：编辑器表情数据存入数据库，支持图片表情包管理（手动链接 / 媒体库选择 / 上传，上传自动压缩至 300×300 以内）；管理端与前台 `md-editor-v3` 编辑器均内置表情面板，支持底部 Tab 切换自定义表情、QQNT 表情库（qface，GIF 优先）、WeChat Emoji 与表情包
-- **客户端设计**：设计模式，文件存储在 `public/` 静态目录，管理端以文件树管理，直接编写 HTML / CSS / JS 自定义博客客户端页面，内置 `window.BlogAPI` 客户端与 `window.BLOG_CONFIG` 配置（参照「接口文档」与 Swagger），页面以 `/client-pages/<页面目录>/` 访问，支持新建文件 / 目录、重命名、删除、一键预览
+- **客户端设计**：设计模式，文件存储在 `public/` 静态目录，管理端以文件树管理，直接编写 HTML / CSS / JS 自定义博客客户端页面，内置 `window.BlogAPI` 通用客户端、`window.BlogApi`（全部公开接口封装函数）与 `window.BLOG_CONFIG` 配置（参照「接口文档」与 Swagger），页面以 `/页面目录/` 访问，后端首页 `/` 自动重定向到 `/index/index.html`，支持新建文件 / 目录、重命名、删除、一键预览
 
 ### 后端 API
 
@@ -324,38 +324,44 @@ Web 端通过 Vite 代理走 `/api/v1` 相对路径，无需配置后端地址�
 
 ### 使用流程
 
-1. 进入管理后台 → **客户端设计** → **新建页面**：在 `public/client-pages/<名称>/` 下自动生成 `index.html` / `style.css` / `script.js` 模板（内置 `BlogAPI` 辅助脚本）
-2. 左侧**文件树**管理文件：支持**新建文件 / 新建目录 / 重命名 / 删除 / 刷新**；打开的文件以 **IDE 式标签栏**展示，可多标签切换 / 关闭，未保存内容带 ● 标记（切换不丢失编辑）；在右侧 **Monaco 在线代码编辑器** 中编写代码（语法高亮 + 智能代码提示：`BlogAPI` / `BLOG_CONFIG` 自动补全）
-3. 点击「保存」**动态写入对应文件**，通过 `/路径` 链接直接访问（如 `/client-pages/home/`）；「复制地址 / 预览」可快速查看
+1. 进入管理后台 → **客户端设计** → **新建页面**：在 `public/<名称>/` 下自动生成 `index.html` / `style.css` / `script.js` 模板（模板通过 `<script src="/common.js">` 自动引用公共封装脚本，含 `BlogAPI` 客户端与全部公开接口封装函数 `BlogApi`）
+2. 左侧**文件树**管理文件：支持**新建文件 / 新建目录 / 重命名 / 删除 / 刷新**；打开的文件以 **IDE 式标签栏**展示，可多标签切换 / 关闭，未保存内容带 ● 标记（切换不丢失编辑）；在右侧 **Monaco 在线代码编辑器** 中编写代码（语法高亮 + 智能代码提示：`BlogAPI` / `BlogApi` / `BLOG_CONFIG` 自动补全）
+3. 点击「保存」**动态写入对应文件**，通过 `/路径` 链接直接访问（如 `/home/`）；「复制地址 / 预览」可快速查看
 4. 「接口文档」页签展示**后端全部接口**（由 Swagger 规范实时生成，`GET /api/v1/site/api-docs`），支持按模块 / 关键词筛选与「仅公开」切换；请求示例、参数、请求体、返回示例均带 **语法高亮**；完整文档见 Swagger `/api-docs`
 
 ### 页面访问地址
 
+自定义页面直接存放于后端静态目录 `public/` 下，页面 `index.html` 的访问地址为：
+
 ```
-http://<host>:3000/client-pages/<页面目录>/
+http://<host>:3000/<页面目录>/
 ```
 
-生产环境（Nginx）下，`client.conf` / `admin.conf` 均已将 `/client-pages/` 反代到后端，直接使用站点域名访问即可。
+后端首页 `GET /` **自动重定向**到自定义首页 `/index/index.html`（若该文件存在）；通过管理端「新建页面」创建名为 `index` 的页面即为站点首页。生产环境（Nginx）下后端反代到站点域名，直接使用域名访问即可。
 
-### 内置全局对象
+### 内置全局对象（公共脚本 public/common.js）
 
-新建页面模板已内置（静态写入文件，非服务端注入）：
+封装脚本**统一存放于公共文件 `backend/public/common.js`**（不再内联到每个页面），新建页面模板通过 `<script src="/common.js">` 自动引用，可在管理端「客户端设计」文件树中直接编辑该文件，修改后对所有引用页面即时生效。提供：
 
 - `window.BLOG_CONFIG` — 页面配置：`apiBase`（`/api/v1`）、`siteUrl` 等
-- `window.BlogAPI` — 封装好的 API 客户端：自动携带 `X-Client-Type: blog-client` 请求头，并解包 `{code, message, data}` 响应
+- `window.BlogAPI` — 通用 API 客户端：自动携带 `X-Client-Type: blog-client` 请求头，并解包 `{code, message, data}` 响应（`get` / `post` / `put` / `del`）
+- `window.BlogApi` — **全部公开接口的封装函数**：`getSiteInfo`、`getSiteStats`、`getArticles`、`getArticle`、`getArticleArchive`、`getArticleComments`、`postArticleComment`、`likeArticle`、`getRelatedArticles`、`getArticleNeighbors`、`getCategories`、`getHotCategories`、`getTags`、`getHotTags`、`getTagArticles`、`getCaptcha`、`getAnnouncements`、`getLatestAnnouncement`、`getLinks`、`getGuestbook`、`postGuestbook`、`getEmojiPacks`、`getPublicPlaylist`
 
 ```js
 // 示例：加载文章列表与站点信息
-const list = await BlogAPI.get('/articles', { page: 1, pageSize: 10 });
-const info = await BlogAPI.get('/site/info');
+const list = await BlogApi.getArticles({ page: 1, pageSize: 10 });
+const info = await BlogApi.getSiteInfo();
 document.title = info.site_name;
+
+// 兜底：也可直接使用通用客户端
+// const list = await BlogAPI.get('/articles', { page: 1, pageSize: 10 });
 ```
 
 ### 静态资源目录
 
-`backend/public/` 为后端静态资源目录，放入的文件可通过链接直接访问（如站点 Logo 放置为 `public/logo.svg` 后以 `/logo.svg` 引用），支持 HTML / CSS / JS / 图片等任意静态资源；目录请求（如 `/client-pages/home/`）会自动返回其中的 `index.html`。
+`backend/public/` 为后端静态资源目录，放入的文件可通过链接直接访问（如站点 Logo 放置为 `public/logo.svg` 后以 `/logo.svg` 引用），支持 HTML / CSS / JS / 图片等任意静态资源；目录请求（如 `/home/`）会自动返回其中的 `index.html`。
 
-> 注：早期版本使用 `client_pages` 数据库表存储自定义页面，现已改为文件存储；升级时已有页面会自动迁移为 `public/client-pages/<slug>/` 下的文件并删除旧表。
+> 注：早期版本使用 `client_pages` 数据库表存储自定义页面，现已改为文件存储并直接存放于 `public/` 根目录（曾用 `public/client-pages/<slug>/` 子目录，升级时旧目录会自动迁移到 `public/<slug>/`）。
 
 ## API 概览
 
@@ -383,7 +389,7 @@ document.title = info.site_name;
 | 数据备份 | `/api/v1/backups` | 在线 / 定时备份、下载、恢复、删除、搜索与定时配置 |
 | 表情管理 | `/api/v1/emojis` | 编辑器表情数据查询与后台增删改查 |
 | 表情包 | `/api/v1/emoji-packs` | 图片表情包查询、增删改查与上传压缩 |
-| 自定义页面 | `/api/v1/client-pages` | 客户端设计模式：public 目录文件管理（文件树 / 文件 / 目录 / 页面模板，公开访问地址 `/client-pages/<页面目录>/`） |
+| 自定义页面 | `/api/v1/client-pages` | 客户端设计模式：public 目录文件管理（文件树 / 文件 / 目录 / 页面模板，公开访问地址 `/页面目录/`） |
 | RSS / Sitemap | `/api/v1/rss`、`/sitemap.xml` | 订阅与站点地图 |
 
 ## 桌面端（Electron）

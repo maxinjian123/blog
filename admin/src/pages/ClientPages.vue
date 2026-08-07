@@ -34,7 +34,7 @@ interface TreeNode {
 
 const treeLoading = ref(false)
 const treeData = ref<any[]>([])
-const expandedKeys = ref<string[]>(['client-pages'])
+const expandedKeys = ref<string[]>([])
 const selectedPath = ref('')
 const nodeMap = ref<Record<string, TreeNode>>({})
 
@@ -464,24 +464,26 @@ const paramColumns = [
   {title: '说明', key: 'description', dataIndex: 'description'}
 ]
 
-const helperExample = `// 自定义页面内置两个全局对象（页面模板已自动包含）：
+const helperExample = `// 自定义页面内置三个全局对象，统一封装在公共脚本 public/common.js 中
+// （新建页面模板通过 <script src="/common.js"> 自动引用，可在管理端直接编辑该文件）：
 // window.BLOG_CONFIG —— 页面配置（apiBase、siteUrl 等）
-// window.BlogAPI       —— 封装好的 API 客户端（自动携带 blog-client 标识并解包响应）
+// window.BlogAPI      —— 通用 API 客户端（get / post / put / del）
+// window.BlogApi      —— 全部公开接口封装的可直接调用函数
 
 async function loadArticles() {
   // 1. 获取文章列表（自动只返回已发布文章）
-  const list = await BlogAPI.get('/articles', { page: 1, pageSize: 10, sort: 'published_at' });
+  const list = await BlogApi.getArticles({ page: 1, pageSize: 10, sort: 'published_at' });
   // list = { list: [...], pagination: { page, pageSize, total, totalPages } }
   console.log(list.list, list.pagination.total);
 
   // 2. 获取站点信息
-  const info = await BlogAPI.get('/site/info');
+  const info = await BlogApi.getSiteInfo();
   document.title = info.site_name;
 
   // 3. 发表评论（需先取验证码）
-  const captcha = await BlogAPI.get('/captcha');
+  const captcha = await BlogApi.getCaptcha();
   // captcha = { key: '...', svg: '<svg>...' } —— 把 svg 渲染给用户填写验证码
-  await BlogAPI.post('/articles/1/comments', {
+  await BlogApi.postArticleComment(1, {
     content: '写得好！',
     qq_number: '123456',
     captcha_key: captcha.key,
@@ -649,9 +651,11 @@ onMounted(() => {
               <api-outlined/> 内置全局对象
             </a-typography-title>
             <a-typography-paragraph>
-              新建页面模板的 <code>index.html</code> 中已内置
-              <code>window.BLOG_CONFIG</code>（页面配置）与
-              <code>window.BlogAPI</code>（API 客户端），无需自己拼接请求。
+              封装脚本统一存放于公共文件 <code>public/common.js</code>（新建页面模板通过
+              <code>&lt;script src="/common.js"&gt;&lt;/script&gt;</code> 自动引用，可在此页文件树直接编辑）。
+              它提供 <code>window.BLOG_CONFIG</code>（页面配置）、
+              <code>window.BlogAPI</code>（通用客户端）与
+              <code>window.BlogApi</code>（全部公开接口封装函数），无需自己拼接请求。
             </a-typography-paragraph>
             <HighlightCode :code="helperExample" language="javascript"/>
           </a-typography>
@@ -758,7 +762,7 @@ onMounted(() => {
     >
       <a-form layout="vertical">
         <a-form-item label="所在目录（相对 public，留空为根目录）">
-          <a-input v-model:value="createModal.dir" placeholder="例如 client-pages/home"/>
+          <a-input v-model:value="createModal.dir" placeholder="例如 home"/>
         </a-form-item>
         <a-form-item :label="createModal.type === 'file' ? '文件名' : '目录名'">
           <a-input
@@ -781,7 +785,7 @@ onMounted(() => {
       <a-form layout="vertical">
         <a-form-item
           label="页面名称"
-          extra="将在 public/client-pages/<名称>/ 下创建 index.html / style.css / script.js 模板（内置 BlogAPI 辅助脚本）"
+          extra="将在 public/<名称>/ 下创建 index.html / style.css / script.js 模板；全局封装脚本统一存放在 public/common.js（自动引用，含 BlogAPI 与全部公开接口封装函数 BlogApi）"
         >
           <a-input
             v-model:value="pageModal.name"

@@ -14,7 +14,7 @@ import {message, Modal} from 'ant-design-vue'
 import dayjs from 'dayjs'
 import {h, onMounted, reactive, ref} from 'vue'
 import {useRouter} from 'vue-router'
-import {CLIENT_BASE_URL} from "@/config/config.ts";
+import {CLIENT_BASE_URL, initClientBaseUrl} from "@/config/config.ts";
 
 const router = useRouter()
 const articleStore = useArticleStore()
@@ -261,6 +261,8 @@ async function handleImportSubmit() {
 }
 
 onMounted(() => {
+  // 加载系统设置中的站点地址(site_url)，用于标题跳转链接拼接
+  initClientBaseUrl()
   loadCategories()
   loadData()
 })

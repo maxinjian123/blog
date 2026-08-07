@@ -1,4 +1,6 @@
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
 const {Article, Category, Tag} = require('../models');
 const config = require('../config');
 const {success} = require("../utils/response");
@@ -16,7 +18,12 @@ function escapeXml(str) {
         .replace(/'/g, '&apos;');
 }
 
+// GET / —— 后端首页：自动重定向到自定义页面 /index/index.html（若存在），否则返回健康检查
 router.get('/', (req, res) => {
+    const home = path.join(__dirname, '..', 'public', 'index', 'index.html');
+    if (fs.existsSync(home)) {
+        return res.redirect('/index/index.html');
+    }
     return success(res, '健康检查');
 });
 // 生成站点地图

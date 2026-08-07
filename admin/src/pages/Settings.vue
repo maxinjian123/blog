@@ -598,8 +598,10 @@ onMounted(() => {
               <a-form-item label="站点描述">
                 <a-textarea v-model:value="siteForm.site_description" :rows="3"/>
               </a-form-item>
-              <a-form-item label="站点地址" help="用于邮件链接、sitemap 等;开发环境用 localhost:5173">
-                <a-input v-model:value="siteForm.site_url" placeholder="https://example.com"/>
+              <a-form-item label="站点地址"
+                           help="用于邮件链接、sitemap、文章/评论跳转链接等">
+                <a-input v-model:value="siteForm.site_url"
+                         placeholder="https://example.com 或 http://localhost:3000/api/v1"/>
               </a-form-item>
               <a-form-item label="管理员邮箱">
                 <a-input v-model:value="siteForm.admin_email" placeholder="admin@example.com"/>

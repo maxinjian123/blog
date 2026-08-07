@@ -2500,7 +2500,7 @@
  *
  * /client-pages/page:
  *   post:
- *     summary: 新建页面（在 public/client-pages/<name>/ 创建 index.html / style.css / script.js 模板，内置 BlogAPI 辅助脚本）
+ *     summary: 新建页面（在 public/<name>/ 创建 index.html / style.css / script.js 模板；全局封装脚本统一存放于 public/common.js 并自动引用，含 BlogAPI 客户端与全部公开接口封装函数 BlogApi）
  *     tags: [自定义页面]
  *     security:
  *       - bearerAuth: []

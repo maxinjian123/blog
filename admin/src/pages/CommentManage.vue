@@ -17,7 +17,7 @@ import {
   ThunderboltOutlined
 } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
-import {CLIENT_BASE_URL} from "@/config/config.ts";
+import {CLIENT_BASE_URL, initClientBaseUrl} from "@/config/config.ts";
 
 const marked = new Marked()
 marked.setOptions({breaks: true, gfm: true})
@@ -441,6 +441,8 @@ async function handleReplyUploadImg(
 }
 
 onMounted(() => {
+  // 加载系统设置中的站点地址(site_url)，用于「跳转文章」链接拼接
+  initClientBaseUrl()
   loadData()
   loadCurrentAdminUser()
 })

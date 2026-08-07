@@ -1,4 +1,4 @@
-body { font-family: system-ui, sans-serif; background: #f6f7fb; margin: 0; }
+body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background: #f6f7fb; margin: 0; color: #333; }
 .wrap { max-width: 720px; margin: 40px auto; padding: 0 20px; }
 h1 { color: #1677ff; }
 #article-list { margin-top: 20px; }

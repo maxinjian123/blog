@@ -6,6 +6,8 @@ const { auth, adminOnly } = require('../middleware/auth');
 const { success, error } = require('../utils/response');
 const {
   buildBlogHelperScript,
+  buildCommonJs,
+  COMMON_JS_FILE,
   PAGE_STYLE_TEMPLATE,
   PAGE_SCRIPT_TEMPLATE,
   buildPageIndexHtml
@@ -233,7 +235,20 @@ router.put('/rename', auth, adminOnly, async (req, res, next) => {
 
 // ==================== 页面模板 ====================
 
-// 新建页面：在 public/client-pages/<name>/ 下创建 index.html / style.css / script.js 模板
+/** 确保 public 根目录的公共封装脚本（common.js）存在，缺失时写入最新模板 */
+async function ensureCommonJs() {
+  const target = path.join(__dirname, '..', 'public', COMMON_JS_FILE);
+  try {
+    if (!fs.existsSync(target)) {
+      await fsp.writeFile(target, buildCommonJs(), 'utf8');
+      console.log(`[ClientPages] 已生成公共封装脚本 public/${COMMON_JS_FILE}`);
+    }
+  } catch (err) {
+    console.error(`[ClientPages] 生成 public/${COMMON_JS_FILE} 失败:`, err.message);
+  }
+}
+
+// 新建页面：在 public/<name>/ 下创建 index.html / style.css / script.js 模板
 router.post('/page', auth, adminOnly, async (req, res, next) => {
   try {
     const { name } = req.body || {};
@@ -247,10 +262,12 @@ router.post('/page', auth, adminOnly, async (req, res, next) => {
       .replace(/^-|-$/g, '');
     if (!slug) return error(res, '页面名称需包含字母、数字或中文', 400);
 
-    const rel = `client-pages/${slug}`;
+    const rel = slug; // 页面直接存放于 public 根目录
     const abs = resolveSafe(rel);
     if (fs.existsSync(abs)) return error(res, '页面已存在', 409);
 
+    // 页面模板通过 <script src="/common.js"> 引用公共封装脚本，确保其存在
+    await ensureCommonJs();
     await fsp.mkdir(abs, { recursive: true });
     await fsp.writeFile(path.join(abs, 'index.html'), buildPageIndexHtml(title || slug), 'utf8');
     await fsp.writeFile(path.join(abs, 'style.css'), PAGE_STYLE_TEMPLATE, 'utf8');
@@ -264,3 +281,4 @@ router.post('/page', auth, adminOnly, async (req, res, next) => {
 });
 
 module.exports = router;
+module.exports.ensureCommonJs = ensureCommonJs;
